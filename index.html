@@ -251,6 +251,26 @@ body{font-family:'Segoe UI',system-ui,Arial,sans-serif;background:var(--bg);colo
 .att-row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #f0f2f8;font-size:13px}
 .att-row:last-child{border-bottom:none}
 
+/* ── UPCOMING EVENTS ── */
+.ev-section{margin-bottom:14px}
+.ev-section-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.ev-section-ttl{font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--navy)}
+.ev-count{font-size:11px;background:var(--purple-bg);color:var(--purple2);padding:2px 9px;border-radius:10px;font-weight:700}
+.ev-card{background:var(--card);border:1px solid var(--border);border-radius:10px;margin-bottom:9px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.ev-card-hdr{background:linear-gradient(135deg,var(--purple2) 0%,#4c1d95 100%);color:#fff;padding:11px 14px}
+.ev-card-name{font-size:14px;font-weight:800;margin-bottom:4px}
+.ev-card-meta{font-size:11px;opacity:.85;display:flex;flex-wrap:wrap;gap:5px}
+.ev-pill{background:rgba(255,255,255,.15);border-radius:10px;padding:2px 8px;font-size:10px;font-weight:600;white-space:nowrap}
+.ev-card-body{padding:11px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.ev-loc{font-size:13px;color:var(--txt);font-weight:500}
+.ev-days{font-size:11px;color:var(--muted);margin-top:2px}
+.ev-detail-row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #f0f2f8;font-size:13px}
+.ev-detail-row:last-child{border-bottom:none}
+.ev-detail-label{color:var(--muted);font-size:12px}
+.ev-detail-val{font-weight:600;text-align:right;max-width:60%}
+.ev-items-list{margin-top:4px}
+.ev-item-row{display:flex;justify-content:space-between;padding:4px 0;font-size:12px;border-bottom:1px solid #f8f8f8}
+
 /* ── ADMIN: TABLES ── */
 table{width:100%;border-collapse:collapse;font-size:13px}
 th{background:#f0f2f8;padding:8px 11px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);border-bottom:2px solid var(--border)}
@@ -439,6 +459,9 @@ let S = {
   approvedOrders:[],allLeaves:[],
   showStaffModal:false,showLocModal:false,
   editStaff:null,
+  // events
+  upcomingEvents:[],
+  eventDetail:null,
   // ui
   loading:false,error:'',loginError:'',
   loginUser:'',loginPw:'',showPw:false,
@@ -670,6 +693,7 @@ function renderSHome(){
         <div class="tile-sub">View past applications</div>
       </div>
     </div>
+    ${renderUpcomingEvents('staff')}
   </div>`;
 }
 
@@ -685,6 +709,7 @@ async function loadStaffData(){
     S.todayAtt=lsG('fb_att_'+today(),null);
     S.myLeaves=lsG('fb_leaves_'+user.userId,[]);
   }
+  loadCateringEvents();
   render();
 }
 
@@ -976,6 +1001,20 @@ async function submitOrder(){
   };
   const res=await apiData('submit',order);
   if(!res&&!isBackendSet()){/* demo */}
+  // Save catering event for upcoming events section
+  if(S.orderType==='Catering'){
+    const evList=lsG('fb_catering_events',[]);
+    evList.push({
+      orderId:order.orderId,eventType:order.eventType,eventName:order.eventName,
+      eventDate:order.eventDate,eventTime:order.eventTime,pax:order.pax,
+      eventLocation:order.eventLocation,eventClient:order.eventClient,
+      eventPhone:order.eventPhone,deliveryDate:order.deliveryDate,
+      urgency:order.urgency,remarks:order.remarks,staffName:order.staffName,
+      submittedAt:order.submittedAt,status:'Pending',items:order.items,
+    });
+    lsS('fb_catering_events',evList);
+    S.upcomingEvents=getLocalCateringEvents();
+  }
   saveItemHist(items);
   S.loading=false;
   go('s-ration-confirm');
@@ -1158,10 +1197,11 @@ async function loadManagerData(){
     S.pendingLeaves=getDemoLeaves();
     S.todayAttAll=getDemoAtt();
   }
+  loadCateringEvents();
 }
 
 function renderMgrHome(){
-  const tabs=[{id:'ration',l:'📋 Ration',n:S.pendingOrders.length},{id:'leaves',l:'🗓️ Leaves',n:S.pendingLeaves.length},{id:'attend',l:'✅ Attendance',n:0}];
+  const tabs=[{id:'ration',l:'📋 Ration',n:S.pendingOrders.length},{id:'leaves',l:'🗓️ Leaves',n:S.pendingLeaves.length},{id:'attend',l:'✅ Attendance',n:0},{id:'events',l:'🎉 Events',n:S.upcomingEvents.length}];
   return`<div class="scr on scr-wide">
     <div class="id-bar" style="max-width:600px">
       <div class="id-info"><strong>${esc(S.user.name)}</strong>Operations Manager</div>
@@ -1173,7 +1213,7 @@ function renderMgrHome(){
       <div class="stat ok"><div class="stat-n">${S.todayAttAll.length}</div><div class="stat-l">Present Today</div></div>
     </div>
     <div class="tabs">${tabs.map(t=>`<button class="tb ${S.mTab===t.id?'on':''}" onclick="S.mTab='${t.id}';render()">${t.l}${t.n?`<span class="tb-cnt">${t.n}</span>`:''}</button>`).join('')}</div>
-    ${S.mTab==='ration'?renderMgrRationTab():S.mTab==='leaves'?renderMgrLeavesTab():renderMgrAttTab()}
+    ${S.mTab==='ration'?renderMgrRationTab():S.mTab==='leaves'?renderMgrLeavesTab():S.mTab==='events'?renderUpcomingEvents('manager'):renderMgrAttTab()}
     <div style="margin-top:14px"><button class="btn btn-out btn-sm" style="width:auto" onclick="loadManagerData().then(render)">🔄 Refresh</button></div>
   </div>`;
 }
@@ -1331,10 +1371,11 @@ async function loadAdminData(){
     S.allLeaves=getDemoLeaves();
     S.allLocations=DEMO_LOCATIONS.slice();
   }
+  loadCateringEvents();
 }
 
 function renderAdminHome(){
-  const tabs=[{id:'procurement',l:'🛒 Procurement'},{id:'staff',l:'👥 Staff'},{id:'locations',l:'📍 Locations'},{id:'leaves',l:'🗓️ Leaves'},{id:'assignleave',l:'✏️ Assign Leave'},{id:'items',l:'📦 Manage Items'},{id:'monthly',l:'📊 Monthly Report'},{id:'ytd',l:'📋 YTD Leaves'}];
+  const tabs=[{id:'procurement',l:'🛒 Procurement'},{id:'staff',l:'👥 Staff'},{id:'locations',l:'📍 Locations'},{id:'leaves',l:'🗓️ Leaves'},{id:'assignleave',l:'✏️ Assign Leave'},{id:'items',l:'📦 Manage Items'},{id:'events',l:'🎉 Events'},{id:'monthly',l:'📊 Monthly Report'},{id:'ytd',l:'📋 YTD Leaves'}];
   return`<div class="scr on scr-wide">
     <div class="id-bar" style="max-width:700px">
       <div class="id-info"><strong>${esc(S.user.name)}</strong>Master Admin — All Locations</div>
@@ -1347,7 +1388,7 @@ function renderAdminHome(){
       <div class="stat ok"><div class="stat-n">${S.allLeaves.filter(l=>l.status==='Pending'||l['Status']==='Pending').length}</div><div class="stat-l">Leave Pending</div></div>
     </div>
     <div class="tabs">${tabs.map(t=>`<button class="tb ${S.aTab===t.id?'on':''}" onclick="S.aTab='${t.id}';render()">${t.l}</button>`).join('')}</div>
-    ${S.aTab==='procurement'?renderAdmProcurement():S.aTab==='staff'?renderAdmStaff():S.aTab==='locations'?renderAdmLocations():S.aTab==='monthly'?renderAdmMonthlyReport():S.aTab==='ytd'?renderAdmYTD():S.aTab==='items'?renderAdmItems():S.aTab==='assignleave'?renderAdmAssignLeave():renderAdmLeaves()}
+    ${S.aTab==='procurement'?renderAdmProcurement():S.aTab==='staff'?renderAdmStaff():S.aTab==='locations'?renderAdmLocations():S.aTab==='monthly'?renderAdmMonthlyReport():S.aTab==='ytd'?renderAdmYTD():S.aTab==='items'?renderAdmItems():S.aTab==='assignleave'?renderAdmAssignLeave():S.aTab==='events'?renderUpcomingEvents('admin'):renderAdmLeaves()}
     <div style="margin-top:14px"><button class="btn btn-out btn-sm" style="width:auto" onclick="loadAdminData().then(render)">🔄 Refresh</button></div>
   </div>`;
 }
@@ -1685,7 +1726,7 @@ async function submitAdminLeave(){
    MODALS
 ════════════════════════════════════════════ */
 function renderModals(){
-  return renderStaffModal()+renderLocModal();
+  return renderStaffModal()+renderLocModal()+renderEventDetailModal();
 }
 
 function renderStaffModal(){
@@ -1781,6 +1822,118 @@ async function saveLoc(){
 /* doLogout kept from original */
 
 /* ════════════════════════════════════════════
+   UPCOMING CATERING EVENTS
+════════════════════════════════════════════ */
+function getLocalCateringEvents(){
+  const all=lsG('fb_catering_events',[]);
+  const t=today();
+  return all.filter(e=>e.eventDate>=t).sort((a,b)=>a.eventDate.localeCompare(b.eventDate));
+}
+
+async function loadCateringEvents(){
+  if(isBackendSet()){
+    const r=await api({action:'getCateringEvents'});
+    if(r?.events&&r.events.length) S.upcomingEvents=r.events;
+    else S.upcomingEvents=getLocalCateringEvents();
+  } else {
+    S.upcomingEvents=getLocalCateringEvents();
+  }
+}
+
+function daysUntil(dateStr){
+  if(!dateStr)return null;
+  const diff=Math.round((new Date(dateStr+'T00:00:00')-new Date(today()+'T00:00:00'))/86400000);
+  return diff;
+}
+
+function renderUpcomingEvents(role){
+  const {upcomingEvents}=S;
+  const isPriv=role==='admin'||role==='manager';
+  const today3=upcomingEvents.filter(e=>{const d=daysUntil(e.eventDate);return d!==null&&d<=3;}).length;
+  return`<div class="ev-section">
+    <div class="ev-section-hdr">
+      <div class="ev-section-ttl">🎉 Upcoming Catering Events</div>
+      ${upcomingEvents.length?`<span class="ev-count">${upcomingEvents.length} event${upcomingEvents.length>1?'s':''}</span>`:''}
+    </div>
+    ${!upcomingEvents.length
+      ?`<div class="card" style="text-align:center;padding:22px 16px">
+          <div style="font-size:32px;margin-bottom:8px">🎉</div>
+          <div style="font-size:13px;color:var(--muted)">No upcoming catering events</div>
+        </div>`
+      :upcomingEvents.map((ev,i)=>{
+          const d=daysUntil(ev.eventDate);
+          const urgentClass=d!==null&&d<=1?'b-red':d<=3?'b-warn':'b-muted';
+          const dLabel=d===0?'TODAY':d===1?'TOMORROW':d!==null?`In ${d} days`:'';
+          return`<div class="ev-card">
+            <div class="ev-card-hdr">
+              <div class="ev-card-name">${esc(ev.eventType)} — ${esc(ev.eventName)}</div>
+              <div class="ev-card-meta">
+                <span class="ev-pill">📅 ${fmtDate(ev.eventDate)}</span>
+                <span class="ev-pill">🕐 ${esc(ev.eventTime)}</span>
+                <span class="ev-pill">👥 ${esc(ev.pax)} PAX</span>
+                ${dLabel?`<span class="ev-pill" style="background:${d<=1?'rgba(220,38,38,.3)':d<=3?'rgba(217,119,6,.3)':'rgba(255,255,255,.15)'}">${dLabel}</span>`:''}
+              </div>
+            </div>
+            <div class="ev-card-body">
+              <div style="flex:1;min-width:0">
+                <div class="ev-loc">📍 ${esc(ev.eventLocation)}</div>
+                ${isPriv?`<div style="font-size:12px;color:var(--muted);margin-top:3px">👤 ${esc(ev.eventClient)} &nbsp;·&nbsp; 📞 ${esc(ev.eventPhone)}</div>`:''}
+              </div>
+              <button class="btn btn-out btn-xs" onclick="S.eventDetail=${i};render()" style="flex-shrink:0">Details →</button>
+            </div>
+          </div>`;
+        }).join('')}
+  </div>`;
+}
+
+function renderEventDetailModal(){
+  if(S.eventDetail===null)return`<div class="modal-bg" id="ev-modal"></div>`;
+  const ev=S.upcomingEvents[S.eventDetail];
+  if(!ev)return`<div class="modal-bg" id="ev-modal"></div>`;
+  const role=S.user?.role||'staff';
+  const isPriv=role==='admin'||role==='manager';
+  const d=daysUntil(ev.eventDate);
+  const dLabel=d===0?'TODAY — ':d===1?'TOMORROW — ':d!==null&&d>0?`In ${d} days — `:'';
+  return`<div class="modal-bg open" id="ev-modal" onclick="if(event.target===this){S.eventDetail=null;render()}">
+    <div class="modal" style="max-width:480px">
+      <div class="modal-hdr" style="background:linear-gradient(135deg,var(--purple2),#4c1d95);color:#fff;border-radius:14px 14px 0 0">
+        <div>
+          <div class="modal-ttl" style="color:#fff">${esc(ev.eventType)}</div>
+          <div style="font-size:12px;opacity:.85;margin-top:2px">${esc(ev.eventName)}</div>
+        </div>
+        <button class="modal-close" style="color:#fff" onclick="S.eventDetail=null;render()">✕</button>
+      </div>
+      <div class="modal-body" style="padding:0">
+        <div style="background:var(--purple-bg);padding:10px 16px;font-size:12px;color:var(--purple2);font-weight:700">
+          ${dLabel}${fmtDate(ev.eventDate)} &nbsp;·&nbsp; ${esc(ev.eventTime)}
+        </div>
+        <div style="padding:14px 16px">
+          <div class="ev-detail-row"><span class="ev-detail-label">Event Date</span><span class="ev-detail-val">${fmtDate(ev.eventDate)}</span></div>
+          <div class="ev-detail-row"><span class="ev-detail-label">Time Slot</span><span class="ev-detail-val">${esc(ev.eventTime)}</span></div>
+          <div class="ev-detail-row"><span class="ev-detail-label">Location</span><span class="ev-detail-val">${esc(ev.eventLocation)}</span></div>
+          <div class="ev-detail-row"><span class="ev-detail-label">Guests (PAX)</span><span class="ev-detail-val" style="font-size:16px;font-weight:800;color:var(--purple2)">${esc(ev.pax)}</span></div>
+          ${isPriv?`
+          <div class="ev-detail-row"><span class="ev-detail-label">Client Name</span><span class="ev-detail-val">${esc(ev.eventClient)}</span></div>
+          <div class="ev-detail-row"><span class="ev-detail-label">Client Phone</span><span class="ev-detail-val"><a href="tel:${esc(ev.eventPhone)}" style="color:var(--navy);text-decoration:none;font-weight:700">📞 ${esc(ev.eventPhone)}</a></span></div>`:''}
+          <div class="ev-detail-row"><span class="ev-detail-label">Ration Delivery</span><span class="ev-detail-val">${fmtDate(ev.deliveryDate)}</span></div>
+          ${ev.remarks?`<div class="ev-detail-row"><span class="ev-detail-label">Notes</span><span class="ev-detail-val">${esc(ev.remarks)}</span></div>`:''}
+          <div class="ev-detail-row"><span class="ev-detail-label">Submitted by</span><span class="ev-detail-val">${esc(ev.staffName)}</span></div>
+          <div class="ev-detail-row"><span class="ev-detail-label">Status</span><span class="ev-detail-val"><span class="badge ${ev.status==='Pending'?'b-warn':ev.status==='Manager Approved'?'b-ok':'b-red'}">${esc(ev.status||'Pending')}</span></span></div>
+          ${ev.items&&ev.items.length?`
+          <div style="margin-top:12px">
+            <div class="card-ttl" style="margin-bottom:8px">Ration Items (${ev.items.length})</div>
+            <div class="ev-items-list">
+              ${ev.items.map(it=>`<div class="ev-item-row"><span>${esc(it.name)}</span><span style="font-weight:700;color:var(--navy)">${it.qty} ${it.unit}</span></div>`).join('')}
+            </div>
+          </div>`:''}
+        </div>
+      </div>
+      <div class="modal-footer"><button class="btn btn-navy btn-sm" onclick="S.eventDetail=null;render()">Close</button></div>
+    </div>
+  </div>`;
+}
+
+/* ════════════════════════════════════════════
    DEMO DATA
 ════════════════════════════════════════════ */
 function getDemoOrders(){
@@ -1803,6 +1956,7 @@ function doLogout(){
   S.user=null;S.myLeaves=[];S.todayAtt=null;
   S.pendingOrders=[];S.pendingLeaves=[];S.todayAttAll=[];
   S.approvedOrders=[];S.allStaff=[];S.allLeaves=[];S.allLocations=[];
+  S.upcomingEvents=[];S.eventDetail=null;
   S.loginUser='';S.loginPw='';S.loginError='';
   go('login');
 }
