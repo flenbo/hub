@@ -293,6 +293,10 @@ tr:hover td{background:#fafbfe}
   .freq-grid{grid-template-columns:1fr 1fr}
   .stat-row{grid-template-columns:repeat(3,1fr)}
 }
+
+.hdr-photo{width:36px;height:36px;border-radius:50%;object-fit:cover;border:2px solid var(--gold);cursor:pointer;flex-shrink:0}
+.hdr-photo-init{width:36px;height:36px;border-radius:50%;background:var(--gold);color:var(--navy);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;cursor:pointer;flex-shrink:0;border:2px solid var(--gold)}
+.hdr-user-col{display:flex;flex-direction:column;align-items:flex-end;gap:2px}
 </style>
 </head>
 <body>
@@ -368,6 +372,10 @@ const ALL_FLAT = [];
 for(const[sup,cats] of Object.entries(ITEMS))
   for(const[cat,items] of Object.entries(cats))
     items.forEach(([name,unit])=>ALL_FLAT.push({sup,cat,name,unit}));
+function getAllItems(){
+  const custom=lsG('fb_custom_items',[]);
+  return [...ALL_FLAT,...custom];
+}
 
 const ORDER_TYPES = [
   {id:'Restaurant',label:'Restaurant',e:'🍽️',desc:'Daily ops'},
@@ -395,7 +403,7 @@ function saveItemHist(items){
 function getFreqItems(n=20){
   const h=getItemHist();
   return Object.entries(h).filter(([,v])=>v.orders>0).sort((a,b)=>b[1].orders-a[1].orders).slice(0,n)
-    .map(([name,v])=>{const fi=ALL_FLAT.find(i=>i.name===name)||{sup:'HYPERPURE',unit:'KG',cat:''};return{name,sup:fi.sup,unit:fi.unit,cat:fi.cat,...v};});
+    .map(([name,v])=>{const fi=getAllItems().find(i=>i.name===name)||{sup:'HYPERPURE',unit:'KG',cat:''};return{name,sup:fi.sup,unit:fi.unit,cat:fi.cat,...v};});
 }
 
 /* ════════════════════════════════════════════
@@ -413,7 +421,7 @@ let S = {
   deliveryDate:dayAfterTomorrow(),urgency:'Normal',remarks:'',
   cart:{},tab:'FREQUENT',search:'',catOpen:{},orderId:'',
   // leave
-  leaveType:'',leaveFrom:'',leaveTo:'',leaveReason:'',
+  leaveType:'',leaveFrom:'',leaveTo:'',leaveReason:'',admLeaveStaff:'',admLeaveType:'',admLeaveFrom:'',admLeaveTo:'',admLeaveReason:'',admLeaveStatus:'Approved',
   myLeaves:[],
   // attendance
   todayAtt:null,       // {checkedIn:true/false, inTime,outTime}
@@ -436,8 +444,8 @@ let S = {
   loginUser:'',loginPw:'',showPw:false,
 };
 
-function nextDay(){const d=new Date();d.setDate(d.getDate()+1);return d.toISOString().split('T')[0];}
-function dayAfterTomorrow(){const d=new Date();d.setDate(d.getDate()+2);return d.toISOString().split('T')[0];}
+function nextDay(){const d=new Date();d.setDate(d.getDate()+1);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function dayAfterTomorrow(){const d=new Date();d.setDate(d.getDate()+2);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
 function today(){return new Date().toISOString().split('T')[0];}
 function fmtDate(s){if(!s)return'—';try{const d=new Date(s+'T00:00:00');return d.toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'});}catch{return s;}}
 function fmtTime(s){if(!s)return'—';try{return new Date(s).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});}catch{return s;}}
@@ -506,20 +514,40 @@ function renderHeader(){
   if(!user) return '';
   const canBack = screen!=='s-home'&&screen!=='m-home'&&screen!=='a-home';
   const steps=getSteps();
+  const photo=lsG('fb_photo_'+user.userId,null);
+  const initials=user.name.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+  const photoHtml=photo
+    ?`<img class="hdr-photo" src="${photo}" onclick="document.getElementById('photoUpload').click()" title="Change photo">`
+    :`<div class="hdr-photo-init" onclick="document.getElementById('photoUpload').click()" title="Upload photo">${initials}</div>`;
   return`<div class="hdr">
     <div class="hdr-inner">
       ${canBack?`<button class="hdr-back" onclick="goBack()">←</button>`:''}
       <div class="hdr-brand">
         <div class="hdr-brand-name">FLENBO<span>HUB</span></div>
-        <div class="hdr-brand-sub">${esc(CFG.CO)}</div>
+        <div class="hdr-brand-sub">OPERATIONS PLATFORM</div>
       </div>
-      <div class="hdr-right">
-        <div>${esc(user.name)}</div>
-        <span class="hdr-role role-${user.role}">${user.role==='manager'?'Ops Manager':user.role==='admin'?'Master Admin':'Staff'}</span>
+      <div class="hdr-right" style="display:flex;align-items:center;gap:8px">
+        <div class="hdr-user-col">
+          <div style="font-size:12px;font-weight:700">${esc(user.name)}</div>
+          <span class="hdr-role role-${user.role}">${user.role==='manager'?'Ops Manager':user.role==='admin'?'Master Admin':'Staff'}</span>
+        </div>
+        ${photoHtml}
       </div>
     </div>
     ${steps?`<div class="hdr-inner"><div class="step-bar" style="width:100%">${steps}</div></div>`:''}
+    <input type="file" id="photoUpload" accept="image/*" style="display:none" onchange="uploadPhoto(this)">
   </div>`;
+}
+
+function uploadPhoto(input){
+  const file=input.files[0];
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=function(e){
+    lsS('fb_photo_'+S.user.userId, e.target.result);
+    render();
+  };
+  reader.readAsDataURL(file);
 }
 
 function getSteps(){
@@ -544,7 +572,7 @@ function renderLogin(){
     <div class="login-logo">
       <div class="login-logo-name">FLENBO<span>HUB</span></div>
       <div class="login-divider"></div>
-      <div class="login-logo-sub">FoodWorks Operations Platform</div>
+      <div class="login-logo-sub">OPERATIONS PLATFORM</div>
     </div>
     <div class="login-card">
       <div class="login-card-ttl">Sign In to Your Account</div>
@@ -667,7 +695,13 @@ async function loadStaffData(){
 /* ════════════════════════════════════════════
    RATION FLOW
 ════════════════════════════════════════════ */
+function isOrderingOpen(){const hr=new Date().getHours();return hr>=8&&hr<20;}
+
 function startRation(){
+  if(!isOrderingOpen()){
+    alert('⏰ Ration ordering is available only between 8:00 AM and 8:00 PM.\nPlease try again during ordering hours.');
+    return;
+  }
   S.orderType='';S.eventType='';S.eventName='';S.eventDate='';S.pax='';S.eventClient='';S.eventPhone='';S.eventTime='';S.eventLocation='';S.eventLocationNew='';S.ckLocation='';
   S.deliveryDate=dayAfterTomorrow();S.urgency='Normal';S.remarks='';
   S.cart={};S.tab='FREQUENT';S.search='';S.catOpen={};
@@ -675,7 +709,18 @@ function startRation(){
 }
 
 function renderRationType(){
+  const open=isOrderingOpen();
+  const hr=new Date().getHours();
+  const closingSoon=hr>=19&&hr<20;
+  const bannerHtml=open
+    ?`<div class="alert alert-ok" style="margin-bottom:12px">
+        🟢 Orders open · ${closingSoon?'<strong>Closing in less than 1 hour</strong> (8:00 PM)':'Ordering hours: 8:00 AM – 8:00 PM'}
+      </div>`
+    :`<div class="alert alert-warn" style="margin-bottom:12px">
+        🔴 <strong>Ordering is closed.</strong> Ration orders can only be placed between <strong>8:00 AM and 8:00 PM</strong> daily.
+      </div>`;
   return`<div class="scr on">
+    ${bannerHtml}
     <div class="card"><div class="card-ttl">What is this order for?</div>
     <div class="type-grid">${ORDER_TYPES.map(t=>`
       <div class="type-tile ${S.orderType===t.id?'sel':''} ${t.disabled?'disabled':''}" onclick="${t.disabled?'':'S.orderType=\''+t.id+'\';render()'}">
@@ -685,7 +730,7 @@ function renderRationType(){
         ${t.disabled?'<span class="tt-soon">Coming Soon</span>':''}
       </div>`).join('')}
     </div></div>
-    <button class="btn btn-navy" onclick="nextFromType()" ${!S.orderType?'disabled':''}>Continue →</button>
+    <button class="btn btn-navy" onclick="nextFromType()" ${!S.orderType||!isOrderingOpen()?'disabled':''}>Continue →</button>
   </div>`;
 }
 function nextFromType(){
@@ -1294,7 +1339,7 @@ async function loadAdminData(){
 }
 
 function renderAdminHome(){
-  const tabs=[{id:'procurement',l:'🛒 Procurement'},{id:'staff',l:'👥 Staff'},{id:'locations',l:'📍 Locations'},{id:'leaves',l:'🗓️ Leaves'},{id:'monthly',l:'📊 Monthly Report'},{id:'ytd',l:'📋 YTD Leaves'}];
+  const tabs=[{id:'procurement',l:'🛒 Procurement'},{id:'staff',l:'👥 Staff'},{id:'locations',l:'📍 Locations'},{id:'leaves',l:'🗓️ Leaves'},{id:'assignleave',l:'✏️ Assign Leave'},{id:'items',l:'📦 Manage Items'},{id:'monthly',l:'📊 Monthly Report'},{id:'ytd',l:'📋 YTD Leaves'}];
   return`<div class="scr on scr-wide">
     <div class="id-bar" style="max-width:700px">
       <div class="id-info"><strong>${esc(S.user.name)}</strong>Master Admin — All Locations</div>
@@ -1308,7 +1353,7 @@ function renderAdminHome(){
       <div class="stat ok"><div class="stat-n">${S.allLeaves.filter(l=>l.status==='Pending'||l['Status']==='Pending').length}</div><div class="stat-l">Leave Pending</div></div>
     </div>
     <div class="tabs">${tabs.map(t=>`<button class="tb ${S.aTab===t.id?'on':''}" onclick="S.aTab='${t.id}';render()">${t.l}</button>`).join('')}</div>
-    ${S.aTab==='procurement'?renderAdmProcurement():S.aTab==='staff'?renderAdmStaff():S.aTab==='locations'?renderAdmLocations():S.aTab==='monthly'?renderAdmMonthlyReport():S.aTab==='ytd'?renderAdmYTD():renderAdmLeaves()}
+    ${S.aTab==='procurement'?renderAdmProcurement():S.aTab==='staff'?renderAdmStaff():S.aTab==='locations'?renderAdmLocations():S.aTab==='monthly'?renderAdmMonthlyReport():S.aTab==='ytd'?renderAdmYTD():S.aTab==='items'?renderAdmItems():S.aTab==='assignleave'?renderAdmAssignLeave():renderAdmLeaves()}
     <div style="margin-top:14px"><button class="btn btn-out btn-sm" style="width:auto" onclick="loadAdminData().then(render)">🔄 Refresh</button></div>
   </div>`;
 }
@@ -1515,6 +1560,131 @@ function renderAdmYTD(){
     </tbody></table>
     </div>
   </div>`;
+}
+
+/* ════════════════════════════════════════════
+   ADMIN — MANAGE ITEMS
+════════════════════════════════════════════ */
+function renderAdmItems(){
+  const custom=lsG('fb_custom_items',[]);
+  const sups=[...SUP_ORDER,'CUSTOM'];
+  const supMeta={...SUP_META,CUSTOM:{e:'➕',l:'Custom'}};
+  const bySup={};
+  custom.forEach(i=>{if(!bySup[i.sup])bySup[i.sup]=[];bySup[i.sup].push(i);});
+  return`<div>
+    <div class="card" style="margin-bottom:12px">
+      <div class="card-ttl">Add New Ration Item</div>
+      <label class="fl">Supplier / Category *</label>
+      <select class="fi" id="ni-sup">
+        ${SUP_ORDER.map(s=>`<option value="${s}">${supMeta[s]?.l||s}</option>`).join('')}
+        <option value="CUSTOM">Custom / Other</option>
+      </select>
+      <label class="fl">Item Category *</label>
+      <input class="fi" id="ni-cat" placeholder="e.g. 🥦 Vegetables & Produce">
+      <label class="fl">Item Name *</label>
+      <input class="fi" id="ni-name" placeholder="e.g. Broccoli">
+      <label class="fl">Unit *</label>
+      <select class="fi" id="ni-unit">
+        ${UNITS.map(u=>`<option value="${u}">${u}</option>`).join('')}
+      </select>
+      <button class="btn btn-navy" style="margin-top:10px" onclick="addCustomItem()">+ Add Item</button>
+    </div>
+    ${custom.length?`
+    <div class="card">
+      <div class="card-ttl">Custom Items Added (${custom.length})</div>
+      ${custom.map((it,i)=>`
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f0f2f8;font-size:13px">
+        <div><strong>${esc(it.name)}</strong> <span style="color:var(--muted)">${it.unit} · ${it.cat||it.sup}</span></div>
+        <button onclick="removeCustomItem(${i})" style="background:none;border:none;color:#dc2626;cursor:pointer;font-size:16px">✕</button>
+      </div>`).join('')}
+    </div>`:''}
+  </div>`;
+}
+
+function addCustomItem(){
+  const sup=document.getElementById('ni-sup')?.value||'CUSTOM';
+  const cat=document.getElementById('ni-cat')?.value?.trim();
+  const name=document.getElementById('ni-name')?.value?.trim();
+  const unit=document.getElementById('ni-unit')?.value||'KG';
+  if(!name||!cat){alert('Please enter item name and category.');return;}
+  const custom=lsG('fb_custom_items',[]);
+  if(custom.find(i=>i.name.toLowerCase()===name.toLowerCase())){alert('Item already exists.');return;}
+  custom.push({sup,cat,name,unit,custom:true});
+  lsS('fb_custom_items',custom);
+  render();
+}
+
+function removeCustomItem(idx){
+  if(!confirm('Remove this item?'))return;
+  const custom=lsG('fb_custom_items',[]);
+  custom.splice(idx,1);
+  lsS('fb_custom_items',custom);
+  render();
+}
+
+/* ════════════════════════════════════════════
+   ADMIN — ASSIGN LEAVE TO STAFF
+════════════════════════════════════════════ */
+function renderAdmAssignLeave(){
+  const staff=[...DEMO_USERS.filter(u=>u.userId!==S.user.userId)];
+  const al=(S.admLeaveFrom&&S.admLeaveTo)?Math.max(0,Math.round((new Date(S.admLeaveTo)-new Date(S.admLeaveFrom))/(86400000))+1):0;
+  return`<div>
+    <div class="card">
+      <div class="card-ttl">Assign Leave to Staff</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:12px">Use this to record leave on behalf of a staff member who missed applying.</div>
+      <label class="fl">Select Staff Member *</label>
+      <select class="fi" onchange="S.admLeaveStaff=this.value;render()">
+        <option value="">— Select staff —</option>
+        ${staff.map(u=>`<option value="${u.userId}" ${S.admLeaveStaff===u.userId?'selected':''}>${esc(u.name)} · ${esc(u.profile||u.location)}</option>`).join('')}
+      </select>
+      <label class="fl">Leave Type *</label>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px">
+        ${LEAVE_TYPES.map(lt=>`<div onclick="S.admLeaveType='${lt}';render()" style="border:2px solid ${S.admLeaveType===lt?'var(--navy)':'var(--border)'};background:${S.admLeaveType===lt?'#f0f2fa':'#fff'};border-radius:9px;padding:9px;cursor:pointer;text-align:center;font-size:12px;font-weight:700">${lt}</div>`).join('')}
+      </div>
+      <label class="fl">From Date *</label>
+      <input class="fi" type="date" value="${esc(S.admLeaveFrom||'')}" oninput="S.admLeaveFrom=this.value;render()">
+      <label class="fl">To Date *</label>
+      <input class="fi" type="date" value="${esc(S.admLeaveTo||'')}" min="${S.admLeaveFrom||''}" oninput="S.admLeaveTo=this.value;render()">
+      ${al>0?`<div style="font-size:12px;color:var(--muted);margin-bottom:8px">📅 ${al} day${al>1?'s':''} selected</div>`:''}
+      ${S.admLeaveType==='Sick Leave'&&al>2?`<div class="alert alert-warn">⚠️ Sick Leave max 2 days per application.</div>`:''}
+      <label class="fl">Reason *</label>
+      <textarea class="ft" rows="2" placeholder="Reason for leave…" oninput="S.admLeaveReason=this.value">${esc(S.admLeaveReason||'')}</textarea>
+      <label class="fl" style="margin-top:8px">Status</label>
+      <select class="fi" onchange="S.admLeaveStatus=this.value">
+        <option value="Approved" ${(S.admLeaveStatus||'Approved')==='Approved'?'selected':''}>Approved</option>
+        <option value="Pending" ${S.admLeaveStatus==='Pending'?'selected':''}>Pending (awaiting review)</option>
+      </select>
+    </div>
+    <button class="btn btn-gold" onclick="submitAdminLeave()"
+      ${!S.admLeaveStaff||!S.admLeaveType||!S.admLeaveFrom||!S.admLeaveTo||!S.admLeaveReason||(S.admLeaveType==='Sick Leave'&&al>2)?'disabled':''}>
+      ✅ Record Leave
+    </button>
+  </div>`;
+}
+
+async function submitAdminLeave(){
+  if(!S.admLeaveStaff||!S.admLeaveType||!S.admLeaveFrom||!S.admLeaveTo||!S.admLeaveReason)return;
+  const target=DEMO_USERS.find(u=>u.userId===S.admLeaveStaff);
+  const leave={
+    leaveId:'LV-ADM-'+Date.now(),
+    userId:S.admLeaveStaff,
+    staffName:target?.name||S.admLeaveStaff,
+    location:target?.location||'',
+    leaveType:S.admLeaveType,
+    fromDate:S.admLeaveFrom,
+    toDate:S.admLeaveTo,
+    reason:S.admLeaveReason,
+    submittedAt:new Date().toISOString(),
+    status:S.admLeaveStatus||'Approved',
+    managerNote:'Recorded by Admin'
+  };
+  S.loading=true;render();
+  await apiData('submitLeave',leave);
+  S.loading=false;
+  S.admLeaveStaff='';S.admLeaveType='';S.admLeaveFrom='';S.admLeaveTo='';S.admLeaveReason='';S.admLeaveStatus='Approved';
+  alert('✅ Leave recorded successfully for '+leave.staffName);
+  await loadAdminData();
+  render();
 }
 
 /* ════════════════════════════════════════════
