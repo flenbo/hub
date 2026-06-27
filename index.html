@@ -522,15 +522,12 @@ function renderHeader(){
   return`<div class="hdr">
     <div class="hdr-inner">
       ${canBack?`<button class="hdr-back" onclick="goBack()">←</button>`:''}
-      <div class="hdr-brand">
+      <div class="hdr-brand" onclick="go(homeScreen())" style="cursor:pointer">
         <div class="hdr-brand-name">FLENBO<span>HUB</span></div>
         <div class="hdr-brand-sub">OPERATIONS PLATFORM</div>
       </div>
       <div class="hdr-right" style="display:flex;align-items:center;gap:8px">
-        <div class="hdr-user-col">
-          <div style="font-size:12px;font-weight:700">${esc(user.name)}</div>
-          <span class="hdr-role role-${user.role}">${user.role==='manager'?'Ops Manager':user.role==='admin'?'Master Admin':'Staff'}</span>
-        </div>
+        <div style="font-size:12px;font-weight:700;text-align:right">${esc(user.name)}</div>
         ${photoHtml}
       </div>
     </div>
@@ -633,8 +630,7 @@ function renderSHome(){
     <div class="id-bar">
       <div class="id-info"><strong>${esc(user.name)}</strong>${esc(user.profile||user.location)}</div>
       <div style="text-align:right">
-        <div class="id-role">Staff · ${esc(user.location)}</div>
-        <div style="font-size:10px;margin-top:5px;opacity:.7;cursor:pointer" onclick="doLogout()">Sign out</div>
+        <div style="font-size:11px;opacity:.8;cursor:pointer;text-decoration:underline" onclick="doLogout()">Sign out</div>
       </div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:13px">
@@ -1169,8 +1165,7 @@ function renderMgrHome(){
   return`<div class="scr on scr-wide">
     <div class="id-bar" style="max-width:600px">
       <div class="id-info"><strong>${esc(S.user.name)}</strong>Operations Manager</div>
-      <div style="text-align:right"><div class="id-role" style="background:rgba(124,58,237,.2);color:#c4b5fd">Manager</div>
-      <div style="font-size:10px;margin-top:5px;opacity:.7;cursor:pointer" onclick="doLogout()">Sign out</div></div>
+      <div style="text-align:right"><div style="font-size:11px;opacity:.8;cursor:pointer;text-decoration:underline" onclick="doLogout()">Sign out</div></div>
     </div>
     <div class="stat-row">
       <div class="stat warn"><div class="stat-n">${S.pendingOrders.length}</div><div class="stat-l">Pending Ration</div></div>
@@ -1343,8 +1338,7 @@ function renderAdminHome(){
   return`<div class="scr on scr-wide">
     <div class="id-bar" style="max-width:700px">
       <div class="id-info"><strong>${esc(S.user.name)}</strong>Master Admin — All Locations</div>
-      <div style="text-align:right"><div class="id-role" style="background:rgba(220,38,38,.2);color:#fca5a5">Admin</div>
-      <div style="font-size:10px;margin-top:5px;opacity:.7;cursor:pointer" onclick="doLogout()">Sign out</div></div>
+      <div style="text-align:right"><div style="font-size:11px;opacity:.8;cursor:pointer;text-decoration:underline" onclick="doLogout()">Sign out</div></div>
     </div>
     <div class="stat-row">
       <div class="stat warn"><div class="stat-n">${S.approvedOrders.length}</div><div class="stat-l">Approved Orders</div></div>
