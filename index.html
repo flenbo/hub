@@ -7,7 +7,7 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 :root{
-  --navy:#1A2642;--navy2:#243254;--navy3:#344266;
+  --navy:#1A2642;--navy2:#243254;--navy3:#344266;h
   --gold:#C9A668;--gold2:#FBF4E6;--gold3:#E8D5A8;
   --bg:#F0F2F8;--card:#fff;--border:#DDE3EE;
   --txt:#1A2642;--muted:#6B7898;--light:#9AA5BF;
@@ -326,7 +326,7 @@ tr:hover td{background:#fafbfe}
    CONFIG
 ════════════════════════════════════════════ */
 const CFG = {
-  BACKEND_URL: 'https://script.google.com/macros/s/AKfycbz4Qqg9kb3MzCom-ThLW2MYG2U_d8SCglt-9OY1zqkl3veiCz_baGbdXPqTzyMU90Gs6Q/exec',
+  BACKEND_URL: 'https://script.google.com/macros/s/AKfycbzboKx0FesXXp3k4MOCfYwyjAnYgCbDFd_-8mI-D_tngA_1v1JIe0uQeB_qipBpj4zNTg/exec',
   APP: 'Flenbo Hub',
   CO: 'Flenbo FoodWorks Pvt. Ltd.',
 };
@@ -476,7 +476,7 @@ function genId(loc){const l=(loc||'').includes('Nawada')?'NAW':(loc||'').include
 function cartCount(){return Object.values(S.cart).filter(v=>v.qty>0).length;}
 function cartItems(){const a=[];for(const[k,v]of Object.entries(S.cart)){if(v.qty>0){const[sup,cat,name]=k.split('|');a.push({sup,cat,name,qty:v.qty,unit:v.unit});}}return a;}
 function esc(s){if(s==null)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
-function isBackendSet(){return CFG.BACKEND_URL&&CFG.BACKEND_URL!=='https://script.google.com/macros/s/AKfycbz4Qqg9kb3MzCom-ThLW2MYG2U_d8SCglt-9OY1zqkl3veiCz_baGbdXPqTzyMU90Gs6Q/exec';}
+function isBackendSet(){return CFG.BACKEND_URL&&CFG.BACKEND_URL!=='https://script.google.com/macros/s/AKfycbzboKx0FesXXp3k4MOCfYwyjAnYgCbDFd_-8mI-D_tngA_1v1JIe0uQeB_qipBpj4zNTg/exec';}
 /* ════════════════════════════════════════════
    API
 ════════════════════════════════════════════ */
