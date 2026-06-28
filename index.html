@@ -1998,9 +1998,9 @@ async function loadUserData(){
     }
     if(S.user.role==='admin'){
       S.approvedOrders=getDemoApproved();
-      S.allStaff=getDemoStaff();
+      S.allStaff=lsG('fb_custom_staff',null)||getDemoStaff();
       S.allLeaves=getDemoLeaves();
-      S.allLocations=DEMO_LOCATIONS.slice();
+      S.allLocations=lsG('fb_custom_locations',null)||DEMO_LOCATIONS.slice();
     }
   }
 }
