@@ -2006,4 +2006,15 @@ async function loadUserData(){
 }
 
 window.addEventListener('DOMContentLoaded',async()=>{
-  const saved=lsG('fb_ses
+  const saved=lsG('fb_session',null);
+  if(saved){
+    S.user=saved;
+    await loadUserData();
+    go(homeScreen());
+  }else{
+    go('login');
+  }
+});
+</script>
+</body>
+</html>
