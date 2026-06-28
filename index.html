@@ -1215,7 +1215,7 @@ function renderMgrHome(){
       <div class="stat gold"><div class="stat-n">${S.pendingLeaves.length}</div><div class="stat-l">Leave Requests</div></div>
       <div class="stat ok"><div class="stat-n">${S.todayAttAll.length}</div><div class="stat-l">Present Today</div></div>
     </div>
-    <div class="tabs">${tabs.map(t=>`<button class="tb ${S.mTab===t.id?'on':''}" onclick="S.mTab='${t.id}';render()">${t.l}${t.n?`<span class="tb-cnt">${t.n}</span>`:''}</button>`).join('')}</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:14px;max-width:600px">${tabs.map(t=>`<button onclick="S.mTab='${t.id}';render()" style="position:relative;background:${S.mTab===t.id?'var(--purple2)':'var(--card)'};color:${S.mTab===t.id?'#fff':'var(--txt)'};border:1.5px solid ${S.mTab===t.id?'var(--purple2)':'var(--border)'};border-radius:10px;padding:10px 6px;font-size:11px;font-weight:700;cursor:pointer;text-align:center;line-height:1.4;width:100%">${t.l}${t.n?`<span style="position:absolute;top:4px;right:6px;background:#e53935;color:#fff;border-radius:10px;padding:0 5px;font-size:9px;font-weight:800">${t.n}</span>`:''}</button>`).join('')}</div>
     ${S.mTab==='ration'?renderMgrRationTab():S.mTab==='leaves'?renderMgrLeavesTab():S.mTab==='events'?renderUpcomingEvents('manager'):S.mTab==='myleave'?renderMgrMyLeaveTab():renderMgrAttTab()}
     <div style="margin-top:14px"><button class="btn btn-out btn-sm" style="width:auto" onclick="loadManagerData().then(render)">🔄 Refresh</button></div>
   </div>`;
