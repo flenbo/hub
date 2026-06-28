@@ -1387,9 +1387,11 @@ function renderAdminHome(){
       <div class="stat gold"><div class="stat-n">${S.allLocations.length}</div><div class="stat-l">Locations</div></div>
       <div class="stat ok"><div class="stat-n">${S.allLeaves.filter(l=>l.status==='Pending'||l['Status']==='Pending').length}</div><div class="stat-l">Leave Pending</div></div>
     </div>
-    <div class="tabs">${tabs.map(t=>`<button class="tb ${S.aTab===t.id?'on':''}" onclick="S.aTab='${t.id}';render()">${t.l}</button>`).join('')}</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:14px;max-width:700px">${tabs.map(t=>`
+      <button onclick="S.aTab='${t.id}';render()" style="background:${S.aTab===t.id?'var(--purple2)':'var(--card)'};color:${S.aTab===t.id?'#fff':'var(--txt)'};border:1.5px solid ${S.aTab===t.id?'var(--purple2)':'var(--border)'};border-radius:10px;padding:10px 6px;font-size:11px;font-weight:700;cursor:pointer;text-align:center;line-height:1.4;width:100%">${t.l}</button>`).join('')}
+    </div>
     ${S.aTab==='procurement'?renderAdmProcurement():S.aTab==='staff'?renderAdmStaff():S.aTab==='locations'?renderAdmLocations():S.aTab==='monthly'?renderAdmMonthlyReport():S.aTab==='ytd'?renderAdmYTD():S.aTab==='items'?renderAdmItems():S.aTab==='assignleave'?renderAdmAssignLeave():S.aTab==='events'?renderUpcomingEvents('admin'):renderAdmLeaves()}
-    <div style="margin-top:14px"><button class="btn btn-out btn-sm" style="width:auto" onclick="loadAdminData().then(render)">🔄 Refresh</button></div>
+    <div style="margin-top:14px"><button class="btn btn-out btn-sm" style="width:auto" onclick="loadAdminData().then(()=>{loadCateringEvents();render();})">🔄 Refresh</button></div>
   </div>`;
 }
 
