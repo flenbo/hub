@@ -631,6 +631,9 @@ async function doLogin(){
   }
   S.loading=false;
   if(!user){S.loginError='Invalid username or password.';render();return;}
+  // Merge backend user with demo data — backend may not return annualLeave/casualLeave
+  const demoMatch=DEMO_USERS.find(d=>d.userId===user.userId||d.username===(user.username||user.Username));
+  if(demoMatch) user={...demoMatch,...user}; // demo as base, backend overrides core fields
   S.user=user;lsS('fb_session',user);
   S.screen=homeScreen();
   if(user.role==='manager') loadManagerData();
@@ -997,7 +1000,6 @@ function renderRationReview(){
 
 async function submitOrder(){
   const items=cartItems();if(!items.length)return;
-  S.loading=true;render();
   S.orderId=genId(S.user.location);
   const resolvedLoc = S.orderType==='Catering'?(S.eventLocation==='NEW LOCATION'?S.eventLocationNew:S.eventLocation):(S.ckLocation||S.user.location);
   const order={
@@ -1009,8 +1011,7 @@ async function submitOrder(){
     deliveryDate:S.deliveryDate,urgency:S.urgency,remarks:S.remarks,
     submittedAt:new Date().toISOString(),items,status:'Pending',
   };
-  const res=await apiData('submit',order);
-  if(!res&&!isBackendSet()){/* demo */}
+  if(isBackendSet()) apiData('submit',order); // background, no await
   // Save catering event for upcoming events section
   if(S.orderType==='Catering'){
     const evList=lsG('fb_catering_events',[]);
@@ -1026,7 +1027,6 @@ async function submitOrder(){
     S.upcomingEvents=getLocalCateringEvents();
   }
   saveItemHist(items);
-  S.loading=false;
   go('s-ration-confirm');
 }
 
@@ -1127,12 +1127,14 @@ function updateLeaveBtn(){
   btn.disabled=bad;
 }
 async function submitLeave(){
-  S.loading=true;render();
   const leave={leaveId:'LV-'+Date.now(),userId:S.user.userId,staffName:S.user.name,location:S.user.location,leaveType:S.leaveType,fromDate:S.leaveFrom,toDate:S.leaveTo,reason:S.leaveReason,submittedAt:new Date().toISOString(),status:'Pending'};
-  await apiData('submitLeave',leave);
-  if(!isBackendSet()){const arr=lsG('fb_leaves_'+S.user.userId,[]);arr.unshift(leave);lsS('fb_leaves_'+S.user.userId,arr.slice(0,30));S.myLeaves=[leave,...S.myLeaves];}
-  S.loading=false;S.leaveType='';S.leaveFrom='';S.leaveTo='';S.leaveReason='';
+  // Optimistic: add to local state and go to success screen immediately
+  S.myLeaves=[leave,...S.myLeaves];
+  const arr=lsG('fb_leaves_'+S.user.userId,[]);arr.unshift(leave);lsS('fb_leaves_'+S.user.userId,arr.slice(0,30));
+  S.leaveType='';S.leaveFrom='';S.leaveTo='';S.leaveReason='';
   go('s-leave-done');
+  // Submit to backend in background (no await)
+  if(isBackendSet()) apiData('submitLeave',leave);
 }
 
 function renderLeaveDone(){
@@ -1443,8 +1445,8 @@ async function logAttendance(type){
     S.todayAtt={...S.todayAtt,outTime:timeStr};
   }
   lsS('fb_att_'+today(),S.todayAtt);
-  await apiData('logAttendance',{userId:S.user.userId,staffName:S.user.name,location:S.user.location,date:today(),...S.todayAtt,type});
-  render();
+  render(); // update UI immediately
+  if(isBackendSet()) apiData('logAttendance',{userId:S.user.userId,staffName:S.user.name,location:S.user.location,date:today(),...S.todayAtt,type}); // background
 }
 
 /* ════════════════════════════════════════════
