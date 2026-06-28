@@ -7,7 +7,7 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 :root{
-  --navy:#1A2642;--navy2:#243254;--navy3:#344266;h
+  --navy:#1A2642;--navy2:#243254;--navy3:#344266;
   --gold:#C9A668;--gold2:#FBF4E6;--gold3:#E8D5A8;
   --bg:#F0F2F8;--card:#fff;--border:#DDE3EE;
   --txt:#1A2642;--muted:#6B7898;--light:#9AA5BF;
@@ -393,6 +393,7 @@ for(const[sup,cats] of Object.entries(ITEMS))
   for(const[cat,items] of Object.entries(cats))
     items.forEach(([name,unit])=>ALL_FLAT.push({sup,cat,name,unit}));
 function getAllItems(){
+  // S.customItems is loaded from backend on login; falls back to localStorage for offline
   const custom=S.customItems.length?S.customItems:lsG('fb_custom_items',[]);
   return [...ALL_FLAT,...custom];
 }
@@ -701,19 +702,24 @@ function renderSHome(){
 
 async function loadStaffData(){
   const {user}=S;
-  // Load attendance
   if(isBackendSet()){
-    const r=await api({action:'getAttendance',userId:user.userId,date:today()});
+    const [r,rl,rci,rc]=await Promise.all([
+      api({action:'getAttendance',userId:user.userId,date:today()}),
+      api({action:'getLeaves',userId:user.userId}),
+      api({action:'getCustomItems'}),
+      api({action:'getCateringEvents'})
+    ]);
     if(r?.record) S.todayAtt=r.record;
-    const rl=await api({action:'getLeaves',userId:user.userId});
     if(rl?.leaves) S.myLeaves=rl.leaves;
-    const rci=await api({action:'getCustomItems'});
     if(rci?.items){S.customItems=rci.items;lsS('fb_custom_items',rci.items);}
+    if(rc?.events&&rc.events.length) S.upcomingEvents=rc.events;
+    else S.upcomingEvents=getLocalCateringEvents();
   } else {
     S.todayAtt=lsG('fb_att_'+today(),null);
     S.myLeaves=lsG('fb_leaves_'+user.userId,[]);
+    S.customItems=lsG('fb_custom_items',[]);
+    S.upcomingEvents=getLocalCateringEvents();
   }
-  loadCateringEvents();
   render();
 }
 
@@ -1190,21 +1196,26 @@ function renderAttendance(){
 ════════════════════════════════════════════ */
 async function loadManagerData(){
   if(isBackendSet()){
-    const ro=await api({action:'getOrders',status:'Pending'});
+    const [ro,rl,ra,rml,rc]=await Promise.all([
+      api({action:'getOrders',status:'Pending'}),
+      api({action:'getLeaves',status:'Pending'}),
+      api({action:'getAttendance',date:today()}),
+      api({action:'getMyLeaves',userId:S.user?.userId}),
+      api({action:'getCateringEvents'})
+    ]);
     if(ro?.orders) S.pendingOrders=ro.orders;
-    const rl=await api({action:'getLeaves',status:'Pending'});
     if(rl?.leaves) S.pendingLeaves=rl.leaves;
-    const ra=await api({action:'getAttendance',date:today()});
     if(ra?.records) S.todayAttAll=ra.records;
-    const rml=await api({action:'getMyLeaves',userId:S.user?.userId});
     if(rml?.leaves) S.myLeaves=rml.leaves;
+    if(rc?.events&&rc.events.length) S.upcomingEvents=rc.events;
+    else S.upcomingEvents=getLocalCateringEvents();
   } else {
     S.pendingOrders=getDemoOrders();
     S.pendingLeaves=getDemoLeaves();
     S.todayAttAll=getDemoAtt();
     S.myLeaves=lsG('fb_leaves_'+(S.user?.userId||'mgr'),[]);
+    S.upcomingEvents=getLocalCateringEvents();
   }
-  loadCateringEvents();
 }
 
 function renderMgrHome(){
@@ -1358,39 +1369,39 @@ function renderMgrMyLeaveTab(){
     <div class="card" style="margin-bottom:12px">
       <div class="card-ttl">Apply for Leave</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
-        <div onclick="S.leaveType='Annual Leave';render()" style="border:2px solid ${S.leaveType==='Annual Leave'?'var(--navy,#1A2642)':'var(--border,#e2e8f0)'};background:${S.leaveType==='Annual Leave'?'#f0f2fa':'#fff'};border-radius:9px;padding:10px;cursor:pointer;text-align:center">
+        <div onclick="S.leaveType='Annual Leave';render()" style="border:2px solid ${'{'}S.leaveType==='Annual Leave'?'var(--navy,#1A2642)':'var(--border,#e2e8f0)'{'}'};background:${'{'} S.leaveType==='Annual Leave'?'#f0f2fa':'#fff'{'}'};border-radius:9px;padding:10px;cursor:pointer;text-align:center">
           <div style="font-size:13px;font-weight:700;color:var(--navy,#1A2642)">Annual Leave</div>
-          <div style="font-size:10px;color:var(--muted,#64748b)">No salary deduction</div>
+          <div style="font-size:10px;color:var(--muted,#64748b)">✅ No salary deduction</div>
         </div>
-        <div onclick="S.leaveType='Casual Leave';render()" style="border:2px solid ${S.leaveType==='Casual Leave'?'#dc2626':'var(--border,#e2e8f0)'};background:${S.leaveType==='Casual Leave'?'#fff5f5':'#fff'};border-radius:9px;padding:10px;cursor:pointer;text-align:center">
+        <div onclick="S.leaveType='Casual Leave';render()" style="border:2px solid ${'{'} S.leaveType==='Casual Leave'?'#dc2626':'var(--border,#e2e8f0)'{'}'};background:${'{'} S.leaveType==='Casual Leave'?'#fff5f5':'#fff'{'}'};border-radius:9px;padding:10px;cursor:pointer;text-align:center">
           <div style="font-size:13px;font-weight:700;color:#dc2626">Casual Leave</div>
-          <div style="font-size:10px;color:var(--muted,#64748b)">Salary deducted</div>
+          <div style="font-size:10px;color:var(--muted,#64748b)">⚠️ Salary deducted</div>
         </div>
       </div>
-      <div onclick="S.leaveType='Sick Leave';render()" style="border:2px solid ${S.leaveType==='Sick Leave'?'#b45309':'var(--border,#e2e8f0)'};background:${S.leaveType==='Sick Leave'?'#fffbeb':'#fff'};border-radius:9px;padding:10px;cursor:pointer;text-align:center;margin-bottom:10px">
-        <div style="font-size:13px;font-weight:700;color:#b45309">Sick Leave</div>
+      <div onclick="S.leaveType='Sick Leave';render()" style="border:2px solid ${'{'} S.leaveType==='Sick Leave'?'#b45309':'var(--border,#e2e8f0)'{'}'};background:${'{'} S.leaveType==='Sick Leave'?'#fffbeb':'#fff'{'}'};border-radius:9px;padding:10px;cursor:pointer;text-align:center;margin-bottom:10px">
+        <div style="font-size:13px;font-weight:700;color:#b45309">🤒 Sick Leave</div>
         <div style="font-size:10px;color:var(--muted,#64748b)">Max 2 days · Deducted from Annual Leave</div>
       </div>
       <label class="fl">From Date *</label>
       <input class="fi" type="date" value="${esc(S.leaveFrom)}" min="${today()}" oninput="S.leaveFrom=this.value;render()">
       <label class="fl">To Date *</label>
       <input class="fi" type="date" value="${esc(S.leaveTo)}" min="${S.leaveFrom||today()}" oninput="S.leaveTo=this.value;render()">
-      ${leaveDays>0?`<div style="font-size:12px;color:var(--muted,#64748b);margin-bottom:8px">${leaveDays} day${leaveDays>1?'s':''} selected</div>`:''}
-      ${notEnoughAnnual?`<div class="alert alert-warn">Only ${al} Annual Leave days remaining.</div>`:''}
-      ${notEnoughCasual?`<div class="alert alert-warn">Only ${cl} Casual Leave days remaining.</div>`:''}
-      ${sickExceeds2?'<div class="alert alert-warn">Sick Leave limited to 2 days per application.</div>':''}
+      ${leaveDays>0?`<div style="font-size:12px;color:var(--muted,#64748b);margin-bottom:8px">📅 ${leaveDays} day${leaveDays>1?'s':''} selected</div>`:''}
+      ${notEnoughAnnual?`<div class="alert alert-warn">⚠️ Only ${al} Annual Leave days remaining.</div>`:''}
+      ${notEnoughCasual?`<div class="alert alert-warn">⚠️ Only ${cl} Casual Leave days remaining.</div>`:''}
+      ${sickExceeds2?`<div class="alert alert-warn">⚠️ Sick Leave limited to 2 days per application.</div>`:''}
       <label class="fl">Reason *</label>
-      <textarea class="ft" rows="3" placeholder="Briefly explain the reason..." oninput="S.leaveReason=this.value">${esc(S.leaveReason)}</textarea>
+      <textarea class="ft" rows="3" placeholder="Briefly explain the reason…" oninput="S.leaveReason=this.value">${esc(S.leaveReason)}</textarea>
       <button class="btn btn-gold" style="margin-top:8px" onclick="submitMgrLeave()" ${disableSubmit?'disabled':''}>
-        ${S.loading?'<span class="spin"></span> Submitting...':'Submit Leave Application'}
+        ${S.loading?'<span class="spin"></span> Submitting…':'Submit Leave Application'}
       </button>
     </div>
     <div class="card">
-      <div class="card-ttl">My Leave History ${pending?`<span class="tb-cnt">${pending}</span>`:''}  </div>
-      ${!leaves.length?'<div class="empty"><div class="empty-icon">🗓️</div><div>No leave applications yet</div></div>':
+      <div class="card-ttl">My Leave History ${pending?`<span class="tb-cnt">${pending}</span>`:''}</div>
+      ${!leaves.length?`<div class="empty"><div class="empty-icon">🗓️</div><div>No leave applications yet</div></div>`:
       leaves.slice(0,10).map(l=>`<div class="leave-card">
         <div class="lc-top">
-          <div><div class="lc-name">${esc(l.leaveType)}</div><div class="lc-dates">${fmtDate(l.fromDate)} → ${fmtDate(l.toDate)}</div></div>
+          <div><div class="lc-name">${esc(l.leaveType)}</div><div class="lc-dates">📅 ${fmtDate(l.fromDate)} → ${fmtDate(l.toDate)}</div></div>
           <div class="lc-stat ${l.status==='Approved'?'ok':l.status==='Rejected'?'err':'warn'}">${l.status}</div>
         </div>
         <div class="lc-reason">${esc(l.reason||'')}</div>
@@ -1406,7 +1417,8 @@ async function submitMgrLeave(){
   if(!isBackendSet()){const arr=lsG('fb_leaves_'+S.user.userId,[]);arr.unshift(leave);lsS('fb_leaves_'+S.user.userId,arr.slice(0,30));S.myLeaves=[leave,...S.myLeaves];}
   else{await loadManagerData();}
   S.loading=false;S.leaveType='';S.leaveFrom='';S.leaveTo='';S.leaveReason='';
-  alert('Leave application submitted!');render();
+  alert('Leave application submitted! ✅');
+  render();
 }
 
 function renderMgrAttTab(){
@@ -1440,24 +1452,29 @@ async function logAttendance(type){
 ════════════════════════════════════════════ */
 async function loadAdminData(){
   if(isBackendSet()){
-    const ro=await api({action:'getOrders',status:'Manager Approved'});
+    const [ro,rs,rl,rloc,rci,rc]=await Promise.all([
+      api({action:'getOrders',status:'Manager Approved'}),
+      api({action:'getStaff'}),
+      api({action:'getLeaves'}),
+      api({action:'getLocations'}),
+      api({action:'getCustomItems'}),
+      api({action:'getCateringEvents'})
+    ]);
     if(ro?.orders) S.approvedOrders=ro.orders;
-    const rs=await api({action:'getStaff'});
     if(rs?.staff) S.allStaff=rs.staff;
-    const rl=await api({action:'getLeaves'});
     if(rl?.leaves) S.allLeaves=rl.leaves;
-    const rloc=await api({action:'getLocations'});
     if(rloc?.locations) S.allLocations=rloc.locations;
-    const rci2=await api({action:'getCustomItems'});
-    if(rci2?.items){S.customItems=rci2.items;lsS('fb_custom_items',rci2.items);}
+    if(rci?.items){S.customItems=rci.items;lsS('fb_custom_items',rci.items);}
+    if(rc?.events&&rc.events.length) S.upcomingEvents=rc.events;
+    else S.upcomingEvents=getLocalCateringEvents();
   } else {
     S.approvedOrders=getDemoApproved();
     S.allStaff=lsG('fb_custom_staff',null)||getDemoStaff();
     S.allLeaves=getDemoLeaves();
     S.allLocations=lsG('fb_custom_locations',null)||DEMO_LOCATIONS.slice();
     S.customItems=lsG('fb_custom_items',[]);
+    S.upcomingEvents=getLocalCateringEvents();
   }
-  loadCateringEvents();
 }
 
 function renderAdminHome(){
@@ -1732,7 +1749,7 @@ async function addCustomItem(){
   const newItem={sup,cat,name,unit,custom:true};
   if(isBackendSet()){
     const r=await apiData('addCustomItem',newItem);
-    if(r?.success||r?.items){
+    if(r?.success){
       S.customItems=r.items||[...S.customItems,newItem];
       lsS('fb_custom_items',S.customItems);
     } else {alert('Failed to save item. Please try again.');}
@@ -1748,7 +1765,7 @@ async function removeCustomItem(idx){
   const item=S.customItems[idx];
   if(isBackendSet()&&item){
     const r=await apiData('deleteCustomItem',{name:item.name});
-    if(r?.success||r?.items){
+    if(r?.success){
       S.customItems=r.items||S.customItems.filter((_,i)=>i!==idx);
       lsS('fb_custom_items',S.customItems);
     } else {alert('Failed to remove item.');}
@@ -1758,6 +1775,7 @@ async function removeCustomItem(idx){
   }
   render();
 }
+
 /* ════════════════════════════════════════════
    ADMIN — ASSIGN LEAVE TO STAFF
 ════════════════════════════════════════════ */
@@ -2085,14 +2103,11 @@ function doLogout(){
 ════════════════════════════════════════════ */
 async function loadUserData(){
   if(!S.user)return;
-  const uid=S.user.userId;
   if(isBackendSet()){
-    const rl=await api({action:'getLeaves',userId:uid});
-    if(rl?.leaves)S.myLeaves=rl.leaves;
-    const ra=await api({action:'getAttendance',userId:uid,date:today()});
-    if(ra?.record)S.todayAtt=ra.record;
-    if(S.user.role==='manager'||S.user.role==='admin') await loadManagerData();
     if(S.user.role==='admin') await loadAdminData();
+    else if(S.user.role==='manager') await loadManagerData();
+    else await loadStaffData();
+    return;
   }else{
     S.myLeaves=lsG('fb_leaves_'+uid,[]);
     S.todayAtt=lsG('fb_att_'+today(),null);
@@ -2110,12 +2125,12 @@ async function loadUserData(){
   }
 }
 
-window.addEventListener('DOMContentLoaded',async()=>{
+window.addEventListener('DOMContentLoaded',()=>{
   const saved=lsG('fb_session',null);
   if(saved){
     S.user=saved;
-    await loadUserData();
-    go(homeScreen());
+    go(homeScreen());          // show home immediately with cached state
+    loadUserData().then(()=>render()); // refresh from backend in background
   }else{
     go('login');
   }
