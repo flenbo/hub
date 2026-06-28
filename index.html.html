@@ -1,0 +1,2106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>Flenbo Hub — Operations Platform</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --navy:#1A2642;--navy2:#243254;--navy3:#344266;
+  --gold:#C9A668;--gold2:#FBF4E6;--gold3:#E8D5A8;
+  --bg:#F0F2F8;--card:#fff;--border:#DDE3EE;
+  --txt:#1A2642;--muted:#6B7898;--light:#9AA5BF;
+  --ok:#166534;--ok-bg:#DCFCE7;--ok2:#16A34A;
+  --warn:#92400E;--warn-bg:#FEF3C7;--warn2:#D97706;
+  --red:#991B1B;--red-bg:#FEE2E2;--red2:#DC2626;
+  --purple:#5B21B6;--purple-bg:#EDE9FE;--purple2:#7C3AED;
+  --r:10px;
+}
+body{font-family:'Segoe UI',system-ui,Arial,sans-serif;background:var(--bg);color:var(--txt);min-height:100vh;font-size:15px;overflow-x:hidden}
+
+/* ── HEADER ── */
+.hdr{background:var(--navy);color:#fff;padding:10px 14px;position:sticky;top:0;z-index:300;box-shadow:0 2px 10px rgba(0,0,0,.25)}
+.hdr-inner{display:flex;align-items:center;gap:10px;max-width:600px;margin:0 auto}
+.hdr-back{background:none;border:none;color:#fff;font-size:22px;cursor:pointer;padding:2px 6px;line-height:1;flex-shrink:0;opacity:.8}
+.hdr-back:hover{opacity:1}
+.hdr-brand{flex:1}
+.hdr-brand-name{font-size:16px;font-weight:800;letter-spacing:.5px}
+.hdr-brand-name span{color:var(--gold,#C9A668)}
+.hdr-brand-sub{font-size:10px;opacity:.6;margin-top:1px;letter-spacing:.3px}
+.hdr-right{text-align:right;font-size:11px;opacity:.75;flex-shrink:0;line-height:1.5}
+.hdr-role{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
+.role-staff{background:rgba(201,166,104,.2);color:var(--gold)}
+.role-manager{background:rgba(91,33,182,.3);color:#c4b5fd}
+.role-admin{background:rgba(220,38,38,.25);color:#fca5a5}
+
+/* ── SCREENS ── */
+.scr{display:none;padding:14px;max-width:600px;margin:0 auto;padding-bottom:100px}
+.scr.on{display:block}
+.scr-wide{max-width:960px}
+
+/* ── LOGIN ── */
+.login-wrap{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;background:linear-gradient(135deg,var(--navy) 0%,var(--navy2) 60%,#1a1a3e 100%)}
+.login-logo{text-align:center;margin-bottom:28px}
+.login-logo-name{font-size:36px;font-weight:900;color:#fff;letter-spacing:2px}
+.login-logo-name span{color:var(--gold,#C9A668)}
+.login-logo-sub{font-size:12px;color:rgba(255,255,255,.5);letter-spacing:2px;text-transform:uppercase;margin-top:4px}
+.login-divider{width:40px;height:2px;background:var(--gold);margin:12px auto}
+.login-card{background:#fff;border-radius:14px;padding:28px 24px;width:100%;max-width:360px;box-shadow:0 20px 60px rgba(0,0,0,.4)}
+.login-card-ttl{font-size:15px;font-weight:700;color:var(--navy);margin-bottom:18px;text-align:center}
+.login-error{background:var(--red-bg);color:var(--red);border-radius:8px;padding:9px 12px;font-size:12px;font-weight:600;margin-bottom:12px;display:none;align-items:center;gap:6px}
+.login-error.show{display:flex}
+
+/* ── FORMS ── */
+.fl{display:block;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin:14px 0 5px}
+.fl:first-child{margin-top:0}
+.fi,.fs,.ft{width:100%;padding:11px 13px;border:2px solid var(--border);border-radius:8px;font-size:14px;color:var(--txt);background:#fff;font-family:inherit;transition:border .15s}
+.fi:focus,.fs:focus,.ft:focus{outline:none;border-color:var(--navy)}
+.ft{resize:vertical;min-height:80px}
+.fi-pw{position:relative}
+.fi-pw .fi{padding-right:40px}
+.pw-toggle{position:absolute;right:11px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;color:var(--muted)}
+
+/* ── BUTTONS ── */
+.btn{display:flex;align-items:center;justify-content:center;gap:7px;padding:13px 20px;border-radius:9px;font-size:14px;font-weight:700;cursor:pointer;border:none;width:100%;transition:all .15s;letter-spacing:.2px;font-family:inherit}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn-navy{background:var(--navy);color:#fff}.btn-navy:hover:not(:disabled){background:var(--navy2)}
+.btn-gold{background:var(--gold);color:var(--navy)}.btn-gold:hover:not(:disabled){background:var(--gold3)}
+.btn-out{background:transparent;border:2px solid var(--border);color:var(--txt)}.btn-out:hover:not(:disabled){border-color:var(--navy)}
+.btn-ok{background:var(--ok2);color:#fff}.btn-ok:hover:not(:disabled){background:var(--ok)}
+.btn-red{background:var(--red2);color:#fff}
+.btn-warn{background:var(--warn2);color:#fff}
+.btn-purple{background:var(--purple2);color:#fff}
+.btn-sm{padding:7px 14px;font-size:12px;width:auto;font-weight:700}
+.btn-xs{padding:4px 10px;font-size:11px;width:auto;font-weight:700}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap}
+.btn-row .btn{flex:1;min-width:110px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spin{width:15px;height:15px;border:3px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:inline-block}
+
+/* ── CARDS ── */
+.card{background:var(--card);border-radius:var(--r);padding:16px;margin-bottom:12px;border:1px solid var(--border);box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.card-ttl{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-bottom:10px}
+
+/* ── BADGES ── */
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.3px}
+.b-navy{background:#e8eaf6;color:var(--navy)}.b-gold{background:var(--gold2);color:#7a5a1a}
+.b-ok{background:var(--ok-bg);color:var(--ok)}.b-red{background:var(--red-bg);color:var(--red)}
+.b-warn{background:var(--warn-bg);color:var(--warn)}.b-purple{background:var(--purple-bg);color:var(--purple)}
+.b-rest{background:#e8eaf6;color:var(--navy)}.b-cat{background:var(--purple-bg);color:var(--purple)}
+.b-cld{background:#e3f2fd;color:#0d47a1}.b-urg{background:var(--warn-bg);color:var(--warn)}
+.b-muted{background:#f0f2f8;color:var(--muted)}
+
+/* ── HOME TILES ── */
+.home-top{text-align:center;padding:20px 0 16px}
+.home-greeting{font-size:22px;font-weight:800;color:var(--navy)}
+.home-sub{font-size:12px;color:var(--muted);margin-top:3px}
+.id-bar{background:var(--navy);color:#fff;border-radius:9px;padding:11px 14px;display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.id-info{font-size:13px;line-height:1.6}
+.id-info strong{display:block;font-size:15px}
+.id-role{font-size:10px;background:rgba(201,166,104,.2);color:var(--gold);padding:2px 8px;border-radius:8px;font-weight:700}
+.tile-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:14px}
+.tile{background:var(--card);border:2px solid var(--border);border-radius:12px;padding:20px 14px;cursor:pointer;text-align:center;transition:all .15s;display:flex;flex-direction:column;align-items:center;gap:8px}
+.tile:hover{border-color:var(--navy);transform:translateY(-2px);box-shadow:0 4px 14px rgba(26,38,66,.12)}
+.tile.gold{background:linear-gradient(135deg,#fff9f0,var(--gold2));border-color:var(--gold3)}
+.tile.gold:hover{border-color:var(--gold)}
+.tile.purple{background:linear-gradient(135deg,#faf5ff,var(--purple-bg));border-color:#c4b5fd}
+.tile.purple:hover{border-color:var(--purple2)}
+.tile-icon{font-size:36px;line-height:1}
+.tile-label{font-size:14px;font-weight:800;color:var(--txt)}
+.tile-sub{font-size:11px;color:var(--muted);line-height:1.3}
+
+/* ── TABS ── */
+.tabs{display:flex;background:var(--card);border-radius:9px;padding:3px;margin-bottom:12px;border:1px solid var(--border);gap:2px;overflow-x:auto}
+.tb{flex:1;min-width:70px;padding:8px 5px;border-radius:7px;border:none;background:transparent;cursor:pointer;font-size:10px;font-weight:700;text-align:center;color:var(--muted);white-space:nowrap;text-transform:uppercase;letter-spacing:.4px;transition:all .15s;font-family:inherit}
+.tb.on{background:var(--navy);color:#fff}
+.tb-cnt{display:inline-flex;align-items:center;justify-content:center;background:var(--gold);color:var(--navy);font-size:9px;width:15px;height:15px;border-radius:50%;margin-left:3px;font-weight:800;vertical-align:middle}
+
+/* ── ORDER TYPE ── */
+.type-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.type-tile{background:var(--card);border:2px solid var(--border);border-radius:12px;padding:20px 14px;cursor:pointer;text-align:center;transition:all .15s;display:flex;flex-direction:column;align-items:center;gap:7px}
+.type-tile:hover:not(.disabled){transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,.1)}
+.type-tile.sel{border-width:3px;border-color:var(--navy)}
+.type-tile.disabled{opacity:.4;cursor:not-allowed;background:#f8f8f8}
+.tt-icon{font-size:38px}.tt-name{font-size:14px;font-weight:800;color:var(--txt)}
+.tt-desc{font-size:11px;color:var(--muted);line-height:1.3}
+.tt-soon{font-size:10px;background:#e5e7eb;color:#6b7280;padding:2px 8px;border-radius:10px;font-weight:700}
+
+/* ── URGENCY ── */
+.urg-row{display:flex;gap:9px}
+.urg-btn{flex:1;padding:10px;border-radius:8px;border:2px solid var(--border);background:#fff;cursor:pointer;font-size:14px;font-weight:700;text-align:center;transition:all .15s;color:var(--muted);font-family:inherit}
+.urg-btn.ok{border-color:var(--ok2);background:var(--ok-bg);color:var(--ok)}
+.urg-btn.hot{border-color:var(--warn2);background:var(--warn-bg);color:var(--warn)}
+
+/* ── ITEM TABS ── */
+.srch{position:relative;margin-bottom:11px}
+.srch input{padding-left:36px}
+.si{position:absolute;left:11px;top:50%;transform:translateY(-50%);font-size:15px;color:var(--muted);pointer-events:none}
+
+/* ── CATEGORY ACCORDION ── */
+.cat-block{background:var(--card);border-radius:9px;margin-bottom:8px;overflow:hidden;border:1px solid var(--border)}
+.cat-hdr{padding:10px 13px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;background:#f5f7fc;transition:background .1s}
+.cat-hdr:hover{background:#eef0f8}
+.cat-name{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--navy2)}
+.cat-cnt{font-size:10px;background:#e8eaf6;color:var(--navy);padding:2px 7px;border-radius:8px;margin-left:6px;font-weight:700}
+.cat-arr{font-size:11px;color:var(--muted);transition:transform .2s}
+.cat-arr.o{transform:rotate(180deg)}
+.cat-body{display:none}.cat-body.o{display:block}
+
+/* ── ITEM ROW ── */
+.item-row{display:flex;align-items:center;padding:8px 13px;border-top:1px solid #f0f2f8;gap:8px;transition:background .1s}
+.item-row.ic{background:#f0f7ff}
+.item-info{flex:1;min-width:0}
+.item-name{font-size:13px;line-height:1.3;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.item-hist{font-size:10px;color:var(--light);margin-top:1px}
+.item-hist .hl{color:var(--navy2);font-weight:600}
+.item-controls{display:flex;align-items:center;gap:4px;flex-shrink:0}
+.qb{width:28px;height:28px;border-radius:50%;border:2px solid var(--border);background:#fff;color:var(--muted);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:700;transition:all .1s;flex-shrink:0}
+.qb:hover,.qb.on{border-color:var(--navy);background:var(--navy);color:#fff}
+.qn{width:38px;text-align:center;font-size:14px;font-weight:700;border:2px solid var(--border);border-radius:6px;padding:3px 1px;color:var(--txt);font-family:inherit}
+.qn:focus{outline:none;border-color:var(--navy)}
+.qu{width:62px;font-size:11px;border:2px solid var(--border);border-radius:6px;padding:3px 2px;color:var(--txt);background:#fff;cursor:pointer;font-family:inherit}
+.qu:focus{outline:none;border-color:var(--navy)}
+.no-res{padding:20px;text-align:center;font-size:13px;color:var(--muted)}
+
+/* ── FREQUENT GRID ── */
+.freq-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.freq-item{background:var(--card);border:1px solid var(--border);border-radius:9px;padding:10px 11px;cursor:pointer;transition:all .15s}
+.freq-item:hover{border-color:var(--navy);background:#f5f7fc}
+.freq-item.ic{border-color:var(--ok2);background:var(--ok-bg)}
+.fi-name{font-size:12px;font-weight:600;color:var(--txt);line-height:1.3;margin-bottom:4px}
+.fi-hist{font-size:10px;color:var(--muted)}
+.fi-hist .hl{color:var(--navy2);font-weight:600}
+.fi-controls{display:flex;align-items:center;gap:5px;margin-top:7px}
+
+/* ── FAB ── */
+.fab{position:fixed;bottom:18px;right:16px;background:var(--navy);color:#fff;border:none;border-radius:50px;padding:13px 18px;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,.3);display:flex;align-items:center;gap:7px;z-index:200;transition:all .2s;font-family:inherit}
+.fab:hover{transform:translateY(-2px)}
+.fab-cnt{background:var(--gold);color:var(--navy);border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800}
+.fab.hide{display:none}
+
+/* ── INFO BAR ── */
+.info-bar{background:var(--navy);color:#fff;border-radius:9px;padding:11px 14px;margin-bottom:12px;display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.ib{display:flex;flex-direction:column;gap:2px}
+.ib-l{font-size:10px;opacity:.6;text-transform:uppercase;letter-spacing:.5px}
+.ib-v{font-size:13px;font-weight:700}
+.event-bar{background:var(--purple2);color:#fff;border-radius:9px;padding:10px 14px;margin-bottom:12px;font-size:13px}
+.event-bar strong{font-size:15px;display:block;margin-bottom:2px}
+
+/* ── REVIEW ── */
+.rev-sup{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--muted);padding:9px 0 5px;border-bottom:1px solid var(--border);margin-bottom:5px}
+.rev-item{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #f0f2f8;font-size:13px}
+.rev-item:last-child{border-bottom:none}
+.rev-qty{font-weight:700;color:var(--navy);margin-left:10px;flex-shrink:0}
+.rev-empty{text-align:center;padding:28px;color:var(--muted);font-size:13px}
+
+/* ── CONFIRM ── */
+.conf-icon{font-size:60px;text-align:center;margin:20px 0 10px}
+.conf-ttl{font-size:20px;font-weight:800;text-align:center;color:var(--ok);margin-bottom:5px}
+.conf-sub{text-align:center;color:var(--muted);font-size:13px;margin-bottom:16px;line-height:1.6}
+.oid-box{background:var(--gold2);border:2px dashed var(--gold);border-radius:9px;padding:14px;text-align:center;margin-bottom:16px}
+.oid-l{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:3px}
+.oid-v{font-size:17px;font-weight:800;color:var(--navy);letter-spacing:2px;font-family:monospace}
+
+/* ── STEP BAR ── */
+.step-bar{display:flex;gap:5px;justify-content:center;margin-top:7px}
+.sb{height:4px;border-radius:2px;background:rgba(255,255,255,.2);flex:1;transition:background .2s}
+.sb.done{background:rgba(255,255,255,.5)}.sb.now{background:var(--gold)}
+
+/* ── STAT CARDS ── */
+.stat-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin-bottom:14px}
+.stat{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:14px 12px;text-align:center}
+.stat-n{font-size:28px;font-weight:800;color:var(--navy)}
+.stat-l{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-top:2px}
+.stat.gold .stat-n{color:#7a5a1a}.stat.ok .stat-n{color:var(--ok)}.stat.warn .stat-n{color:var(--warn2)}.stat.red .stat-n{color:var(--red2)}
+
+/* ── MANAGER APPROVAL ── */
+.req-card{background:var(--card);border:1px solid var(--border);border-radius:9px;margin-bottom:9px;overflow:hidden}
+.req-hdr{padding:11px 14px;display:flex;align-items:flex-start;justify-content:space-between;cursor:pointer;background:#f5f7fc;transition:background .1s}
+.req-hdr:hover{background:#eef0f8}
+.req-id{font-family:monospace;font-size:11px;font-weight:700;color:var(--navy)}
+.req-meta{font-size:11px;color:var(--muted);margin-top:2px;line-height:1.5}
+.req-body{display:none;padding:12px 14px;border-top:1px solid var(--border)}
+.req-body.o{display:block}
+.rev-row{display:flex;align-items:center;padding:7px 0;border-bottom:1px solid #f0f2f8;gap:8px}
+.rev-row:last-child{border-bottom:none}
+.rev-row.rejected{opacity:.45;text-decoration:line-through}
+.rv-name{flex:1;font-size:13px}
+.rv-qty-inp{width:64px;padding:5px 6px;border:2px solid var(--border);border-radius:6px;font-size:13px;font-weight:700;text-align:center;font-family:inherit}
+.rv-qty-inp:focus{outline:none;border-color:var(--navy)}
+.rv-unit{font-size:11px;color:var(--muted);width:50px}
+.rv-reject{width:24px;height:24px;border-radius:50%;border:2px solid var(--border);background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;transition:all .1s}
+.rv-reject.on{border-color:var(--red2);background:var(--red-bg);color:var(--red2)}
+
+/* ── LEAVE ── */
+.leave-type-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:14px}
+.lt-btn{padding:12px;border:2px solid var(--border);border-radius:9px;background:#fff;cursor:pointer;text-align:center;font-size:13px;font-weight:700;color:var(--muted);transition:all .15s;font-family:inherit}
+.lt-btn.sel{border-color:var(--navy);background:#f0f2fa;color:var(--navy)}
+.leave-card{background:var(--card);border:1px solid var(--border);border-radius:9px;padding:12px 14px;margin-bottom:9px}
+.lc-top{display:flex;align-items:flex-start;justify-content:space-between}
+.lc-name{font-size:13px;font-weight:700}
+.lc-dates{font-size:11px;color:var(--muted);margin-top:3px}
+
+/* ── ATTENDANCE ── */
+.att-status{background:var(--card);border:2px solid var(--border);border-radius:12px;padding:20px;text-align:center;margin-bottom:14px}
+.att-status.in{border-color:var(--ok2);background:var(--ok-bg)}
+.att-status.out{border-color:var(--warn2);background:var(--warn-bg)}
+.att-icon{font-size:48px;margin-bottom:8px}
+.att-label{font-size:16px;font-weight:800;color:var(--txt)}
+.att-time{font-size:22px;font-weight:800;color:var(--navy);margin:4px 0}
+.att-row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #f0f2f8;font-size:13px}
+.att-row:last-child{border-bottom:none}
+
+/* ── UPCOMING EVENTS ── */
+.ev-section{margin-bottom:14px}
+.ev-section-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.ev-section-ttl{font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--navy)}
+.ev-count{font-size:11px;background:var(--purple-bg);color:var(--purple2);padding:2px 9px;border-radius:10px;font-weight:700}
+.ev-card{background:var(--card);border:1px solid var(--border);border-radius:10px;margin-bottom:9px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.ev-card-hdr{background:linear-gradient(135deg,var(--purple2) 0%,#4c1d95 100%);color:#fff;padding:11px 14px}
+.ev-card-name{font-size:14px;font-weight:800;margin-bottom:4px}
+.ev-card-meta{font-size:11px;opacity:.85;display:flex;flex-wrap:wrap;gap:5px}
+.ev-pill{background:rgba(255,255,255,.15);border-radius:10px;padding:2px 8px;font-size:10px;font-weight:600;white-space:nowrap}
+.ev-card-body{padding:11px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.ev-loc{font-size:13px;color:var(--txt);font-weight:500}
+.ev-days{font-size:11px;color:var(--muted);margin-top:2px}
+.ev-detail-row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #f0f2f8;font-size:13px}
+.ev-detail-row:last-child{border-bottom:none}
+.ev-detail-label{color:var(--muted);font-size:12px}
+.ev-detail-val{font-weight:600;text-align:right;max-width:60%}
+.ev-items-list{margin-top:4px}
+.ev-item-row{display:flex;justify-content:space-between;padding:4px 0;font-size:12px;border-bottom:1px solid #f8f8f8}
+
+/* ── ADMIN: TABLES ── */
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{background:#f0f2f8;padding:8px 11px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);border-bottom:2px solid var(--border)}
+td{padding:8px 11px;border-bottom:1px solid #f5f7fc;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#fafbfe}
+
+/* ── MODAL ── */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:500;display:none;align-items:center;justify-content:center;padding:16px}
+.modal-bg.open{display:flex}
+.modal{background:#fff;border-radius:14px;width:100%;max-width:400px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.35)}
+.modal-hdr{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.modal-ttl{font-size:15px;font-weight:700}
+.modal-close{background:none;border:none;font-size:20px;cursor:pointer;color:var(--muted);padding:2px 6px}
+.modal-body{padding:16px}
+.modal-footer{padding:12px 16px;border-top:1px solid var(--border);display:flex;gap:8px}
+
+/* ── PROCUREMENT ── */
+.po-sup-block{margin-bottom:14px}
+.po-sup-hdr{background:var(--navy);color:#fff;padding:9px 14px;border-radius:9px 9px 0 0;font-size:12px;font-weight:700;display:flex;justify-content:space-between;align-items:center}
+.po-item{display:flex;align-items:center;padding:8px 14px;border-bottom:1px solid #f0f2f8;gap:8px;font-size:13px}
+.po-item:last-child{border-bottom:none;border-radius:0 0 9px 9px}
+.po-name{flex:1}
+.po-loc{font-size:10px;color:var(--muted)}
+.po-qty{font-weight:700;color:var(--navy);min-width:80px;text-align:right}
+.po-chk{width:18px;height:18px;cursor:pointer;accent-color:var(--navy)}
+
+/* ── MISC ── */
+.empty{text-align:center;padding:36px 20px;color:var(--muted)}
+.empty-icon{font-size:42px;margin-bottom:10px}
+.sep{height:1px;background:var(--border);margin:12px 0}
+.alert{border-radius:8px;padding:9px 12px;font-size:12px;font-weight:600;margin-bottom:11px;display:flex;align-items:center;gap:7px}
+.alert-warn{background:var(--warn-bg);color:var(--warn)}
+.alert-ok{background:var(--ok-bg);color:var(--ok)}
+.alert-red{background:var(--red-bg);color:var(--red)}
+.alert-navy{background:#e8eaf6;color:var(--navy)}
+
+@media(max-width:480px){
+  .tile-grid,.type-grid,.leave-type-grid{grid-template-columns:1fr 1fr}
+  .freq-grid{grid-template-columns:1fr 1fr}
+  .stat-row{grid-template-columns:repeat(3,1fr)}
+}
+
+.hdr-photo{width:36px;height:36px;border-radius:50%;object-fit:cover;border:2px solid var(--gold,#C9A668);cursor:pointer;flex-shrink:0}
+.hdr-photo-init{width:36px;height:36px;border-radius:50%;background:var(--gold,#C9A668);color:var(--navy,#1A2642);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;cursor:pointer;flex-shrink:0;border:2px solid var(--gold,#C9A668)}
+.hdr-user-col{display:flex;flex-direction:column;align-items:flex-end;gap:2px}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+/* ════════════════════════════════════════════
+   CONFIG
+════════════════════════════════════════════ */
+const CFG = {
+  BACKEND_URL: 'https://script.google.com/macros/s/AKfycbzboKx0FesXXp3k4MOCfYwyjAnYgCbDFd_-8mI-D_tngA_1v1JIe0uQeB_qipBpj4zNTg/exec',
+  APP: 'Flenbo Hub',
+  CO: 'Flenbo FoodWorks Pvt. Ltd.',
+};
+
+// ── STAFF from Flenbo Policy.xlsx / Staff sheet ──────────
+// Annual leave balances as of 31 May 2026 (1.25 × months service, capped at 15)
+const DEMO_USERS = [
+  {userId:'U001',name:'Ravindra Singh Pundeer',username:'ravindrapundeer',password:'982587',role:'staff',location:'Flenbo Nawada',   profile:'Sous Chef',                annualLeave:15,    casualLeave:0,casualUsedThisMonth:0},
+  {userId:'U002',name:'Amrendra Kumar',        username:'amrendrakumar',   password:'587436',role:'staff',location:'Flenbo Nawada',   profile:'Utility',                  annualLeave:7.5,   casualLeave:0,casualUsedThisMonth:0},
+  {userId:'U003',name:'Yogesh Rawat',          username:'yogeshrawat',     password:'482695',role:'staff',location:'Emaar DigiHomes', profile:'Commi 1 - Tandoor',        annualLeave:11.25, casualLeave:0,casualUsedThisMonth:0},
+  {userId:'U004',name:'Harish Singh Bisht',    username:'harishbisht',     password:'251423',role:'staff',location:'Emaar DigiHomes', profile:'SR CDP - Indian',          annualLeave:0,     casualLeave:0,casualUsedThisMonth:0},
+  {userId:'U005',name:'Umed Singh',            username:'umedsingh',       password:'893475',role:'staff',location:'Emaar DigiHomes', profile:'Captain',                  annualLeave:15,    casualLeave:0,casualUsedThisMonth:0},
+  {userId:'U006',name:'Ramesh',                username:'ramesh',          password:'684256',role:'staff',location:'Emaar DigiHomes', profile:'Steward',                  annualLeave:1.25,  casualLeave:0,casualUsedThisMonth:0},
+  {userId:'U007',name:'Roshan',                username:'roshan',          password:'374562',role:'staff',location:'Emaar DigiHomes', profile:'Utility',                  annualLeave:5,     casualLeave:0,casualUsedThisMonth:0},
+  {userId:'U008',name:'Nandan Ram',            username:'nandanram',       password:'758962',role:'staff',location:'Emaar DigiHomes', profile:'Commi 1 - Indian',         annualLeave:0,     casualLeave:0,casualUsedThisMonth:0},
+  {userId:'U009',name:'Bharat Chopra',         username:'bharatchopra',    password:'485397',role:'manager',location:'Corporate',     profile:'Operations Manager',       annualLeave:0,     casualLeave:0,casualUsedThisMonth:0},
+  {userId:'U010',name:'Nivedita Sahay',        username:'niveditasahay',   password:'452478',role:'admin',location:'Corporate',       profile:'Director Operations',      annualLeave:10,    casualLeave:0,casualUsedThisMonth:0},
+  {userId:'U011',name:'Ashish Sahay',          username:'ashishsahay',     password:'597425',role:'admin',location:'Corporate',       profile:'Director Communications',  annualLeave:10,    casualLeave:0,casualUsedThisMonth:0},
+];
+
+const DEMO_LOCATIONS = ['Flenbo Nawada','Emaar DigiHomes'];
+
+// ── POLICY DATA from Flenbo Policy.xlsx ──────────────────
+const EVENT_TYPES     = ['BIRTHDAY','ANNIVERSARY','BABY SHOWER','KITTY PARTY','SOCIAL GATHERINGS','HOUSE WARMING','WEDDING','ENGAGEMENT','CORPORATE / OFFICIAL','RELIGIOUS / POOJA','FAREWELL','RETIREMENT','HIGH TEA','BARSI / TERVI / SHRAAD','OTHERS'];
+const EVENT_TIMES     = ['BREAKFAST','BRUNCH','LUNCH','HIGH TEA','DINNER'];
+const CK_LOCATIONS    = ['EMAAR DIGIHOMES','FLENBO NAWADA','SAAN VERDANTE','GODREJ ICON','OTHERS'];
+const EVENT_LOCATIONS = ['EMAAR DIGIHOMES','SAAN VERDANTE','GODREJ ICON','NEW LOCATION'];
+
+// ── LEAVE POLICY ─────────────────────────────────────────
+// Annual Leave: 15/yr, 1.25/month on last day; no salary deduction; max 15 (excess goes to Casual)
+// Casual Leave: salary deducted; max 2/month; balance expires 31 Mar each year
+const MAX_ANNUAL = 15;
+const MONTHLY_CREDIT = 1.25;
+const MAX_CASUAL_PER_MONTH = 2;
+
+/* ════════════════════════════════════════════
+   ITEMS DATA
+════════════════════════════════════════════ */
+const UNITS = ['KG','Grams','Litres','ML','Pcs','Packets','Bottles','Dozen','Bunch','Rolls','Trays','Boxes'];
+const ITEMS = {
+  HYPERPURE:{
+    '🥦 Vegetables & Produce':[['Aaloo (Potato)','KG'],['Pyaaz (Onion)','KG'],['Tamatar (Tomato)','KG'],['Adrak (Ginger)','KG'],['Lehsun (Garlic)','KG'],['Phool Gobhi (Cauliflower)','KG'],['Methi Leaves','KG'],['Palak (Spinach)','KG'],['Lauki (Bottle Gourd)','KG'],['Hari Mirch (Green Chilly)','KG'],['Capsicum Green','KG'],['Red Capsicum','KG'],['Yellow Capsicum','KG'],['Gajar (Carrot)','KG'],['Patta Gobhi (Cabbage)','KG'],['Beans (French Beans)','KG'],['Nimbu (Lemon)','KG'],['Hara Dhaniya (Coriander)','Bunch'],['Basil Fresh','Bunch'],['Pudina (Mint)','Bunch'],['Mushroom','KG'],['Frozen Corn','KG'],['Frozen Peas','KG']],
+    '🍗 Meat & Seafood':[['Eggs','Dozen'],['Chicken Thigh','KG'],['Chicken Tandoori Cut','KG'],['Chicken Wings','KG'],['Chicken Seekh Kabab Frozen','KG'],['Basa Fish','KG'],['Prawns','KG']],
+    '🌾 Grains & Flours':[['Dawat Biryani Rice','KG'],['Staff Rice','KG'],['Aashirvaad Aata','KG'],['Aashirvaad Maida','KG'],['Rajdhani Besan','KG'],['Cornflour','KG'],['Bread Crumbs Panko','KG'],['Pasta','KG'],['Noodles','KG']],
+    '🫘 Pulses & Legumes':[['Arhar Dal','KG'],['Chana Dal','KG'],['Dhuli Moong Dal','KG'],['Kali Urad','KG'],['Rajma','KG'],['Mix Dal','KG']],
+    '🌶 Spices & Masalas':[['Tata Salt','KG'],['Kala Namak','Grams'],['Saboot Jeera','Grams'],['Kali Mirch Saboot','Grams'],['White Pepper Powder','Grams'],['Dhaniya Powder','Grams'],['Lal Mirch Powder','Grams'],['Deggi Mirch','Grams'],['Haldi Powder','Grams'],['Garam Masala','Grams'],['Kitchen King Masala','Grams'],['Chicken Masala','Grams'],['Chaat Masala','Grams'],['Chole Masala','Grams'],['Rajma Masala','Grams'],['Ajina Moto (MSG)','Grams'],['Hing (Asafoetida)','Grams'],['Lal Mirch Saboot','Grams'],['Kasoori Methi','Grams'],['Jaifal (Nutmeg)','Grams'],['Choti Elaichi','Grams'],['Badi Elaichi','Grams'],['Ajwain','Grams'],['Laung (Cloves)','Grams'],['Tej Patta (Bay Leaves)','Grams'],['Dalchini (Cinnamon)','Grams']],
+    '🫙 Oils & Fats':[['Fortune Sunflower Oil','Litres'],['Mustard Oil','Litres'],['Ghee','KG'],['Amul Butter','KG'],['Amul Cream','KG']],
+    '🍶 Sauces & Condiments':[['Tomato Sauce (Veeba)','Bottles'],['Green Chilly Sauce','Bottles'],['Schezwan Sauce (Veeba)','Bottles'],['Light Soya Sauce','Bottles'],['Dark Soya Sauce','Bottles'],['Vinegar (Tops)','Bottles'],['Oyster Sauce','Bottles'],['Tomato Puree','KG'],['Imlli (Tamarind)','KG'],['Gud / Jaggery','KG'],['Honey','KG'],['Olives','KG'],['Amul Cheese','KG']],
+    '🥜 Nuts & Dry Fruits':[['Cashew (Kaju)','KG'],['Magaj (Melon Seeds)','KG']],
+    '☕ Beverages & Sugar':[['Tea','KG'],['Coffee','KG'],['Sugar','KG'],['Sugar Sachets','Packets'],['Frappe Powder','KG']],
+    '❄️ Frozen & Ready':[['French Fries Frozen','KG'],['Spring Roll Sheet','Packets'],['Spring Rolls Frozen','KG'],['Cheese Balls Frozen','KG'],['Pizza Base','Pcs'],['Gulab Jamun 40gm Frozen','KG'],['Brownie Frozen','Pcs']],
+    '🍪 Bakery & Confectionery':[['Oreo Biscuits','Packets'],['Nutella','KG'],['Cocoa Powder','KG'],['Cookies','Packets']],
+    '🗑️ Miscellaneous':[['Garbage Bags','Packets']],
+  },
+  DAIRY:{'🥛 Dairy Products':[['Dahi / Curd','KG'],['Malai Paneer','KG']]},
+  ZEPTO:{'🧹 Cleaning & Household':[['Milk','Litres'],['Wiper / Mop','Pcs'],['Pocha (Floor Cloth)','Pcs'],['Scotch Brite','Pcs'],['Sponge','Pcs'],['Phenyl','Litres'],['Dish Wash Liquid','Bottles'],['Dettol','Bottles'],['Detergent','KG'],['Vim Bar','Pcs'],['Jhadu (Broom)','Pcs']]},
+  BIKANERVALA:{'🍮 Sweets & Desserts':[['Rasmalai','KG'],['Gajar Halwa','KG'],['Moong Dal Halwa','KG'],['Jalebi','KG'],['Rasgulla','KG'],['Sponge Rasgulla','KG'],['Other Desserts & Sweets','KG']]},
+};
+const SUP_ORDER = ['HYPERPURE','DAIRY','ZEPTO','BIKANERVALA'];
+const SUP_META = {HYPERPURE:{e:'🥬',l:'Hyperpure'},DAIRY:{e:'🥛',l:'Dairy'},ZEPTO:{e:'🧹',l:'Zepto'},BIKANERVALA:{e:'🍮',l:'Bikanervala'}};
+
+const ALL_FLAT = [];
+for(const[sup,cats] of Object.entries(ITEMS))
+  for(const[cat,items] of Object.entries(cats))
+    items.forEach(([name,unit])=>ALL_FLAT.push({sup,cat,name,unit}));
+function getAllItems(){
+  const custom=lsG('fb_custom_items',[]);
+  return [...ALL_FLAT,...custom];
+}
+
+const ORDER_TYPES = [
+  {id:'Restaurant',label:'Restaurant',e:'🍽️',desc:'Daily ops'},
+  {id:'Catering',label:'Catering Event',e:'🎉',desc:'Enter PAX below'},
+  {id:'Cloud Kitchen',label:'Cloud Kitchen',e:'🏭',desc:'Delivery orders'},
+  {id:'Canteen',label:'Canteen',e:'🏢',desc:'Coming soon',disabled:true},
+];
+const LEAVE_TYPES = ['Annual Leave','Casual Leave','Sick Leave'];
+
+/* ════════════════════════════════════════════
+   LOCAL STORAGE
+════════════════════════════════════════════ */
+const lsG=(k,d)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):d;}catch{return d;}};
+const lsS=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));}catch{}};
+
+function getItemHist(){return lsG('fb_item_hist',{});}
+function saveItemHist(items){
+  const h=getItemHist(),today=new Date().toISOString().split('T')[0];
+  items.forEach(it=>{
+    if(!h[it.name])h[it.name]={lastDate:'',lastQty:0,lastUnit:'',orders:0,totalQty:0};
+    Object.assign(h[it.name],{lastDate:today,lastQty:it.qty,lastUnit:it.unit,orders:(h[it.name].orders||0)+1,totalQty:(h[it.name].totalQty||0)+parseFloat(it.qty||0)});
+  });
+  lsS('fb_item_hist',h);
+}
+function getFreqItems(n=20){
+  const h=getItemHist();
+  return Object.entries(h).filter(([,v])=>v.orders>0).sort((a,b)=>b[1].orders-a[1].orders).slice(0,n)
+    .map(([name,v])=>{const fi=getAllItems().find(i=>i.name===name)||{sup:'HYPERPURE',unit:'KG',cat:''};return{name,sup:fi.sup,unit:fi.unit,cat:fi.cat,...v};});
+}
+
+/* ════════════════════════════════════════════
+   STATE
+════════════════════════════════════════════ */
+let S = {
+  screen:'login',
+  user:null,           // {userId,name,username,role,location}
+  // ration
+  orderType:'',
+  // catering fields
+  eventType:'',eventName:'',eventDate:'',pax:'',eventClient:'',eventPhone:'',eventTime:'',eventLocation:'',eventLocationNew:'',
+  // cloud kitchen
+  ckLocation:'',
+  deliveryDate:dayAfterTomorrow(),urgency:'Normal',remarks:'',
+  cart:{},tab:'FREQUENT',search:'',catOpen:{},orderId:'',
+  // leave
+  leaveType:'',leaveFrom:'',leaveTo:'',leaveReason:'',admLeaveStaff:'',admLeaveType:'',admLeaveFrom:'',admLeaveTo:'',admLeaveReason:'',admLeaveStatus:'Approved',
+  myLeaves:[],
+  // attendance
+  todayAtt:null,       // {checkedIn:true/false, inTime,outTime}
+  attHistory:[],
+  // manager
+  mTab:'ration',
+  pendingOrders:[],pendingLeaves:[],todayAttAll:[],
+  reviewOrder:null,    // order being reviewed/edited
+  reviewEdits:{},      // orderId->itemKey->qty
+  reviewRejects:{},    // orderId->itemKey->bool
+  reviewNote:'',
+  // admin
+  aTab:'procurement',
+  allStaff:[],allLocations:DEMO_LOCATIONS.slice(),
+  approvedOrders:[],allLeaves:[],
+  showStaffModal:false,showLocModal:false,
+  editStaff:null,
+  // events
+  upcomingEvents:[],
+  eventDetail:null,
+  // ui
+  loading:false,error:'',loginError:'',
+  loginUser:'',loginPw:'',showPw:false,
+};
+
+function nextDay(){const d=new Date();d.setDate(d.getDate()+1);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function dayAfterTomorrow(){const d=new Date();d.setDate(d.getDate()+2);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function today(){return new Date().toISOString().split('T')[0];}
+function fmtDate(s){if(!s)return'—';try{const d=new Date(s+'T00:00:00');return d.toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'});}catch{return s;}}
+function fmtTime(s){if(!s)return'—';try{return new Date(s).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});}catch{return s;}}
+function genId(loc){const l=(loc||'').includes('Nawada')?'NAW':(loc||'').includes('Emaar')?'EMR':'HUB';const d=new Date().toISOString().slice(0,10).replace(/-/g,'');return`FB-${l}-${d}-${Math.floor(Math.random()*900)+100}`;}
+function cartCount(){return Object.values(S.cart).filter(v=>v.qty>0).length;}
+function cartItems(){const a=[];for(const[k,v]of Object.entries(S.cart)){if(v.qty>0){const[sup,cat,name]=k.split('|');a.push({sup,cat,name,qty:v.qty,unit:v.unit});}}return a;}
+function esc(s){if(s==null)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function isBackendSet(){return CFG.BACKEND_URL&&CFG.BACKEND_URL!=='https://script.google.com/macros/s/AKfycbzboKx0FesXXp3k4MOCfYwyjAnYgCbDFd_-8mI-D_tngA_1v1JIe0uQeB_qipBpj4zNTg/exec';}
+/* ════════════════════════════════════════════
+   API
+════════════════════════════════════════════ */
+async function api(params){
+  if(!isBackendSet()) return null;
+  try{
+    const url=CFG.BACKEND_URL+'?'+new URLSearchParams(params);
+    const r=await fetch(url);
+    return await r.json();
+  }catch(e){console.warn('API error',e);return null;}
+}
+async function apiData(action,data){
+  if(!isBackendSet()) return null;
+  try{
+    const url=CFG.BACKEND_URL+'?action='+encodeURIComponent(action)+'&data='+encodeURIComponent(JSON.stringify(data));
+    const r=await fetch(url);
+    return await r.json();
+  }catch(e){console.warn('API error',e);return null;}
+}
+
+/* ════════════════════════════════════════════
+   RENDER ENGINE
+════════════════════════════════════════════ */
+function render(){
+  const root=document.getElementById('root');
+  const {screen,user}=S;
+  if(screen==='login'){root.innerHTML=renderLogin();return;}
+  // All authenticated screens get header
+  const role=user?.role||'staff';
+  const hdrHtml=renderHeader();
+  let body='';
+  switch(screen){
+    // STAFF
+    case 's-home':       body=renderSHome();break;
+    case 's-ration-type':body=renderRationType();break;
+    case 's-ration-ck':  body=renderRationCK();break;
+    case 's-ration-event':body=renderRationEvent();break;
+    case 's-ration-setup':body=renderRationSetup();break;
+    case 's-ration-items':body=renderRationItems();break;
+    case 's-ration-review':body=renderRationReview();break;
+    case 's-ration-confirm':body=renderRationConfirm();break;
+    case 's-leave':      body=renderLeaveForm();break;
+    case 's-leave-done': body=renderLeaveDone();break;
+    case 's-leave-hist': body=renderLeaveHistory();break;
+    case 's-attend':     body=renderAttendance();break;
+    // MANAGER
+    case 'm-home':       body=renderMgrHome();break;
+    case 'm-review':     body=renderMgrReview();break;
+    // ADMIN
+    case 'a-home':       body=renderAdminHome();break;
+    default:             body='<div class="scr on"><p>Screen not found</p></div>';
+  }
+  root.innerHTML=hdrHtml+body+renderModals();
+}
+
+function renderHeader(){
+  const {user,screen}=S;
+  if(!user) return '';
+  const canBack = screen!=='s-home'&&screen!=='m-home'&&screen!=='a-home';
+  const steps=getSteps();
+  const photo=lsG('fb_photo_'+user.userId,null);
+  const initials=user.name.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+  const photoHtml=photo
+    ?`<img class="hdr-photo" src="${photo}" onclick="document.getElementById('photoUpload').click()" title="Change photo">`
+    :`<div class="hdr-photo-init" onclick="document.getElementById('photoUpload').click()" title="Upload photo">${initials}</div>`;
+  return`<div class="hdr">
+    <div class="hdr-inner">
+      ${canBack?`<button class="hdr-back" onclick="goBack()">←</button>`:''}
+      <div class="hdr-brand" onclick="go(homeScreen())" style="cursor:pointer">
+        <div class="hdr-brand-name">FLENBO<span>HUB</span></div>
+        <div class="hdr-brand-sub">OPERATIONS PLATFORM</div>
+      </div>
+      <div class="hdr-right" style="display:flex;align-items:center;gap:8px">
+        <div style="font-size:12px;font-weight:700;text-align:right">${esc(user.name)}</div>
+        ${photoHtml}
+      </div>
+    </div>
+    ${steps?`<div class="hdr-inner"><div class="step-bar" style="width:100%">${steps}</div></div>`:''}
+    <input type="file" id="photoUpload" accept="image/*" style="display:none" onchange="uploadPhoto(this)">
+  </div>`;
+}
+
+function uploadPhoto(input){
+  const file=input.files[0];
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=function(e){
+    lsS('fb_photo_'+S.user.userId, e.target.result);
+    render();
+  };
+  reader.readAsDataURL(file);
+}
+
+function getSteps(){
+  const m={'s-ration-type':['Type','','','',''],'s-ration-event':['✓','Event','','',''],'s-ration-setup':['✓','✓','Details','',''],'s-ration-items':['✓','✓','✓','Items',''],'s-ration-review':['✓','✓','✓','✓','Review']};
+  if(!m[S.screen])return'';
+  return m[S.screen].map((l,i)=>`<div class="sb ${l==='✓'?'done':l?'now':''}" title="${l||''}"></div>`).join('');
+}
+
+function goBack(){
+  const backs={'s-ration-event':'s-ration-type','s-ration-setup':S.orderType==='Catering'?'s-ration-event':'s-ration-type','s-ration-items':'s-ration-setup','s-ration-review':'s-ration-items','s-ration-confirm':'s-home','s-leave':'s-home','s-leave-done':'s-home','s-leave-hist':'s-home','s-attend':'s-home','m-review':'m-home'};
+  const next=backs[S.screen]||homeScreen();
+  go(next);
+}
+function homeScreen(){return S.user?.role==='manager'?'m-home':S.user?.role==='admin'?'a-home':'s-home';}
+function go(s){S.screen=s;render();}
+
+/* ════════════════════════════════════════════
+   LOGIN
+════════════════════════════════════════════ */
+function renderLogin(){
+  return`<div class="login-wrap">
+    <div class="login-logo">
+      <div class="login-logo-name">FLENBO<span>HUB</span></div>
+      <div class="login-divider"></div>
+      <div class="login-logo-sub">OPERATIONS PLATFORM</div>
+    </div>
+    <div class="login-card">
+      <div class="login-card-ttl">Sign In to Your Account</div>
+      ${S.loginError?`<div class="login-error show">⚠️ ${esc(S.loginError)}</div>`:''}
+      <label class="fl">Username</label>
+      <input class="fi" type="text" id="lu" value="${esc(S.loginUser)}" placeholder="Enter username" autocomplete="username" onkeydown="if(event.key==='Enter')document.getElementById('lp').focus()" oninput="S.loginUser=this.value">
+      <label class="fl">Password</label>
+      <div class="fi-pw">
+        <input class="fi" type="${S.showPw?'text':'password'}" id="lp" value="${esc(S.loginPw)}" placeholder="Enter password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()" oninput="S.loginPw=this.value">
+        <button class="pw-toggle" type="button" onclick="S.showPw=!S.showPw;render()">${S.showPw?'🙈':'👁️'}</button>
+      </div>
+      <div style="margin-top:18px">
+        <button class="btn btn-navy" onclick="doLogin()" ${S.loading?'disabled':''}>
+          ${S.loading?'<span class="spin"></span> Signing in…':'🔐 Sign In'}
+        </button>
+      </div>
+    </div>
+  </div>`;
+}
+
+async function doLogin(){
+  // Read values from state (oninput keeps S.loginUser/S.loginPw in sync)
+  const u=(S.loginUser||'').trim().toLowerCase();
+  const p=(S.loginPw||'').trim();
+  if(!u||!p){S.loginError='Enter username and password.';render();return;}
+  S.loading=true;S.loginError='';render();
+  let user=null;
+  if(isBackendSet()){
+    const res=await api({action:'login',username:u,password:p});
+    if(res?.success) user=res.user;
+  } else {
+    user=DEMO_USERS.find(x=>x.username===u&&String(x.password)===String(p))||null;
+  }
+  S.loading=false;
+  if(!user){S.loginError='Invalid username or password.';render();return;}
+  S.user=user;lsS('fb_session',user);
+  S.screen=homeScreen();
+  if(user.role==='manager') loadManagerData();
+  else if(user.role==='admin') loadAdminData();
+  else loadStaffData();
+  render();
+}
+
+/* ════════════════════════════════════════════
+   STAFF HOME
+════════════════════════════════════════════ */
+function renderSHome(){
+  const {user,myLeaves,todayAtt}=S;
+  const pendingLeave=myLeaves.filter(l=>l.status==='Pending').length;
+  const hr=new Date().getHours();
+  const al=(user.annualLeave||0).toFixed(2)*1;
+  const cl=(user.casualLeave||0).toFixed(2)*1;
+  return`<div class="scr on">
+    <div class="home-top">
+      <div class="home-greeting">👋 Good ${hr<12?'morning':hr<17?'afternoon':'evening'}, ${esc(user.name.split(' ')[0])}!</div>
+      <div class="home-sub">${new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'})}</div>
+    </div>
+    <div class="id-bar">
+      <div class="id-info"><strong>${esc(user.name)}</strong>${esc(user.profile||user.location)}</div>
+      <div style="text-align:right">
+        <div style="font-size:11px;opacity:.8;cursor:pointer;text-decoration:underline" onclick="doLogout()">Sign out</div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:13px">
+      <div style="background:var(--gold2);border:1px solid var(--gold3);border-radius:9px;padding:11px 13px;text-align:center">
+        <div style="font-size:22px;font-weight:800;color:#7a5a1a">${al}</div>
+        <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">Annual Leave Balance</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:2px">No salary deduction</div>
+      </div>
+      <div style="background:#fff5f5;border:1px solid #fecaca;border-radius:9px;padding:11px 13px;text-align:center">
+        <div style="font-size:22px;font-weight:800;color:var(--red2)">${cl}</div>
+        <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">Casual Leave Balance</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:2px">Salary deducted · max 2/month</div>
+      </div>
+    </div>
+    ${todayAtt?.inTime&&!todayAtt?.outTime?`<div class="alert alert-ok">✅ Checked in at ${esc(todayAtt.inTime)} — remember to check out!</div>`:''}
+    <div class="tile-grid">
+      <div class="tile" onclick="startRation()">
+        <div class="tile-icon">📋</div>
+        <div class="tile-label">Ration Request</div>
+        <div class="tile-sub">Place daily requisition</div>
+      </div>
+      <div class="tile gold" onclick="go('s-leave')">
+        <div class="tile-icon">🗓️</div>
+        <div class="tile-label">Leave Application</div>
+        <div class="tile-sub">${pendingLeave?`<span class="badge b-warn">${pendingLeave} pending</span>`:'Apply for time off'}</div>
+      </div>
+    </div>
+    <div class="tile-grid">
+      <div class="tile purple" onclick="go('s-attend')">
+        <div class="tile-icon">✅</div>
+        <div class="tile-label">Attendance</div>
+        <div class="tile-sub">${todayAtt?.inTime?'Checked in':'Mark today\'s attendance'}</div>
+      </div>
+      <div class="tile" onclick="go('s-leave-hist')">
+        <div class="tile-icon">📜</div>
+        <div class="tile-label">Leave History</div>
+        <div class="tile-sub">View past applications</div>
+      </div>
+    </div>
+    ${renderUpcomingEvents('staff')}
+  </div>`;
+}
+
+async function loadStaffData(){
+  const {user}=S;
+  // Load attendance
+  if(isBackendSet()){
+    const r=await api({action:'getAttendance',userId:user.userId,date:today()});
+    if(r?.record) S.todayAtt=r.record;
+    const rl=await api({action:'getLeaves',userId:user.userId});
+    if(rl?.leaves) S.myLeaves=rl.leaves;
+  } else {
+    S.todayAtt=lsG('fb_att_'+today(),null);
+    S.myLeaves=lsG('fb_leaves_'+user.userId,[]);
+  }
+  loadCateringEvents();
+  render();
+}
+
+/* ════════════════════════════════════════════
+   RATION FLOW
+════════════════════════════════════════════ */
+function isOrderingOpen(){const hr=new Date().getHours();return hr>=8&&hr<20;}
+
+function startRation(){
+  if(!isOrderingOpen()){
+    alert('⏰ Ration ordering is available only between 8:00 AM and 8:00 PM.\nPlease try again during ordering hours.');
+    return;
+  }
+  S.orderType='';S.eventType='';S.eventName='';S.eventDate='';S.pax='';S.eventClient='';S.eventPhone='';S.eventTime='';S.eventLocation='';S.eventLocationNew='';S.ckLocation='';
+  S.deliveryDate=dayAfterTomorrow();S.urgency='Normal';S.remarks='';
+  S.cart={};S.tab='FREQUENT';S.search='';S.catOpen={};
+  go('s-ration-type');
+}
+
+function renderRationType(){
+  const open=isOrderingOpen();
+  const hr=new Date().getHours();
+  const closingSoon=hr>=19&&hr<20;
+  const bannerHtml=open
+    ?`<div class="alert alert-ok" style="margin-bottom:12px">
+        🟢 Orders open · ${closingSoon?'<strong>Closing in less than 1 hour</strong> (8:00 PM)':'Ordering hours: 8:00 AM – 8:00 PM'}
+      </div>`
+    :`<div class="alert alert-warn" style="margin-bottom:12px">
+        🔴 <strong>Ordering is closed.</strong> Ration orders can only be placed between <strong>8:00 AM and 8:00 PM</strong> daily.
+      </div>`;
+  return`<div class="scr on">
+    ${bannerHtml}
+    <div class="card"><div class="card-ttl">What is this order for?</div>
+    <div class="type-grid">${ORDER_TYPES.map(t=>`
+      <div class="type-tile ${S.orderType===t.id?'sel':''} ${t.disabled?'disabled':''}" onclick="${t.disabled?'':'S.orderType=\''+t.id+'\';render()'}">
+        <div class="tt-icon">${t.e}</div>
+        <div class="tt-name">${t.label}</div>
+        <div class="tt-desc">${t.desc}</div>
+        ${t.disabled?'<span class="tt-soon">Coming Soon</span>':''}
+      </div>`).join('')}
+    </div></div>
+    <button class="btn btn-navy" onclick="nextFromType()" ${!S.orderType||!isOrderingOpen()?'disabled':''}>Continue →</button>
+  </div>`;
+}
+function nextFromType(){
+  if(S.orderType==='Catering') go('s-ration-event');
+  else if(S.orderType==='Cloud Kitchen') go('s-ration-ck');
+  else go('s-ration-setup');
+}
+
+/* Cloud Kitchen location selection */
+function renderRationCK(){
+  return`<div class="scr on">
+    <div class="card">
+      <div class="card-ttl">🏭 Cloud Kitchen — Select Location</div>
+      <label class="fl">Which Cloud Kitchen is this order for? *</label>
+      ${CK_LOCATIONS.map(l=>`<div onclick="S.ckLocation='${l}';render()" style="display:flex;align-items:center;gap:10px;padding:11px 13px;border:2px solid ${S.ckLocation===l?'var(--navy)':'var(--border)'};background:${S.ckLocation===l?'#f0f2fa':'#fff'};border-radius:8px;margin-bottom:8px;cursor:pointer;font-size:14px;font-weight:${S.ckLocation===l?700:500}">
+        <span style="font-size:20px">🏭</span> ${esc(l)}
+        ${S.ckLocation===l?'<span style="margin-left:auto;color:var(--navy)">✓</span>':''}
+      </div>`).join('')}
+    </div>
+    <button class="btn btn-navy" onclick="go('s-ration-setup')" ${!S.ckLocation?'disabled':''}>Continue →</button>
+  </div>`;
+}
+
+function renderRationEvent(){
+  const evLocNew = S.eventLocation==='NEW LOCATION';
+  const canContinue = S.eventType && S.eventName && S.eventDate && S.pax && S.eventClient && S.eventPhone && S.eventTime && S.eventLocation && (!evLocNew || S.eventLocationNew);
+  return`<div class="scr on">
+    <div class="card">
+      <div class="card-ttl">🎉 Catering Event Details</div>
+
+      <label class="fl">Type of Event *</label>
+      <select class="fi" onchange="S.eventType=this.value">
+        <option value="">— Select event type —</option>
+        ${EVENT_TYPES.map(t=>`<option value="${t}" ${S.eventType===t?'selected':''}>${t}</option>`).join('')}
+      </select>
+
+      <label class="fl">Event Name / Description *</label>
+      <input class="fi" value="${esc(S.eventName)}" placeholder="e.g. Sharma Family Dinner" oninput="S.eventName=this.value">
+
+      <label class="fl">Event Date *</label>
+      <input class="fi" type="date" value="${esc(S.eventDate)}" oninput="S.eventDate=this.value">
+
+      <label class="fl">Meal / Event Time *</label>
+      <select class="fi" onchange="S.eventTime=this.value">
+        <option value="">— Select time slot —</option>
+        ${EVENT_TIMES.map(t=>`<option value="${t}" ${S.eventTime===t?'selected':''}>${t}</option>`).join('')}
+      </select>
+
+      <label class="fl">Number of Guests (PAX) *</label>
+      <input class="fi" type="number" value="${esc(S.pax)}" placeholder="e.g. 150" oninput="S.pax=this.value" min="1">
+
+      <label class="fl">Client Name *</label>
+      <input class="fi" value="${esc(S.eventClient)}" placeholder="Full name of client" oninput="S.eventClient=this.value">
+
+      <label class="fl">Client Phone *</label>
+      <input class="fi" type="tel" value="${esc(S.eventPhone)}" placeholder="10-digit mobile number" oninput="S.eventPhone=this.value.replace(/[^0-9]/g,'').slice(0,10)" maxlength="10">
+
+      <label class="fl">Event Location *</label>
+      <select class="fi" onchange="S.eventLocation=this.value;S.eventLocationNew='';render()">
+        <option value="">— Select location —</option>
+        ${EVENT_LOCATIONS.map(l=>`<option value="${l}" ${S.eventLocation===l?'selected':''}>${l}</option>`).join('')}
+      </select>
+      ${evLocNew?`<label class="fl">Enter New Location Details *</label>
+      <input class="fi" value="${esc(S.eventLocationNew)}" placeholder="Address / venue name" oninput="S.eventLocationNew=this.value">`:''}
+    </div>
+    <button class="btn btn-navy" onclick="validateCateringForm()">Continue →</button>
+  </div>`;
+}
+
+function validateCateringForm(){
+  const missing=[];
+  if(!S.eventType)    missing.push('Type of Event');
+  if(!S.eventName)    missing.push('Event Name / Description');
+  if(!S.eventDate)    missing.push('Event Date');
+  if(!S.eventTime)    missing.push('Meal / Event Time');
+  if(!S.pax)          missing.push('Number of Guests (PAX)');
+  if(!S.eventClient)  missing.push('Client Name');
+  if(!S.eventPhone)   missing.push('Client Phone');
+  if(!S.eventLocation)missing.push('Event Location');
+  if(S.eventLocation==='NEW LOCATION'&&!S.eventLocationNew) missing.push('New Location Details');
+  if(missing.length){
+    alert('Please fill in:\n\n• '+missing.join('\n• '));
+    return;
+  }
+  go('s-ration-setup');
+}
+
+function renderRationSetup(){
+  const summaryBadge = S.orderType==='Catering'
+    ? `<div class="alert" style="background:#f0f2fa;border-color:var(--navy2);margin-bottom:10px;font-size:12px">
+        🎉 <strong>${esc(S.eventType)}</strong> · ${esc(S.eventName)} · PAX: ${esc(S.pax)} · ${esc(S.eventTime)}<br>
+        📍 ${esc(S.eventLocation==='NEW LOCATION'?S.eventLocationNew:S.eventLocation)}<br>
+        👤 ${esc(S.eventClient)} · 📞 ${esc(S.eventPhone)}
+      </div>`
+    : S.orderType==='Cloud Kitchen'
+    ? `<div class="alert" style="background:#f0f2fa;border-color:var(--navy2);margin-bottom:10px;font-size:12px">🏭 Cloud Kitchen: <strong>${esc(S.ckLocation)}</strong></div>`
+    : '';
+  const needLocDrop = S.orderType==='Restaurant';
+  const hr=new Date().getHours();
+  const urgentOff=hr>=20;
+  return`<div class="scr on">
+    <div class="card">
+      <div class="card-ttl">Delivery Details</div>
+      ${summaryBadge}
+      ${needLocDrop?`
+      <label class="fl">Delivery Location *</label>
+      <select class="fi" onchange="S.ckLocation=this.value;render()">
+        <option value="">— Select delivery location —</option>
+        ${CK_LOCATIONS.map(l=>`<option value="${l}" ${S.ckLocation===l?'selected':''}>${l}</option>`).join('')}
+      </select>`:''}
+      <label class="fl">Priority</label>
+      <div class="urg-row">
+        <button class="urg-btn ${S.urgency==='Normal'?'ok':''}" onclick="S.urgency='Normal';S.deliveryDate=dayAfterTomorrow();render()">✅ Normal</button>
+        <button class="urg-btn ${S.urgency==='Urgent'&&!urgentOff?'hot':''}" ${urgentOff?'disabled':'onclick="S.urgency=\'Urgent\';S.deliveryDate=nextDay();render()"'} style="${urgentOff?'opacity:.4;cursor:not-allowed':''}">
+          🚨 Urgent${urgentOff?'<span style="display:block;font-size:9px;font-weight:400;margin-top:2px">Closes at 8 PM</span>':''}
+        </button>
+      </div>
+      ${urgentOff?'<div class="alert alert-warn" style="font-size:12px;margin-top:6px">⏰ Urgent orders close at 8 PM daily. Use Normal for next-morning delivery.</div>':''}
+      <label class="fl" style="margin-top:12px">Delivery / Requirement Date *</label>
+      <input class="fi" type="date" value="${esc(S.deliveryDate)}" min="${S.urgency==='Urgent'?nextDay():dayAfterTomorrow()}" oninput="S.deliveryDate=this.value">
+      <div style="font-size:12px;color:var(--muted);margin-top:4px;margin-bottom:8px">📦 Delivery by <strong>10:30 AM</strong> on selected date</div>
+      <label class="fl">Remarks</label>
+      <textarea class="ft" rows="2" placeholder="Any notes…" oninput="S.remarks=this.value">${esc(S.remarks)}</textarea>
+    </div>
+    <button class="btn btn-navy" onclick="go('s-ration-items')" ${!S.deliveryDate||(needLocDrop&&!S.ckLocation)?'disabled':''}>Select Items →</button>
+  </div>`;
+}
+
+function renderRationItems(){
+  const freq=getFreqItems();
+  const tabs=['FREQUENT',...SUP_ORDER];
+  const cnt=cartCount();
+  const search=S.search.toLowerCase();
+  return`<div class="scr on">
+    <div class="tabs">${tabs.map(t=>{
+      const n=t==='FREQUENT'?freq.length:(Object.entries(S.cart).filter(([k,v])=>k.startsWith(t+'|')&&v.qty>0).length);
+      return`<button class="tb ${S.tab===t?'on':''}" onclick="S.tab='${t}';render()">${t==='FREQUENT'?'⭐ Frequent':((SUP_META[t]?.e||'')+' '+(SUP_META[t]?.l||t))}${n?`<span class="tb-cnt">${n}</span>`:''}</button>`;
+    }).join('')}</div>
+    <div class="srch"><span class="si">🔍</span><input class="fi" placeholder="Search items…" value="${esc(S.search)}" oninput="S.search=this.value;render()"></div>
+    ${S.tab==='FREQUENT'?renderFreqTab(freq,search):renderSupTab(S.tab,search)}
+  </div>
+  <button class="fab ${cnt?'':'hide'}" onclick="go('s-ration-review')">Review Order <span class="fab-cnt">${cnt}</span></button>`;
+}
+
+function renderFreqTab(freq,search){
+  const filtered=search?freq.filter(f=>f.name.toLowerCase().includes(search)):freq;
+  if(!filtered.length)return`<div class="no-res">${search?'No items match your search':'No frequent items yet — order a few times to build your list!'}</div>`;
+  return`<div class="freq-grid">${filtered.map(f=>{
+    const k=`${f.sup}|${f.cat}|${f.name}`;const v=S.cart[k]||{qty:0,unit:f.unit};
+    return`<div class="freq-item ${v.qty>0?'ic':''}">
+      <div class="fi-name">${esc(f.name)}</div>
+      <div class="fi-hist">📅 ${esc(f.lastDate?fmtDate(f.lastDate):'—')} · <span class="hl">${f.lastQty} ${f.lastUnit}</span></div>
+      <div class="fi-controls">
+        <button class="qb" onclick="adjCart('${esc(k)}','${esc(f.unit)}',-1)">−</button>
+        <input class="qn" type="number" min="0" value="${v.qty||0}" oninput="setCart('${esc(k)}','${esc(f.unit)}',this.value)">
+        <select class="qu" onchange="setCartUnit('${esc(k)}',this.value)">${UNITS.map(u=>`<option ${(v.unit||f.unit)===u?'selected':''}>${u}</option>`).join('')}</select>
+        <button class="qb" onclick="adjCart('${esc(k)}','${esc(f.unit)}',1)">+</button>
+      </div>
+    </div>`;
+  }).join('')}</div>`;
+}
+
+function renderSupTab(sup,search){
+  const cats=ITEMS[sup];if(!cats)return`<div class="no-res">No items</div>`;
+  return Object.entries(cats).map(([cat,items])=>{
+    const filtered=search?items.filter(([n])=>n.toLowerCase().includes(search)):items;
+    if(!filtered.length&&search)return'';
+    const open=S.catOpen[cat]!==false;
+    const inCart=filtered.filter(([n])=>{const k=`${sup}|${cat}|${n}`;return(S.cart[k]?.qty||0)>0;}).length;
+    return`<div class="cat-block">
+      <div class="cat-hdr" onclick="S.catOpen['${esc(cat)}']=!S.catOpen['${esc(cat)}'];render()">
+        <span class="cat-name">${esc(cat)}<span class="cat-cnt">${inCart||''}</span></span>
+        <span class="cat-arr ${open?'o':''}">▼</span>
+      </div>
+      <div class="cat-body ${open?'o':''}">
+        ${filtered.map(([name,defUnit])=>{
+          const k=`${sup}|${cat}|${name}`;const v=S.cart[k]||{qty:0,unit:defUnit};
+          const h=getItemHist()[name];
+          return`<div class="item-row ${v.qty>0?'ic':''}">
+            <div class="item-info">
+              <div class="item-name" title="${esc(name)}">${esc(name)}</div>
+              ${h?.lastDate?`<div class="item-hist">📅 ${fmtDate(h.lastDate)} · <span class="hl">${h.lastQty} ${h.lastUnit}</span> · ${h.orders}x</div>`:''}
+            </div>
+            <div class="item-controls">
+              <button class="qb" onclick="adjCart('${esc(k)}','${esc(defUnit)}',-1)">−</button>
+              <input class="qn" type="number" min="0" value="${v.qty||0}" oninput="setCart('${esc(k)}','${esc(defUnit)}',this.value)">
+              <select class="qu" onchange="setCartUnit('${esc(k)}',this.value)">${UNITS.map(u=>`<option ${(v.unit||defUnit)===u?'selected':''}>${u}</option>`).join('')}</select>
+              <button class="qb" onclick="adjCart('${esc(k)}','${esc(defUnit)}',1)">+</button>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function adjCart(k,defUnit,d){
+  if(!S.cart[k])S.cart[k]={qty:0,unit:defUnit};
+  S.cart[k].qty=Math.max(0,parseFloat(S.cart[k].qty||0)+d);
+  render();
+}
+function setCart(k,defUnit,v){
+  if(!S.cart[k])S.cart[k]={qty:0,unit:defUnit};
+  S.cart[k].qty=Math.max(0,parseFloat(v)||0);
+}
+function setCartUnit(k,u){if(S.cart[k])S.cart[k].unit=u;}
+
+function renderRationReview(){
+  const items=cartItems();
+  if(!items.length)return`<div class="scr on"><div class="rev-empty">Cart is empty — go back to add items.</div><button class="btn btn-out" onclick="go('s-ration-items')">← Back</button></div>`;
+  const bySup={};items.forEach(it=>{if(!bySup[it.sup])bySup[it.sup]=[];bySup[it.sup].push(it);});
+  return`<div class="scr on">
+    <div class="info-bar">
+      <div class="ib"><div class="ib-l">Location</div><div class="ib-v">${esc(S.user.location)}</div></div>
+      <div class="ib"><div class="ib-l">Delivery</div><div class="ib-v">${fmtDate(S.deliveryDate)}</div></div>
+      <div class="ib"><div class="ib-l">Order Type</div><div class="ib-v">${esc(S.orderType)}</div></div>
+      <div class="ib"><div class="ib-l">Priority</div><div class="ib-v">${S.urgency==='Urgent'?'🚨':''} ${esc(S.urgency)}</div></div>
+    </div>
+    ${S.orderType==='Catering'?`<div class="event-bar"><strong>🎉 ${esc(S.eventType)} — ${esc(S.eventName)}</strong><br>${fmtDate(S.eventDate)} · ${esc(S.eventTime)} · ${esc(S.pax)} PAX<br>📍 ${esc(S.eventLocation==='NEW LOCATION'?S.eventLocationNew:S.eventLocation)} · 👤 ${esc(S.eventClient)} (${esc(S.eventPhone)})</div>`:''}
+    ${S.orderType==='Cloud Kitchen'?`<div class="event-bar">🏭 <strong>Cloud Kitchen: ${esc(S.ckLocation)}</strong></div>`:''}
+    <div class="card">${SUP_ORDER.filter(s=>bySup[s]).map(s=>`
+      <div class="rev-sup">${SUP_META[s]?.e} ${SUP_META[s]?.l||s}</div>
+      ${bySup[s].map(it=>`<div class="rev-item"><span>${esc(it.name)}</span><span class="rev-qty">${it.qty} ${it.unit}</span></div>`).join('')}
+    `).join('')}</div>
+    <div class="btn-row">
+      <button class="btn btn-out" onclick="go('s-ration-items')">← Edit</button>
+      <button class="btn btn-navy" onclick="submitOrder()" ${S.loading?'disabled':''}>
+        ${S.loading?'<span class="spin"></span> Submitting…':'Submit Requisition ✓'}
+      </button>
+    </div>
+  </div>`;
+}
+
+async function submitOrder(){
+  const items=cartItems();if(!items.length)return;
+  S.loading=true;render();
+  S.orderId=genId(S.user.location);
+  const resolvedLoc = S.orderType==='Catering'?(S.eventLocation==='NEW LOCATION'?S.eventLocationNew:S.eventLocation):(S.ckLocation||S.user.location);
+  const order={
+    orderId:S.orderId,orderType:S.orderType,
+    eventType:S.eventType,eventName:S.eventName,eventDate:S.eventDate,eventTime:S.eventTime,
+    pax:S.pax,eventClient:S.eventClient,eventPhone:S.eventPhone,
+    ckLocation:S.ckLocation,eventLocation:resolvedLoc,
+    location:resolvedLoc,staffName:S.user.name,userId:S.user.userId,
+    deliveryDate:S.deliveryDate,urgency:S.urgency,remarks:S.remarks,
+    submittedAt:new Date().toISOString(),items,status:'Pending',
+  };
+  const res=await apiData('submit',order);
+  if(!res&&!isBackendSet()){/* demo */}
+  // Save catering event for upcoming events section
+  if(S.orderType==='Catering'){
+    const evList=lsG('fb_catering_events',[]);
+    evList.push({
+      orderId:order.orderId,eventType:order.eventType,eventName:order.eventName,
+      eventDate:order.eventDate,eventTime:order.eventTime,pax:order.pax,
+      eventLocation:order.eventLocation,eventClient:order.eventClient,
+      eventPhone:order.eventPhone,deliveryDate:order.deliveryDate,
+      urgency:order.urgency,remarks:order.remarks,staffName:order.staffName,
+      submittedAt:order.submittedAt,status:'Pending',items:order.items,
+    });
+    lsS('fb_catering_events',evList);
+    S.upcomingEvents=getLocalCateringEvents();
+  }
+  saveItemHist(items);
+  S.loading=false;
+  go('s-ration-confirm');
+}
+
+function buildWAText(){
+  const items=Object.entries(S.cart).filter(([,v])=>v.qty>0).map(([k,v])=>{const[sup,,name]=k.split('|');return`• ${name} — ${v.qty} ${v.unit}`;}).join('\n');
+  const header = S.orderType==='Catering'
+    ? `*Ration Request — Catering*\nEvent: ${S.eventType} | ${S.eventName}\nDate: ${fmtDate(S.eventDate)} | Time: ${S.eventTime}\nLocation: ${S.eventLocation==='NEW LOCATION'?S.eventLocationNew:S.eventLocation}\nClient: ${S.eventClient} (${S.eventPhone})\nPAX: ${S.pax}`
+    : S.orderType==='Cloud Kitchen'
+    ? `*Ration Request — Cloud Kitchen*\nLocation: ${S.ckLocation}`
+    : `*Ration Request — ${S.orderType}*\nLocation: ${S.user.location}`;
+  return encodeURIComponent(`${header}\nDelivery: ${fmtDate(S.deliveryDate)} | Priority: ${S.urgency}\nRef: ${S.orderId}\n\n*Items:*\n${items}${S.remarks?'\n\nNote: '+S.remarks:''}\n\n_Submitted via Flenbo Hub_`);
+}
+
+function renderRationConfirm(){
+  return`<div class="scr on">
+    <div class="conf-icon">✅</div>
+    <div class="conf-ttl">Order Submitted!</div>
+    <div class="conf-sub">Your requisition has been sent for Operations Manager approval.</div>
+    <div class="oid-box">
+      <div class="oid-l">Order Reference</div>
+      <div class="oid-v">${esc(S.orderId)}</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:3px">Save this for reference · Delivery: ${fmtDate(S.deliveryDate)}</div>
+    </div>
+    <a href="https://wa.me/?text=${buildWAText()}" target="_blank" rel="noopener"
+       style="display:flex;align-items:center;justify-content:center;gap:10px;padding:14px;background:#25D366;color:#fff;border-radius:12px;font-weight:700;font-size:15px;text-decoration:none;margin-bottom:12px">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.09.543 4.05 1.49 5.76L0 24l6.41-1.47A11.94 11.94 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.808 9.808 0 01-5.003-1.37l-.36-.213-3.72.853.871-3.63-.234-.374A9.818 9.818 0 012.182 12C2.182 6.58 6.58 2.182 12 2.182S21.818 6.58 21.818 12 17.42 21.818 12 21.818z"/></svg>
+      Share on WhatsApp
+    </a>
+    <button class="btn btn-navy" onclick="go('s-home')">← Back to Home</button>
+  </div>`;
+}
+
+/* ════════════════════════════════════════════
+   LEAVE FLOW
+════════════════════════════════════════════ */
+function renderLeaveForm(){
+  const al=(S.user.annualLeave||0);
+  const cl=(S.user.casualLeave||0);
+  const leaveDays=S.leaveFrom&&S.leaveTo?Math.max(0,Math.round((new Date(S.leaveTo)-new Date(S.leaveFrom))/(86400000))+1):0;
+  const notEnoughAnnual=S.leaveType==='Annual Leave'&&leaveDays>al;
+  const notEnoughCasual=S.leaveType==='Casual Leave'&&leaveDays>cl;
+  const sickExceeds2=S.leaveType==='Sick Leave'&&leaveDays>2;
+  const notEnoughSick=S.leaveType==='Sick Leave'&&leaveDays>al;
+  const disableSubmit=!S.leaveType||!S.leaveFrom||!S.leaveTo||!S.leaveReason||notEnoughAnnual||notEnoughCasual||sickExceeds2||notEnoughSick||S.loading;
+  const balPolicyHTML=`
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+      <div onclick="S.leaveType='Annual Leave';render()" style="border:2px solid ${S.leaveType==='Annual Leave'?'var(--navy)':'var(--border)'};background:${S.leaveType==='Annual Leave'?'#f0f2fa':'#fff'};border-radius:9px;padding:11px;cursor:pointer;text-align:center">
+        <div style="font-size:18px;font-weight:800;color:#1a2642">${al.toFixed(2)*1}</div>
+        <div style="font-size:12px;font-weight:700;color:var(--navy)">Annual Leave</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:3px">✅ No salary deduction</div>
+      </div>
+      <div onclick="S.leaveType='Casual Leave';render()" style="border:2px solid ${S.leaveType==='Casual Leave'?'#dc2626':'var(--border)'};background:${S.leaveType==='Casual Leave'?'#fff5f5':'#fff'};border-radius:9px;padding:11px;cursor:pointer;text-align:center">
+        <div style="font-size:18px;font-weight:800;color:#dc2626">${cl.toFixed(2)*1}</div>
+        <div style="font-size:12px;font-weight:700;color:#dc2626">Casual Leave</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:3px">⚠️ Salary deducted · max 2/month</div>
+      </div>
+    </div>
+    <div onclick="S.leaveType='Sick Leave';render()" style="border:2px solid ${S.leaveType==='Sick Leave'?'#b45309':'var(--border)'};background:${S.leaveType==='Sick Leave'?'#fffbeb':'#fff'};border-radius:9px;padding:11px;cursor:pointer;text-align:center;margin-bottom:12px">
+      <div style="font-size:14px;font-weight:800;color:#b45309">🤒 Sick Leave</div>
+      <div style="font-size:10px;color:var(--muted);margin-top:3px">Max 2 days · Deducted from Annual Leave · Salary deducted</div>
+    </div>`;
+  return`<div class="scr on">
+    <div class="card">
+      <div class="card-ttl">Leave Application</div>
+      <label class="fl">Select Leave Type — tap to choose *</label>
+      ${balPolicyHTML}
+      ${S.leaveType==='Annual Leave'?`<div class="alert alert-ok" style="margin-bottom:10px"><strong>Annual Leave</strong> — balance reduced by days taken. No salary deduction.</div>`:''}
+      ${S.leaveType==='Casual Leave'?`<div class="alert alert-warn" style="margin-bottom:10px"><strong>Casual Leave</strong> — salary deducted for days absent. Balance: ${cl} remaining. Expires 31st March every year.</div>`:''}
+      ${S.leaveType==='Sick Leave'?`<div class="alert" style="background:#fffbeb;border-color:#b45309;margin-bottom:10px"><strong>🤒 Sick Leave</strong> — max 2 days per application. Days deducted from your Annual Leave balance (${al} remaining). Salary is deducted.</div>`:''}
+      <label class="fl">From Date *</label>
+      <input class="fi" type="date" value="${esc(S.leaveFrom)}" min="${today()}" oninput="S.leaveFrom=this.value;render()">
+      <label class="fl">To Date *</label>
+      <input class="fi" type="date" value="${esc(S.leaveTo)}" min="${S.leaveFrom||today()}" oninput="S.leaveTo=this.value;render()">
+      ${leaveDays>0?`<div style="font-size:12px;color:var(--muted);margin-bottom:8px">📅 ${leaveDays} day${leaveDays>1?'s':''} selected</div>`:''}
+      ${notEnoughAnnual?`<div class="alert alert-warn">⚠️ You only have ${al} Annual Leave day${al!==1?'s':''} remaining.</div>`:''}
+      ${notEnoughCasual?`<div class="alert alert-warn">⚠️ You only have ${cl} Casual Leave day${cl!==1?'s':''} remaining.</div>`:''}
+      ${sickExceeds2?`<div class="alert alert-warn">⚠️ Sick Leave is limited to 2 days per application.</div>`:''}
+      ${notEnoughSick&&!sickExceeds2?`<div class="alert alert-warn">⚠️ Insufficient Annual Leave balance for Sick Leave (${al} days remaining).</div>`:''}
+      <label class="fl">Reason *</label>
+      <textarea class="ft" rows="3" placeholder="Briefly explain the reason…" oninput="S.leaveReason=this.value;updateLeaveBtn()">${esc(S.leaveReason)}</textarea>
+    </div>
+    <button id="leave-submit-btn" class="btn btn-gold" onclick="submitLeave()" ${disableSubmit?'disabled':''}>
+      ${S.loading?'<span class="spin"></span> Submitting…':'Submit Leave Application'}
+    </button>
+  </div>`;
+}
+
+function updateLeaveBtn(){
+  const btn=document.getElementById('leave-submit-btn');
+  if(!btn)return;
+  const leaveDays=S.leaveFrom&&S.leaveTo?Math.max(0,Math.round((new Date(S.leaveTo)-new Date(S.leaveFrom))/(86400000))+1):0;
+  const al=S.user?.annualLeave||0;
+  const cl=S.user?.casualLeave||0;
+  const bad=!S.leaveType||!S.leaveFrom||!S.leaveTo||!S.leaveReason||
+    (S.leaveType==='Annual Leave'&&leaveDays>al)||
+    (S.leaveType==='Casual Leave'&&leaveDays>cl)||
+    (S.leaveType==='Sick Leave'&&(leaveDays>2||leaveDays>al));
+  btn.disabled=bad;
+}
+async function submitLeave(){
+  S.loading=true;render();
+  const leave={leaveId:'LV-'+Date.now(),userId:S.user.userId,staffName:S.user.name,location:S.user.location,leaveType:S.leaveType,fromDate:S.leaveFrom,toDate:S.leaveTo,reason:S.leaveReason,submittedAt:new Date().toISOString(),status:'Pending'};
+  await apiData('submitLeave',leave);
+  if(!isBackendSet()){const arr=lsG('fb_leaves_'+S.user.userId,[]);arr.unshift(leave);lsS('fb_leaves_'+S.user.userId,arr.slice(0,30));S.myLeaves=[leave,...S.myLeaves];}
+  S.loading=false;S.leaveType='';S.leaveFrom='';S.leaveTo='';S.leaveReason='';
+  go('s-leave-done');
+}
+
+function renderLeaveDone(){
+  return`<div class="scr on">
+    <div class="conf-icon">🗓️</div>
+    <div class="conf-ttl">Leave Applied!</div>
+    <div class="conf-sub">Your application has been sent to the Operations Manager for approval. You'll be notified once it's reviewed.</div>
+    <button class="btn btn-navy" onclick="go('s-home')">← Back to Home</button>
+    <div style="margin-top:9px"><button class="btn btn-out" onclick="go('s-leave-hist')">View Leave History</button></div>
+  </div>`;
+}
+
+function renderLeaveHistory(){
+  const leaves=S.myLeaves;
+  return`<div class="scr on">
+    <h3 style="font-size:15px;font-weight:700;margin-bottom:12px">My Leave Applications</h3>
+    ${!leaves.length?`<div class="empty"><div class="empty-icon">🗓️</div><div>No leave applications yet</div></div>`:
+    leaves.map(l=>`<div class="leave-card">
+      <div class="lc-top">
+        <div><div class="lc-name">${esc(l.leaveType)}</div><div class="lc-dates">📅 ${fmtDate(l.fromDate)} → ${fmtDate(l.toDate)}</div></div>
+        <span class="badge ${l.status==='Approved'?'b-ok':l.status==='Rejected'?'b-red':'b-warn'}">${l.status}</span>
+      </div>
+      ${l.reason?`<div style="font-size:12px;color:var(--muted);margin-top:7px">${esc(l.reason)}</div>`:''}
+      ${l.managerNote?`<div style="font-size:11px;color:var(--warn);margin-top:5px;font-weight:600">Manager: ${esc(l.managerNote)}</div>`:''}
+    </div>`).join('')}
+    <button class="btn btn-out" onclick="go('s-leave')">+ New Application</button>
+  </div>`;
+}
+
+/* ════════════════════════════════════════════
+   ATTENDANCE
+════════════════════════════════════════════ */
+function renderAttendance(){
+  const att=S.todayAtt;
+  const checked=att?.inTime;
+  const checkedOut=att?.outTime;
+  return`<div class="scr on">
+    <h3 style="font-size:15px;font-weight:700;margin-bottom:12px">Today's Attendance</h3>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:12px">${new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</div>
+    <div class="att-status ${checked&&!checkedOut?'in':checkedOut?'out':''}">
+      <div class="att-icon">${checkedOut?'🏠':checked?'🏢':'⏰'}</div>
+      <div class="att-label">${checkedOut?'Checked Out':checked?'Checked In':'Not Checked In'}</div>
+      ${att?.inTime?`<div class="att-time">🕐 In: ${esc(att.inTime)}</div>`:''}
+      ${att?.outTime?`<div class="att-time">🕕 Out: ${esc(att.outTime)}</div>`:''}
+    </div>
+    ${!checked?`<button class="btn btn-ok" onclick="logAttendance('in')">✅ Check In Now</button>`:
+      !checkedOut?`<button class="btn btn-warn" onclick="logAttendance('out')">🏠 Check Out</button>`:
+      `<div class="alert alert-ok">✅ Attendance complete for today!</div>`}
+    ${S.attHistory.length?`<div style="margin-top:16px"><div class="card-ttl" style="margin-bottom:8px">Recent Attendance</div>
+      ${S.attHistory.slice(0,7).map(r=>`<div class="att-row">
+        <span style="font-size:12px;color:var(--muted)">${fmtDate(r.date)}</span>
+        <span style="font-size:12px">${r.inTime?'In: '+r.inTime:'—'}</span>
+        <span style="font-size:12px">${r.outTime?'Out: '+r.outTime:'—'}</span>
+      </div>`).join('')}
+    </div>`:''}
+  </div>`;
+}
+
+/* ════════════════════════════════════════════
+   MANAGER SCREENS
+════════════════════════════════════════════ */
+async function loadManagerData(){
+  if(isBackendSet()){
+    const ro=await api({action:'getOrders',status:'Pending'});
+    if(ro?.orders) S.pendingOrders=ro.orders;
+    const rl=await api({action:'getLeaves',status:'Pending'});
+    if(rl?.leaves) S.pendingLeaves=rl.leaves;
+    const ra=await api({action:'getAttendance',date:today()});
+    if(ra?.records) S.todayAttAll=ra.records;
+    const rml=await api({action:'getMyLeaves',userId:S.user?.userId});
+    if(rml?.leaves) S.myLeaves=rml.leaves;
+  } else {
+    S.pendingOrders=getDemoOrders();
+    S.pendingLeaves=getDemoLeaves();
+    S.todayAttAll=getDemoAtt();
+    S.myLeaves=lsG('fb_leaves_'+(S.user?.userId||'mgr'),[]);
+  }
+  loadCateringEvents();
+}
+
+function renderMgrHome(){
+  const tabs=[{id:'ration',l:'📋 Ration',n:S.pendingOrders.length},{id:'leaves',l:'🗓️ Leaves',n:S.pendingLeaves.length},{id:'attend',l:'✅ Attendance',n:0},{id:'events',l:'🎉 Events',n:S.upcomingEvents.length},{id:'myleave',l:'🗓️ My Leave',n:0}];
+  return`<div class="scr on scr-wide">
+    <div class="id-bar" style="max-width:600px">
+      <div class="id-info"><strong>${esc(S.user.name)}</strong>Operations Manager</div>
+      <div style="text-align:right"><div style="font-size:11px;opacity:.8;cursor:pointer;text-decoration:underline" onclick="doLogout()">Sign out</div></div>
+    </div>
+    <div class="stat-row">
+      <div class="stat warn"><div class="stat-n">${S.pendingOrders.length}</div><div class="stat-l">Pending Ration</div></div>
+      <div class="stat gold"><div class="stat-n">${S.pendingLeaves.length}</div><div class="stat-l">Leave Requests</div></div>
+      <div class="stat ok"><div class="stat-n">${S.todayAttAll.length}</div><div class="stat-l">Present Today</div></div>
+    </div>
+    <div class="tabs">${tabs.map(t=>`<button class="tb ${S.mTab===t.id?'on':''}" onclick="S.mTab='${t.id}';render()">${t.l}${t.n?`<span class="tb-cnt">${t.n}</span>`:''}</button>`).join('')}</div>
+    ${S.mTab==='ration'?renderMgrRationTab():S.mTab==='leaves'?renderMgrLeavesTab():S.mTab==='events'?renderUpcomingEvents('manager'):S.mTab==='myleave'?renderMgrMyLeaveTab():renderMgrAttTab()}
+    <div style="margin-top:14px"><button class="btn btn-out btn-sm" style="width:auto" onclick="loadManagerData().then(render)">🔄 Refresh</button></div>
+  </div>`;
+}
+
+function renderMgrRationTab(){
+  if(!S.pendingOrders.length)return`<div class="empty"><div class="empty-icon">📋</div><div>No pending ration orders</div></div>`;
+  // Group by order ID
+  const grouped={};
+  S.pendingOrders.forEach(r=>{
+    const id=r['Order ID']||r.orderId;
+    if(!grouped[id])grouped[id]={id,loc:r['Location']||r.location,staff:r['Staff Name']||r.staffName,delivery:r['Delivery Date']||r.deliveryDate,type:r['Order Type']||r.orderType,urgency:r['Urgency']||r.urgency,status:r['Status']||r.status,eventName:r['Event Name']||r.eventName,pax:r['PAX']||r.pax,items:[]};
+    grouped[id].items.push({name:r['Item']||r.name,qty:r['Quantity']||r.qty,unit:r['Unit']||r.unit,supplier:r['Supplier']||r.sup});
+  });
+  return Object.values(grouped).map(o=>{
+    const isOpen=S.catOpen[o.id];
+    return`<div class="req-card">
+      <div class="req-hdr" onclick="S.catOpen['${esc(o.id)}']=!S.catOpen['${esc(o.id)}'];render()">
+        <div>
+          <div class="req-id">${esc(o.id)}</div>
+          <div class="req-meta">📍 ${esc(o.loc)} · 👤 ${esc(o.staff)} · 📅 ${fmtDate(o.delivery)}
+          ${o.urgency==='Urgent'?` <span class="badge b-warn">URGENT</span>`:''}</div>
+          ${o.eventName?`<div class="req-meta">🎉 ${esc(o.eventName)} · ${esc(o.pax)} PAX</div>`:''}
+        </div>
+        <span class="badge b-warn">Pending</span>
+      </div>
+      <div class="req-body ${isOpen?'o':''}">
+        <div class="card-ttl" style="margin-bottom:8px">Review Items — edit qty or ✗ to reject</div>
+        ${o.items.map((it,i)=>{
+          const edKey=o.id+'|'+it.name;
+          const rej=S.reviewRejects[edKey];
+          const qty=S.reviewEdits[edKey]!=null?S.reviewEdits[edKey]:it.qty;
+          return`<div class="rev-row ${rej?'rejected':''}">
+            <span class="rv-name">${esc(it.name)}</span>
+            <input class="rv-qty-inp" type="number" value="${rej?0:qty}" min="0" ${rej?'disabled':''} oninput="S.reviewEdits['${esc(edKey)}']=parseFloat(this.value)||0">
+            <span class="rv-unit">${esc(it.unit)}</span>
+            <button class="rv-reject ${rej?'on':''}" title="${rej?'Restore':'Reject item'}" onclick="toggleReject('${esc(edKey)}')">${rej?'↩':'✗'}</button>
+          </div>`;
+        }).join('')}
+        <label class="fl">Manager Note</label>
+        <textarea class="ft" rows="2" placeholder="Add note for admin…" oninput="S.reviewNote=this.value">${esc(S.reviewNote)}</textarea>
+        <div class="btn-row" style="margin-top:12px">
+          <button class="btn btn-red btn-sm" onclick="mgrDecision('${esc(o.id)}','Rejected')">✗ Reject All</button>
+          <button class="btn btn-ok btn-sm" onclick="mgrDecision('${esc(o.id)}','Manager Approved')">✓ Approve & Forward</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleReject(key){S.reviewRejects[key]=!S.reviewRejects[key];render();}
+
+async function mgrDecision(orderId,status){
+  S.loading=true;render();
+  const edits=S.reviewEdits;const rejects=S.reviewRejects;
+  const note=S.reviewNote;
+  await apiData('updateOrderStatus',{orderId,status,managerEdits:edits,managerRejects:rejects,managerNote:note});
+  // Remove from pending
+  S.pendingOrders=S.pendingOrders.filter(r=>(r['Order ID']||r.orderId)!==orderId);
+  S.reviewEdits={};S.reviewRejects={};S.reviewNote='';S.catOpen[orderId]=false;
+  S.loading=false;render();
+}
+
+function renderMgrLeavesTab(){
+  if(!S.pendingLeaves.length)return`<div class="empty"><div class="empty-icon">🗓️</div><div>No pending leave requests</div></div>`;
+  return S.pendingLeaves.map(l=>{
+    const staffUser=DEMO_USERS.find(u=>u.userId===l.userId)||{};
+    const al=(staffUser.annualLeave||l.annualLeaveBalance||0);
+    const cl=(staffUser.casualLeave||l.casualLeaveBalance||0);
+    const fromD=l.fromDate||l['From Date']||'';
+    const toD=l.toDate||l['To Date']||'';
+    const days=fromD&&toD?Math.max(0,Math.round((new Date(toD)-new Date(fromD))/86400000)+1):0;
+    const lType=l.leaveType||l['Leave Type']||'';
+    const isAnnual=lType.toLowerCase().includes('annual');
+    return`<div class="leave-card">
+    <div class="lc-top">
+      <div>
+        <div class="lc-name">👤 ${esc(l.staffName||l['Staff Name'])} — <span style="color:${isAnnual?'var(--navy)':'#dc2626'}">${esc(lType)}</span></div>
+        <div class="lc-dates">📍 ${esc(l.location||l['Location'])} · 📅 ${fmtDate(fromD)} → ${fmtDate(toD)} ${days>0?`(${days} day${days>1?'s':''})`:''}
+        </div>
+        ${(l.reason||l['Reason'])?`<div style="font-size:12px;color:var(--muted);margin-top:5px">${esc(l.reason||l['Reason'])}</div>`:''}
+      </div>
+      <span class="badge b-warn">${l.status||'Pending'}</span>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin:10px 0 8px">
+      <div style="background:#f0f2fa;border-radius:7px;padding:8px 10px;text-align:center">
+        <div style="font-size:16px;font-weight:800;color:var(--navy)">${(+al).toFixed(2)*1}</div>
+        <div style="font-size:10px;color:var(--muted)">Annual Balance</div>
+      </div>
+      <div style="background:#fff5f5;border-radius:7px;padding:8px 10px;text-align:center">
+        <div style="font-size:16px;font-weight:800;color:#dc2626">${(+cl).toFixed(2)*1}</div>
+        <div style="font-size:10px;color:var(--muted)">Casual Balance</div>
+      </div>
+    </div>
+    ${isAnnual&&days>(+al)?`<div class="alert alert-warn" style="font-size:12px;margin-bottom:8px">⚠️ Requested ${days} day(s) but only ${al} annual leave available.</div>`:''}
+    <div>
+      <input class="fi" placeholder="Optional note to staff…" id="ln-${esc(l.leaveId)}" style="margin-bottom:8px">
+      <div class="btn-row">
+        <button class="btn btn-red btn-sm" onclick="decideLeave('${esc(l.leaveId)}','Rejected')">✗ Reject</button>
+        <button class="btn btn-ok btn-sm" onclick="decideLeave('${esc(l.leaveId)}','Approved')">✓ Approve</button>
+      </div>
+    </div>
+  </div>`;
+  }).join('');
+}
+
+async function decideLeave(leaveId,status){
+  const note=document.getElementById('ln-'+leaveId)?.value||'';
+  await apiData('updateLeave',{leaveId,status,managerNote:note});
+  S.pendingLeaves=S.pendingLeaves.filter(l=>l.leaveId!==leaveId);
+  render();
+}
+
+function renderMgrMyLeaveTab(){
+  const al=(S.user.annualLeave||0);
+  const cl=(S.user.casualLeave||0);
+  const leaves=S.myLeaves||[];
+  const pending=leaves.filter(l=>l.status==='Pending').length;
+  const leaveDays=S.leaveFrom&&S.leaveTo?Math.max(0,Math.round((new Date(S.leaveTo)-new Date(S.leaveFrom))/(86400000))+1):0;
+  const notEnoughAnnual=S.leaveType==='Annual Leave'&&leaveDays>al;
+  const notEnoughCasual=S.leaveType==='Casual Leave'&&leaveDays>cl;
+  const sickExceeds2=S.leaveType==='Sick Leave'&&leaveDays>2;
+  const notEnoughSick=S.leaveType==='Sick Leave'&&leaveDays>al;
+  const disableSubmit=!S.leaveType||!S.leaveFrom||!S.leaveTo||!S.leaveReason||notEnoughAnnual||notEnoughCasual||sickExceeds2||notEnoughSick||S.loading;
+  return`<div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+      <div style="background:#f0f2fa;border-radius:10px;padding:12px;text-align:center">
+        <div style="font-size:22px;font-weight:800;color:var(--navy,#1A2642)">${al.toFixed(2)*1}</div>
+        <div style="font-size:11px;font-weight:700;color:var(--muted,#64748b);text-transform:uppercase;letter-spacing:.5px">Annual Leave</div>
+      </div>
+      <div style="background:#fff5f5;border-radius:10px;padding:12px;text-align:center">
+        <div style="font-size:22px;font-weight:800;color:#dc2626">${cl.toFixed(2)*1}</div>
+        <div style="font-size:11px;font-weight:700;color:var(--muted,#64748b);text-transform:uppercase;letter-spacing:.5px">Casual Leave</div>
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:12px">
+      <div class="card-ttl">Apply for Leave</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+        <div onclick="S.leaveType='Annual Leave';render()" style="border:2px solid ${'{'}S.leaveType==='Annual Leave'?'var(--navy,#1A2642)':'var(--border,#e2e8f0)'{'}'};background:${'{'} S.leaveType==='Annual Leave'?'#f0f2fa':'#fff'{'}'};border-radius:9px;padding:10px;cursor:pointer;text-align:center">
+          <div style="font-size:13px;font-weight:700;color:var(--navy,#1A2642)">Annual Leave</div>
+          <div style="font-size:10px;color:var(--muted,#64748b)">✅ No salary deduction</div>
+        </div>
+        <div onclick="S.leaveType='Casual Leave';render()" style="border:2px solid ${'{'} S.leaveType==='Casual Leave'?'#dc2626':'var(--border,#e2e8f0)'{'}'};background:${'{'} S.leaveType==='Casual Leave'?'#fff5f5':'#fff'{'}'};border-radius:9px;padding:10px;cursor:pointer;text-align:center">
+          <div style="font-size:13px;font-weight:700;color:#dc2626">Casual Leave</div>
+          <div style="font-size:10px;color:var(--muted,#64748b)">⚠️ Salary deducted</div>
+        </div>
+      </div>
+      <div onclick="S.leaveType='Sick Leave';render()" style="border:2px solid ${'{'} S.leaveType==='Sick Leave'?'#b45309':'var(--border,#e2e8f0)'{'}'};background:${'{'} S.leaveType==='Sick Leave'?'#fffbeb':'#fff'{'}'};border-radius:9px;padding:10px;cursor:pointer;text-align:center;margin-bottom:10px">
+        <div style="font-size:13px;font-weight:700;color:#b45309">🤒 Sick Leave</div>
+        <div style="font-size:10px;color:var(--muted,#64748b)">Max 2 days · Deducted from Annual Leave</div>
+      </div>
+      <label class="fl">From Date *</label>
+      <input class="fi" type="date" value="${esc(S.leaveFrom)}" min="${today()}" oninput="S.leaveFrom=this.value;render()">
+      <label class="fl">To Date *</label>
+      <input class="fi" type="date" value="${esc(S.leaveTo)}" min="${S.leaveFrom||today()}" oninput="S.leaveTo=this.value;render()">
+      ${leaveDays>0?`<div style="font-size:12px;color:var(--muted,#64748b);margin-bottom:8px">📅 ${leaveDays} day${leaveDays>1?'s':''} selected</div>`:''}
+      ${notEnoughAnnual?`<div class="alert alert-warn">⚠️ Only ${al} Annual Leave days remaining.</div>`:''}
+      ${notEnoughCasual?`<div class="alert alert-warn">⚠️ Only ${cl} Casual Leave days remaining.</div>`:''}
+      ${sickExceeds2?`<div class="alert alert-warn">⚠️ Sick Leave limited to 2 days per application.</div>`:''}
+      <label class="fl">Reason *</label>
+      <textarea class="ft" rows="3" placeholder="Briefly explain the reason…" oninput="S.leaveReason=this.value">${esc(S.leaveReason)}</textarea>
+      <button class="btn btn-gold" style="margin-top:8px" onclick="submitMgrLeave()" ${disableSubmit?'disabled':''}>
+        ${S.loading?'<span class="spin"></span> Submitting…':'Submit Leave Application'}
+      </button>
+    </div>
+    <div class="card">
+      <div class="card-ttl">My Leave History ${pending?`<span class="tb-cnt">${pending}</span>`:''}</div>
+      ${!leaves.length?`<div class="empty"><div class="empty-icon">🗓️</div><div>No leave applications yet</div></div>`:
+      leaves.slice(0,10).map(l=>`<div class="leave-card">
+        <div class="lc-top">
+          <div><div class="lc-name">${esc(l.leaveType)}</div><div class="lc-dates">📅 ${fmtDate(l.fromDate)} → ${fmtDate(l.toDate)}</div></div>
+          <div class="lc-stat ${l.status==='Approved'?'ok':l.status==='Rejected'?'err':'warn'}">${l.status}</div>
+        </div>
+        <div class="lc-reason">${esc(l.reason||'')}</div>
+      </div>`).join('')}
+    </div>
+  </div>`;
+}
+
+async function submitMgrLeave(){
+  S.loading=true;render();
+  const leave={leaveId:'LV-'+Date.now(),userId:S.user.userId,staffName:S.user.name,location:S.user.location,leaveType:S.leaveType,fromDate:S.leaveFrom,toDate:S.leaveTo,reason:S.leaveReason,submittedAt:new Date().toISOString(),status:'Pending'};
+  await apiData('submitLeave',leave);
+  if(!isBackendSet()){const arr=lsG('fb_leaves_'+S.user.userId,[]);arr.unshift(leave);lsS('fb_leaves_'+S.user.userId,arr.slice(0,30));S.myLeaves=[leave,...S.myLeaves];}
+  else{await loadManagerData();}
+  S.loading=false;S.leaveType='';S.leaveFrom='';S.leaveTo='';S.leaveReason='';
+  alert('Leave application submitted! ✅');
+  render();
+}
+
+function renderMgrAttTab(){
+  if(!S.todayAttAll.length)return`<div class="empty"><div class="empty-icon">✅</div><div>No attendance records for today</div></div>`;
+  return`<div class="card"><div class="card-ttl">Today's Attendance — ${new Date().toLocaleDateString('en-IN',{day:'numeric',month:'short'})}</div>
+    <table><thead><tr><th>Staff</th><th>Location</th><th>Check In</th><th>Check Out</th></tr></thead><tbody>
+    ${S.todayAttAll.map(r=>`<tr>
+      <td>${esc(r.staffName||r['Staff Name'])}</td>
+      <td><span class="badge b-navy" style="font-size:9px">${esc((r.location||r['Location']||'').split(' ')[0])}</span></td>
+      <td>${esc(r.inTime||r['In Time']||'—')}</td>
+      <td>${esc(r.outTime||r['Out Time']||'—')}</td>
+    </tr>`).join('')}
+    </tbody></table>
+  </div>`;
+}
+
+async function logAttendance(type){
+  const timeStr=new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+  if(type==='in'){
+    S.todayAtt={inTime:timeStr,outTime:'',date:today()};
+  } else {
+    S.todayAtt={...S.todayAtt,outTime:timeStr};
+  }
+  lsS('fb_att_'+today(),S.todayAtt);
+  await apiData('logAttendance',{userId:S.user.userId,staffName:S.user.name,location:S.user.location,date:today(),...S.todayAtt,type});
+  render();
+}
+
+/* ════════════════════════════════════════════
+   ADMIN SCREENS
+════════════════════════════════════════════ */
+async function loadAdminData(){
+  if(isBackendSet()){
+    const ro=await api({action:'getOrders',status:'Manager Approved'});
+    if(ro?.orders) S.approvedOrders=ro.orders;
+    const rs=await api({action:'getStaff'});
+    if(rs?.staff) S.allStaff=rs.staff;
+    const rl=await api({action:'getLeaves'});
+    if(rl?.leaves) S.allLeaves=rl.leaves;
+    const rloc=await api({action:'getLocations'});
+    if(rloc?.locations) S.allLocations=rloc.locations;
+  } else {
+    S.approvedOrders=getDemoApproved();
+    S.allStaff=lsG('fb_custom_staff',null)||getDemoStaff();
+    S.allLeaves=getDemoLeaves();
+    S.allLocations=lsG('fb_custom_locations',null)||DEMO_LOCATIONS.slice();
+  }
+  loadCateringEvents();
+}
+
+function renderAdminHome(){
+  const tabs=[{id:'procurement',l:'🛒 Procurement'},{id:'staff',l:'👥 Staff'},{id:'locations',l:'📍 Locations'},{id:'leaves',l:'🗓️ Leaves'},{id:'assignleave',l:'✏️ Assign Leave'},{id:'items',l:'📦 Manage Items'},{id:'events',l:'🎉 Events'},{id:'monthly',l:'📊 Monthly Report'},{id:'ytd',l:'📋 YTD Leaves'}];
+  return`<div class="scr on scr-wide">
+    <div class="id-bar" style="max-width:700px">
+      <div class="id-info"><strong>${esc(S.user.name)}</strong>Master Admin — All Locations</div>
+      <div style="text-align:right"><div style="font-size:11px;opacity:.8;cursor:pointer;text-decoration:underline" onclick="doLogout()">Sign out</div></div>
+    </div>
+    <div class="stat-row">
+      <div class="stat warn"><div class="stat-n">${S.approvedOrders.length}</div><div class="stat-l">Approved Orders</div></div>
+      <div class="stat navy" style="border-color:var(--border)"><div class="stat-n" style="color:var(--navy)">${S.allStaff.length}</div><div class="stat-l">Total Staff</div></div>
+      <div class="stat gold"><div class="stat-n">${S.allLocations.length}</div><div class="stat-l">Locations</div></div>
+      <div class="stat ok"><div class="stat-n">${S.allLeaves.filter(l=>l.status==='Pending'||l['Status']==='Pending').length}</div><div class="stat-l">Leave Pending</div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:14px;max-width:700px">${tabs.map(t=>`
+      <button onclick="S.aTab='${t.id}';render()" style="background:${S.aTab===t.id?'var(--purple2)':'var(--card)'};color:${S.aTab===t.id?'#fff':'var(--txt)'};border:1.5px solid ${S.aTab===t.id?'var(--purple2)':'var(--border)'};border-radius:10px;padding:10px 6px;font-size:11px;font-weight:700;cursor:pointer;text-align:center;line-height:1.4;width:100%">${t.l}</button>`).join('')}
+    </div>
+    ${S.aTab==='procurement'?renderAdmProcurement():S.aTab==='staff'?renderAdmStaff():S.aTab==='locations'?renderAdmLocations():S.aTab==='monthly'?renderAdmMonthlyReport():S.aTab==='ytd'?renderAdmYTD():S.aTab==='items'?renderAdmItems():S.aTab==='assignleave'?renderAdmAssignLeave():S.aTab==='events'?renderUpcomingEvents('admin'):renderAdmLeaves()}
+    <div style="margin-top:14px"><button class="btn btn-out btn-sm" style="width:auto" onclick="loadAdminData().then(()=>{loadCateringEvents();render();})">🔄 Refresh</button></div>
+  </div>`;
+}
+
+
+function renderAdmProcurement(){
+  if(!S.approvedOrders.length)return`<div class="empty"><div class="empty-icon">🛒</div><div>No approved orders pending procurement</div><div style="font-size:12px;margin-top:6px">Orders appear here after Operations Manager approval</div></div>`;
+  const bySup={};
+  S.approvedOrders.forEach(r=>{
+    const sup=r['Supplier']||r.sup||'OTHER';
+    if(!bySup[sup])bySup[sup]=[];
+    bySup[sup].push({orderId:r['Order ID']||r.orderId,loc:r['Location']||r.location,name:r['Item']||r.name,qty:r['Quantity']||r.qty,unit:r['Unit']||r.unit,delivery:r['Delivery Date']||r.deliveryDate,type:r['Order Type']||r.orderType,eventName:r['Event Name']||r.eventName});
+  });
+  return`<div>
+    <div class="alert alert-navy">✅ Operations Manager approved these orders. Mark as Ordered once placed with suppliers.</div>
+    ${SUP_ORDER.filter(s=>bySup[s]).map(s=>`
+      <div class="po-sup-block">
+        <div class="po-sup-hdr">${SUP_META[s]?.e} ${SUP_META[s]?.l||s}<span style="font-size:11px;opacity:.75">${bySup[s].length} items</span></div>
+        <div class="card" style="margin:0;border-radius:0 0 9px 9px">
+          ${bySup[s].map(it=>`<div class="po-item">
+            <input type="checkbox" class="po-chk" id="po-${esc(it.orderId+it.name)}">
+            <div class="po-name">${esc(it.name)}<div class="po-loc">📍 ${esc(it.loc)} · ${fmtDate(it.delivery)} ${it.eventName?'· 🎉 '+it.eventName:''}</div></div>
+            <div class="po-qty">${esc(it.qty)} ${esc(it.unit)}</div>
+          </div>`).join('')}
+        </div>
+      </div>`).join('')}
+    <div class="btn-row" style="margin-top:14px">
+      <button class="btn btn-ok" onclick="markOrdered()">✓ Mark Selected as Ordered</button>
+      <button class="btn btn-navy" onclick="exportPO()">⬇ Export PO</button>
+    </div>
+  </div>`;
+}
+
+async function markOrdered(){
+  const checked=[...document.querySelectorAll('.po-chk:checked')].map(el=>el.id.replace('po-',''));
+  if(!checked.length){alert('Select items to mark as ordered.');return;}
+  await apiData('markOrdered',{items:checked});
+  alert(checked.length+' item(s) marked as Ordered.');
+  loadAdminData().then(render);
+}
+
+function exportPO(){
+  const rows=S.approvedOrders.map(r=>[r['Order ID']||r.orderId,r['Supplier']||r.sup,r['Item']||r.name,r['Quantity']||r.qty,r['Unit']||r.unit,r['Location']||r.location,r['Delivery Date']||r.deliveryDate].join(','));
+  const csv='Order ID,Supplier,Item,Qty,Unit,Location,Delivery\n'+rows.join('\n');
+  const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download='Flenbo_PO_'+today()+'.csv';a.click();
+}
+
+function renderAdmStaff(){
+  const staffList=S.allStaff.length?S.allStaff:DEMO_USERS;
+  return`<div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <h3 style="font-size:14px;font-weight:700">Staff Directory</h3>
+      <button class="btn btn-gold btn-sm" onclick="openStaffModal()">+ Add Staff</button>
+    </div>
+    <div class="card" style="padding:0;overflow:auto">
+    <table><thead><tr><th>Name</th><th>Designation</th><th>Username</th><th>Role</th><th>Location</th><th>Annual Bal</th><th>Casual Bal</th><th>Action</th></tr></thead><tbody>
+    ${staffList.map(s=>`<tr>
+      <td style="font-weight:600">${esc(s.name||s['Name'])}</td>
+      <td style="font-size:11px">${esc(s.profile||s['Profile']||'')}</td>
+      <td style="font-family:monospace;font-size:11px">${esc(s.username||s['Username'])}</td>
+      <td><span class="badge ${(s.role||s['Role'])==='admin'?'b-red':(s.role||s['Role'])==='manager'?'b-purple':'b-navy'}">${esc(s.role||s['Role'])}</span></td>
+      <td style="font-size:11px">${esc(s.location||s['Location'])}</td>
+      <td style="text-align:center;font-weight:700;color:var(--navy)">${(+(s.annualLeave||s['Annual Leave']||0)).toFixed(2)*1}</td>
+      <td style="text-align:center;font-weight:700;color:#dc2626">${(+(s.casualLeave||s['Casual Leave']||0)).toFixed(2)*1}</td>
+      <td><button class="btn btn-xs btn-out" onclick="openEditStaff(${JSON.stringify(s).replace(/"/g,'&quot;')})">Edit</button></td>
+    </tr>`).join('')}
+    </tbody></table></div>
+  </div>`;
+}
+
+function renderAdmLocations(){
+  return`<div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <h3 style="font-size:14px;font-weight:700">Locations</h3>
+      <button class="btn btn-gold btn-sm" onclick="openLocModal()">+ Add Location</button>
+    </div>
+    ${!S.allLocations.length?`<div class="empty"><div class="empty-icon">📍</div><div>No locations added</div></div>`:`
+    <div class="card" style="padding:0">
+    <table><thead><tr><th>#</th><th>Location Name</th></tr></thead><tbody>
+    ${S.allLocations.map((l,i)=>`<tr><td>${i+1}</td><td style="font-weight:600">${esc(l)}</td></tr>`).join('')}
+    </tbody></table></div>`}
+  </div>`;
+}
+
+function renderAdmLeaves(){
+  const leaves=S.allLeaves;
+  if(!leaves.length)return`<div class="empty"><div class="empty-icon">🗓️</div><div>No leave applications</div></div>`;
+  return`<div>
+    <h3 style="font-size:14px;font-weight:700;margin-bottom:12px">All Leave Applications</h3>
+    ${leaves.map(l=>{
+      const su=DEMO_USERS.find(u=>u.userId===(l.userId||l['User ID']))||{};
+      const al=su.annualLeave!=null?su.annualLeave:(l.annualLeaveBalance||0);
+      const cl=su.casualLeave!=null?su.casualLeave:(l.casualLeaveBalance||0);
+      const st=l.status||l['Status']||'Pending';
+      const lType=l.leaveType||l['Leave Type']||'';
+      return`<div class="leave-card">
+      <div class="lc-top">
+        <div>
+          <div class="lc-name">👤 ${esc(l.staffName||l['Staff Name'])} — ${esc(lType)}</div>
+          <div class="lc-dates">📍 ${esc(l.location||l['Location'])} · 📅 ${fmtDate(l.fromDate||l['From Date'])} → ${fmtDate(l.toDate||l['To Date'])}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px">Annual bal: <strong>${(+al).toFixed(2)*1}</strong> · Casual bal: <strong>${(+cl).toFixed(2)*1}</strong></div>
+        </div>
+        <span class="badge ${st==='Approved'?'b-ok':st==='Rejected'?'b-red':'b-warn'}">${st}</span>
+      </div>
+    </div>`;}).join('')}
+  </div>`;
+}
+
+/* Monthly Salary / Attendance Report */
+function renderAdmMonthlyReport(){
+  const now=new Date();
+  const selMonth=S.reportMonth||(now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0'));
+  const monthLeaves=S.allLeaves.filter(l=>{
+    const st=l.status||l['Status']||'';
+    if(st!=='Approved')return false;
+    const fd=l.fromDate||l['From Date']||'';
+    return fd.startsWith(selMonth);
+  });
+  const staffRows=DEMO_USERS.filter(u=>u.role==='staff').map(u=>{
+    const uLeaves=monthLeaves.filter(l=>(l.userId||l['User ID'])===u.userId);
+    let annualDays=0,casualDays=0;
+    uLeaves.forEach(l=>{
+      const fd=new Date(l.fromDate||l['From Date']);
+      const td=new Date(l.toDate||l['To Date']);
+      const days=Math.max(0,Math.round((td-fd)/86400000)+1);
+      if((l.leaveType||l['Leave Type']||'').toLowerCase().includes('annual'))annualDays+=days;
+      else casualDays+=days;
+    });
+    return{...u,annualDays,casualDays};
+  });
+  const csvRows=staffRows.map(r=>[r.name,r.location,r.profile||'',selMonth,r.annualDays,r.casualDays,r.annualDays+r.casualDays,r.casualDays>0?'Deduct '+r.casualDays+' day(s)':'No Deduction'].join(','));
+  const csv='Name,Location,Designation,Month,Annual Leave Days,Casual Leave Days,Total Leave Days,Salary Action\n'+csvRows.join('\n');
+  return`<div>
+    <h3 style="font-size:14px;font-weight:700;margin-bottom:10px">📊 Monthly Salary & Attendance Report</h3>
+    <div style="display:flex;gap:9px;align-items:flex-end;margin-bottom:12px;flex-wrap:wrap">
+      <div>
+        <label class="fl" style="margin-bottom:3px">Select Month</label>
+        <input type="month" class="fi" style="width:auto;min-width:160px" value="${selMonth}" oninput="S.reportMonth=this.value;render()">
+      </div>
+      <a href="data:text/csv;charset=utf-8,${encodeURIComponent(csv)}" download="Flenbo_Monthly_Payroll_${selMonth}.csv"
+         style="display:inline-flex;align-items:center;gap:6px;padding:10px 15px;background:var(--navy);color:#fff;border-radius:8px;font-size:13px;font-weight:700;text-decoration:none">
+        ⬇ Export CSV
+      </a>
+    </div>
+    <div class="card" style="padding:0;overflow:auto">
+    <table><thead><tr><th>Staff Name</th><th>Designation</th><th>Location</th><th style="text-align:center">Annual<br>Leave Days</th><th style="text-align:center">Casual<br>Leave Days</th><th>Salary Action</th></tr></thead><tbody>
+    ${staffRows.map(r=>`<tr>
+      <td style="font-weight:600">${esc(r.name)}</td>
+      <td style="font-size:11px">${esc(r.profile||'')}</td>
+      <td><span class="badge b-navy" style="font-size:9px">${esc((r.location||'').split(' ')[0])}</span></td>
+      <td style="text-align:center;font-weight:700;color:${r.annualDays>0?'var(--navy)':'var(--muted)'}">${r.annualDays||'—'}</td>
+      <td style="text-align:center;font-weight:700;color:${r.casualDays>0?'#dc2626':'var(--muted)'}">${r.casualDays||'—'}</td>
+      <td style="font-size:12px">${r.casualDays>0?`<span style="color:#dc2626;font-weight:700">Deduct ${r.casualDays} day(s)</span>`:'<span style="color:var(--green)">No Deduction</span>'}</td>
+    </tr>`).join('')}
+    </tbody></table>
+    </div>
+    <div class="alert" style="margin-top:12px;font-size:12px;background:#f0f2fa;border-color:var(--navy2);color:var(--navy)">
+      ℹ️ <strong>Annual Leave</strong> — no salary deduction; balance reduced. &nbsp; <strong>Casual Leave</strong> — salary deducted for absent days; paid leave balance stays intact.
+    </div>
+  </div>`;
+}
+
+/* Year-to-Date Leave Summary */
+function renderAdmYTD(){
+  const yr=new Date().getFullYear();
+  const yearLeaves=S.allLeaves.filter(l=>{
+    const fd=l.fromDate||l['From Date']||'';
+    return fd.startsWith(String(yr))&&(l.status||l['Status']||'')==='Approved';
+  });
+  const staffRows=DEMO_USERS.filter(u=>u.role==='staff').map(u=>{
+    const uLeaves=yearLeaves.filter(l=>(l.userId||l['User ID'])===u.userId);
+    let annualTotal=0,casualTotal=0;
+    uLeaves.forEach(l=>{
+      const fd=new Date(l.fromDate||l['From Date']);
+      const td=new Date(l.toDate||l['To Date']);
+      const days=Math.max(0,Math.round((td-fd)/86400000)+1);
+      if((l.leaveType||l['Leave Type']||'').toLowerCase().includes('annual'))annualTotal+=days;
+      else casualTotal+=days;
+    });
+    return{...u,annualTotal,casualTotal};
+  });
+  const csv='Name,Location,Designation,Year,Annual Taken,Casual Taken,Total Taken,Annual Balance,Casual Balance\n'+
+    staffRows.map(r=>[r.name,r.location,r.profile||'',yr,r.annualTotal,r.casualTotal,r.annualTotal+r.casualTotal,r.annualLeave||0,r.casualLeave||0].join(',')).join('\n');
+  return`<div>
+    <h3 style="font-size:14px;font-weight:700;margin-bottom:10px">📋 Year-to-Date Leave Summary — ${yr}</h3>
+    <div style="margin-bottom:12px">
+      <a href="data:text/csv;charset=utf-8,${encodeURIComponent(csv)}" download="Flenbo_YTD_Leaves_${yr}.csv"
+         style="display:inline-flex;align-items:center;gap:6px;padding:10px 15px;background:var(--navy);color:#fff;border-radius:8px;font-size:13px;font-weight:700;text-decoration:none">
+        ⬇ Export CSV
+      </a>
+    </div>
+    <div class="card" style="padding:0;overflow:auto">
+    <table><thead><tr><th>Staff Name</th><th>Location</th><th style="text-align:center">Annual<br>Taken</th><th style="text-align:center">Casual<br>Taken</th><th style="text-align:center">Total<br>Taken</th><th style="text-align:center">Annual<br>Balance</th><th style="text-align:center">Casual<br>Balance</th></tr></thead><tbody>
+    ${staffRows.map(r=>`<tr>
+      <td style="font-weight:600">${esc(r.name)}</td>
+      <td><span class="badge b-navy" style="font-size:9px">${esc((r.location||'').split(' ')[0])}</span></td>
+      <td style="text-align:center;font-weight:700">${r.annualTotal||0}</td>
+      <td style="text-align:center;font-weight:700;color:${r.casualTotal>0?'#dc2626':'inherit'}">${r.casualTotal||0}</td>
+      <td style="text-align:center;font-weight:800">${(r.annualTotal||0)+(r.casualTotal||0)}</td>
+      <td style="text-align:center;font-weight:700;color:var(--navy)">${(+(r.annualLeave||0)).toFixed(2)*1}</td>
+      <td style="text-align:center;font-weight:700;color:${(+(r.casualLeave||0))>0?'#dc2626':'var(--muted)'}">${(+(r.casualLeave||0)).toFixed(2)*1}</td>
+    </tr>`).join('')}
+    </tbody></table>
+    </div>
+  </div>`;
+}
+
+/* ════════════════════════════════════════════
+   ADMIN — MANAGE ITEMS
+════════════════════════════════════════════ */
+function renderAdmItems(){
+  const custom=lsG('fb_custom_items',[]);
+  const sups=[...SUP_ORDER,'CUSTOM'];
+  const supMeta={...SUP_META,CUSTOM:{e:'➕',l:'Custom'}};
+  const bySup={};
+  custom.forEach(i=>{if(!bySup[i.sup])bySup[i.sup]=[];bySup[i.sup].push(i);});
+  return`<div>
+    <div class="card" style="margin-bottom:12px">
+      <div class="card-ttl">Add New Ration Item</div>
+      <label class="fl">Supplier / Category *</label>
+      <select class="fi" id="ni-sup">
+        ${SUP_ORDER.map(s=>`<option value="${s}">${supMeta[s]?.l||s}</option>`).join('')}
+        <option value="CUSTOM">Custom / Other</option>
+      </select>
+      <label class="fl">Item Category *</label>
+      <input class="fi" id="ni-cat" placeholder="e.g. 🥦 Vegetables & Produce">
+      <label class="fl">Item Name *</label>
+      <input class="fi" id="ni-name" placeholder="e.g. Broccoli">
+      <label class="fl">Unit *</label>
+      <select class="fi" id="ni-unit">
+        ${UNITS.map(u=>`<option value="${u}">${u}</option>`).join('')}
+      </select>
+      <button class="btn btn-navy" style="margin-top:10px" onclick="addCustomItem()">+ Add Item</button>
+    </div>
+    ${custom.length?`
+    <div class="card">
+      <div class="card-ttl">Custom Items Added (${custom.length})</div>
+      ${custom.map((it,i)=>`
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f0f2f8;font-size:13px">
+        <div><strong>${esc(it.name)}</strong> <span style="color:var(--muted)">${it.unit} · ${it.cat||it.sup}</span></div>
+        <button onclick="removeCustomItem(${i})" style="background:none;border:none;color:#dc2626;cursor:pointer;font-size:16px">✕</button>
+      </div>`).join('')}
+    </div>`:''}
+  </div>`;
+}
+
+function addCustomItem(){
+  const sup=document.getElementById('ni-sup')?.value||'CUSTOM';
+  const cat=document.getElementById('ni-cat')?.value?.trim();
+  const name=document.getElementById('ni-name')?.value?.trim();
+  const unit=document.getElementById('ni-unit')?.value||'KG';
+  if(!name||!cat){alert('Please enter item name and category.');return;}
+  const custom=lsG('fb_custom_items',[]);
+  if(custom.find(i=>i.name.toLowerCase()===name.toLowerCase())){alert('Item already exists.');return;}
+  custom.push({sup,cat,name,unit,custom:true});
+  lsS('fb_custom_items',custom);
+  render();
+}
+
+function removeCustomItem(idx){
+  if(!confirm('Remove this item?'))return;
+  const custom=lsG('fb_custom_items',[]);
+  custom.splice(idx,1);
+  lsS('fb_custom_items',custom);
+  render();
+}
+
+/* ════════════════════════════════════════════
+   ADMIN — ASSIGN LEAVE TO STAFF
+════════════════════════════════════════════ */
+function renderAdmAssignLeave(){
+  const staff=[...DEMO_USERS.filter(u=>u.userId!==S.user.userId)];
+  const al=(S.admLeaveFrom&&S.admLeaveTo)?Math.max(0,Math.round((new Date(S.admLeaveTo)-new Date(S.admLeaveFrom))/(86400000))+1):0;
+  return`<div>
+    <div class="card">
+      <div class="card-ttl">Assign Leave to Staff</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:12px">Use this to record leave on behalf of a staff member who missed applying.</div>
+      <label class="fl">Select Staff Member *</label>
+      <select class="fi" onchange="S.admLeaveStaff=this.value;render()">
+        <option value="">— Select staff —</option>
+        ${staff.map(u=>`<option value="${u.userId}" ${S.admLeaveStaff===u.userId?'selected':''}>${esc(u.name)} · ${esc(u.profile||u.location)}</option>`).join('')}
+      </select>
+      <label class="fl">Leave Type *</label>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px">
+        ${LEAVE_TYPES.map(lt=>`<div onclick="S.admLeaveType='${lt}';render()" style="border:2px solid ${S.admLeaveType===lt?'var(--navy)':'var(--border)'};background:${S.admLeaveType===lt?'#f0f2fa':'#fff'};border-radius:9px;padding:9px;cursor:pointer;text-align:center;font-size:12px;font-weight:700">${lt}</div>`).join('')}
+      </div>
+      <label class="fl">From Date *</label>
+      <input class="fi" type="date" value="${esc(S.admLeaveFrom||'')}" oninput="S.admLeaveFrom=this.value;render()">
+      <label class="fl">To Date *</label>
+      <input class="fi" type="date" value="${esc(S.admLeaveTo||'')}" min="${S.admLeaveFrom||''}" oninput="S.admLeaveTo=this.value;render()">
+      ${al>0?`<div style="font-size:12px;color:var(--muted);margin-bottom:8px">📅 ${al} day${al>1?'s':''} selected</div>`:''}
+      ${S.admLeaveType==='Sick Leave'&&al>2?`<div class="alert alert-warn">⚠️ Sick Leave max 2 days per application.</div>`:''}
+      <label class="fl">Reason *</label>
+      <textarea class="ft" rows="2" placeholder="Reason for leave…" oninput="S.admLeaveReason=this.value">${esc(S.admLeaveReason||'')}</textarea>
+      <label class="fl" style="margin-top:8px">Status</label>
+      <select class="fi" onchange="S.admLeaveStatus=this.value">
+        <option value="Approved" ${(S.admLeaveStatus||'Approved')==='Approved'?'selected':''}>Approved</option>
+        <option value="Pending" ${S.admLeaveStatus==='Pending'?'selected':''}>Pending (awaiting review)</option>
+      </select>
+    </div>
+    <button class="btn btn-gold" onclick="submitAdminLeave()"
+      ${!S.admLeaveStaff||!S.admLeaveType||!S.admLeaveFrom||!S.admLeaveTo||!S.admLeaveReason||(S.admLeaveType==='Sick Leave'&&al>2)?'disabled':''}>
+      ✅ Record Leave
+    </button>
+  </div>`;
+}
+
+async function submitAdminLeave(){
+  if(!S.admLeaveStaff||!S.admLeaveType||!S.admLeaveFrom||!S.admLeaveTo||!S.admLeaveReason)return;
+  const target=DEMO_USERS.find(u=>u.userId===S.admLeaveStaff);
+  const leave={
+    leaveId:'LV-ADM-'+Date.now(),
+    userId:S.admLeaveStaff,
+    staffName:target?.name||S.admLeaveStaff,
+    location:target?.location||'',
+    leaveType:S.admLeaveType,
+    fromDate:S.admLeaveFrom,
+    toDate:S.admLeaveTo,
+    reason:S.admLeaveReason,
+    submittedAt:new Date().toISOString(),
+    status:S.admLeaveStatus||'Approved',
+    managerNote:'Recorded by Admin'
+  };
+  S.loading=true;render();
+  await apiData('submitLeave',leave);
+  S.loading=false;
+  S.admLeaveStaff='';S.admLeaveType='';S.admLeaveFrom='';S.admLeaveTo='';S.admLeaveReason='';S.admLeaveStatus='Approved';
+  alert('✅ Leave recorded successfully for '+leave.staffName);
+  await loadAdminData();
+  render();
+}
+
+/* ════════════════════════════════════════════
+   MODALS
+════════════════════════════════════════════ */
+function renderModals(){
+  return renderStaffModal()+renderLocModal()+renderEventDetailModal();
+}
+
+function renderStaffModal(){
+  if(!S.showStaffModal)return`<div class="modal-bg" id="staff-modal"></div>`;
+  const s=S.editStaff||{};
+  return`<div class="modal-bg open" id="staff-modal" onclick="if(event.target===this)closeStaffModal()">
+    <div class="modal">
+      <div class="modal-hdr"><div class="modal-ttl">${s.userId?'Edit':'Add New'} Staff Member</div><button class="modal-close" onclick="closeStaffModal()">✕</button></div>
+      <div class="modal-body">
+        <label class="fl">Full Name *</label><input class="fi" id="sm-name" value="${esc(s.name||s['Name']||'')}">
+        <label class="fl">Designation / Profile</label><input class="fi" id="sm-profile" value="${esc(s.profile||s['Profile']||'')}">
+        <label class="fl">Username *</label><input class="fi" id="sm-user" value="${esc(s.username||s['Username']||'')}" ${s.userId?'disabled':''} placeholder="Lowercase, no spaces">
+        <label class="fl">Password *</label><input class="fi" type="text" id="sm-pw" value="${esc(s.password||s['Password']||'')}" placeholder="Set a password">
+        <label class="fl">Role *</label>
+        <select class="fi" id="sm-role">
+          <option value="staff" ${(s.role||s['Role'])==='staff'?'selected':''}>Staff (Requestor)</option>
+          <option value="manager" ${(s.role||s['Role'])==='manager'?'selected':''}>Operations Manager</option>
+          <option value="admin" ${(s.role||s['Role'])==='admin'?'selected':''}>Master Admin</option>
+        </select>
+        <label class="fl">Location *</label>
+        <select class="fi" id="sm-loc">
+          ${[...S.allLocations,...DEMO_LOCATIONS,'Corporate'].filter((v,i,a)=>a.indexOf(v)===i).map(l=>`<option ${(s.location||s['Location'])===l?'selected':''}>${l}</option>`).join('')}
+        </select>
+        <label class="fl">Phone</label><input class="fi" id="sm-phone" type="tel" value="${esc(s.phone||s['Phone']||'')}">
+        <label class="fl">Join Date</label><input class="fi" type="date" id="sm-join" value="${esc(s.joinDate||s['Join Date']||'')}">
+        <label class="fl">Annual Leave Balance</label><input class="fi" type="number" id="sm-al" value="${esc(s.annualLeave!=null?s.annualLeave:(s['Annual Leave']||0))}" step="0.25" min="0" max="15">
+        <label class="fl">Casual Leave Balance</label><input class="fi" type="number" id="sm-cl" value="${esc(s.casualLeave!=null?s.casualLeave:(s['Casual Leave']||0))}" step="0.25" min="0">
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-out btn-sm" onclick="closeStaffModal()">Cancel</button>
+        <button class="btn btn-navy btn-sm" onclick="saveStaff()">💾 Save</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function openStaffModal(){S.showStaffModal=true;S.editStaff=null;render();}
+function openEditStaff(s){S.showStaffModal=true;S.editStaff=s;render();}
+function closeStaffModal(){S.showStaffModal=false;S.editStaff=null;render();}
+
+async function saveStaff(){
+  const s=S.editStaff||{};
+  const data={
+    userId:s.userId||'U-'+Date.now(),
+    name:document.getElementById('sm-name').value.trim(),
+    profile:document.getElementById('sm-profile').value.trim(),
+    username:document.getElementById('sm-user').value.trim().toLowerCase(),
+    password:document.getElementById('sm-pw').value.trim(),
+    role:document.getElementById('sm-role').value,
+    location:document.getElementById('sm-loc').value,
+    phone:document.getElementById('sm-phone').value.trim(),
+    joinDate:document.getElementById('sm-join').value,
+    annualLeave:parseFloat(document.getElementById('sm-al').value)||0,
+    casualLeave:parseFloat(document.getElementById('sm-cl').value)||0,
+    status:'Active',
+  };
+  if(!data.name||!data.username||!data.password){alert('Name, username and password are required.');return;}
+  await apiData(s.userId?'updateStaff':'addStaff',data);
+  if(!isBackendSet()){
+    if(s.userId){const i=S.allStaff.findIndex(x=>x.userId===s.userId);if(i>=0)S.allStaff[i]=data;else S.allStaff.push(data);}
+    else S.allStaff.push(data);
+    lsS('fb_custom_staff',S.allStaff);
+  }else{await loadAdminData();}
+  closeStaffModal();
+}
+
+function renderLocModal(){
+  if(!S.showLocModal)return`<div class="modal-bg" id="loc-modal"></div>`;
+  return`<div class="modal-bg open" id="loc-modal" onclick="if(event.target===this)closeLocModal()">
+    <div class="modal">
+      <div class="modal-hdr"><div class="modal-ttl">Add New Location</div><button class="modal-close" onclick="closeLocModal()">✕</button></div>
+      <div class="modal-body">
+        <label class="fl">Location Name *</label>
+        <input class="fi" id="lm-name" placeholder="e.g. Prestige Heights">
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-out btn-sm" onclick="closeLocModal()">Cancel</button>
+        <button class="btn btn-navy btn-sm" onclick="saveLoc()">💾 Save</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function openLocModal(){S.showLocModal=true;render();}
+function closeLocModal(){S.showLocModal=false;render();}
+async function saveLoc(){
+  const name=document.getElementById('lm-name').value.trim();
+  if(!name){alert('Location name is required.');return;}
+  await apiData('addLocation',{name});
+  if(!isBackendSet()){
+    S.allLocations.push(name);
+    lsS('fb_custom_locations',S.allLocations);
+  } else {
+    await loadAdminData();
+  }
+  closeLocModal();
+}
+
+/* doLogout kept from original */
+
+/* ════════════════════════════════════════════
+   UPCOMING CATERING EVENTS
+════════════════════════════════════════════ */
+function getLocalCateringEvents(){
+  const all=lsG('fb_catering_events',[]);
+  const t=today();
+  return all.filter(e=>e.eventDate>=t).sort((a,b)=>a.eventDate.localeCompare(b.eventDate));
+}
+
+async function loadCateringEvents(){
+  if(isBackendSet()){
+    const r=await api({action:'getCateringEvents'});
+    if(r?.events&&r.events.length) S.upcomingEvents=r.events;
+    else S.upcomingEvents=getLocalCateringEvents();
+  } else {
+    S.upcomingEvents=getLocalCateringEvents();
+  }
+}
+
+function daysUntil(dateStr){
+  if(!dateStr)return null;
+  const diff=Math.round((new Date(dateStr+'T00:00:00')-new Date(today()+'T00:00:00'))/86400000);
+  return diff;
+}
+
+function renderUpcomingEvents(role){
+  const {upcomingEvents}=S;
+  const isPriv=role==='admin'||role==='manager';
+  const today3=upcomingEvents.filter(e=>{const d=daysUntil(e.eventDate);return d!==null&&d<=3;}).length;
+  return`<div class="ev-section">
+    <div class="ev-section-hdr">
+      <div class="ev-section-ttl">🎉 Upcoming Catering Events</div>
+      ${upcomingEvents.length?`<span class="ev-count">${upcomingEvents.length} event${upcomingEvents.length>1?'s':''}</span>`:''}
+    </div>
+    ${!upcomingEvents.length
+      ?`<div class="card" style="text-align:center;padding:22px 16px">
+          <div style="font-size:32px;margin-bottom:8px">🎉</div>
+          <div style="font-size:13px;color:var(--muted)">No upcoming catering events</div>
+        </div>`
+      :upcomingEvents.map((ev,i)=>{
+          const d=daysUntil(ev.eventDate);
+          const urgentClass=d!==null&&d<=1?'b-red':d<=3?'b-warn':'b-muted';
+          const dLabel=d===0?'TODAY':d===1?'TOMORROW':d!==null?`In ${d} days`:'';
+          return`<div class="ev-card">
+            <div class="ev-card-hdr">
+              <div class="ev-card-name">${esc(ev.eventType)} — ${esc(ev.eventName)}</div>
+              <div class="ev-card-meta">
+                <span class="ev-pill">📅 ${fmtDate(ev.eventDate)}</span>
+                <span class="ev-pill">🕐 ${esc(ev.eventTime)}</span>
+                <span class="ev-pill">👥 ${esc(ev.pax)} PAX</span>
+                ${dLabel?`<span class="ev-pill" style="background:${d<=1?'rgba(220,38,38,.3)':d<=3?'rgba(217,119,6,.3)':'rgba(255,255,255,.15)'}">${dLabel}</span>`:''}
+              </div>
+            </div>
+            <div class="ev-card-body">
+              <div style="flex:1;min-width:0">
+                <div class="ev-loc">📍 ${esc(ev.eventLocation)}</div>
+                ${isPriv?`<div style="font-size:12px;color:var(--muted);margin-top:3px">👤 ${esc(ev.eventClient)} &nbsp;·&nbsp; 📞 ${esc(ev.eventPhone)}</div>`:''}
+              </div>
+              <button class="btn btn-out btn-xs" onclick="S.eventDetail=${i};render()" style="flex-shrink:0">Details →</button>
+            </div>
+          </div>`;
+        }).join('')}
+  </div>`;
+}
+
+function renderEventDetailModal(){
+  if(S.eventDetail===null)return`<div class="modal-bg" id="ev-modal"></div>`;
+  const ev=S.upcomingEvents[S.eventDetail];
+  if(!ev)return`<div class="modal-bg" id="ev-modal"></div>`;
+  const role=S.user?.role||'staff';
+  const isPriv=role==='admin'||role==='manager';
+  const d=daysUntil(ev.eventDate);
+  const dLabel=d===0?'TODAY — ':d===1?'TOMORROW — ':d!==null&&d>0?`In ${d} days — `:'';
+  return`<div class="modal-bg open" id="ev-modal" onclick="if(event.target===this){S.eventDetail=null;render()}">
+    <div class="modal" style="max-width:480px">
+      <div class="modal-hdr" style="background:linear-gradient(135deg,var(--purple2),#4c1d95);color:#fff;border-radius:14px 14px 0 0">
+        <div>
+          <div class="modal-ttl" style="color:#fff">${esc(ev.eventType)}</div>
+          <div style="font-size:12px;opacity:.85;margin-top:2px">${esc(ev.eventName)}</div>
+        </div>
+        <button class="modal-close" style="color:#fff" onclick="S.eventDetail=null;render()">✕</button>
+      </div>
+      <div class="modal-body" style="padding:0">
+        <div style="background:var(--purple-bg);padding:10px 16px;font-size:12px;color:var(--purple2);font-weight:700">
+          ${dLabel}${fmtDate(ev.eventDate)} &nbsp;·&nbsp; ${esc(ev.eventTime)}
+        </div>
+        <div style="padding:14px 16px">
+          <div class="ev-detail-row"><span class="ev-detail-label">Event Date</span><span class="ev-detail-val">${fmtDate(ev.eventDate)}</span></div>
+          <div class="ev-detail-row"><span class="ev-detail-label">Time Slot</span><span class="ev-detail-val">${esc(ev.eventTime)}</span></div>
+          <div class="ev-detail-row"><span class="ev-detail-label">Location</span><span class="ev-detail-val">${esc(ev.eventLocation)}</span></div>
+          <div class="ev-detail-row"><span class="ev-detail-label">Guests (PAX)</span><span class="ev-detail-val" style="font-size:16px;font-weight:800;color:var(--purple2)">${esc(ev.pax)}</span></div>
+          ${isPriv?`
+          <div class="ev-detail-row"><span class="ev-detail-label">Client Name</span><span class="ev-detail-val">${esc(ev.eventClient)}</span></div>
+          <div class="ev-detail-row"><span class="ev-detail-label">Client Phone</span><span class="ev-detail-val"><a href="tel:${esc(ev.eventPhone)}" style="color:var(--navy);text-decoration:none;font-weight:700">📞 ${esc(ev.eventPhone)}</a></span></div>`:''}
+          <div class="ev-detail-row"><span class="ev-detail-label">Ration Delivery</span><span class="ev-detail-val">${fmtDate(ev.deliveryDate)}</span></div>
+          ${ev.remarks?`<div class="ev-detail-row"><span class="ev-detail-label">Notes</span><span class="ev-detail-val">${esc(ev.remarks)}</span></div>`:''}
+          <div class="ev-detail-row"><span class="ev-detail-label">Submitted by</span><span class="ev-detail-val">${esc(ev.staffName)}</span></div>
+          <div class="ev-detail-row"><span class="ev-detail-label">Status</span><span class="ev-detail-val"><span class="badge ${ev.status==='Pending'?'b-warn':ev.status==='Manager Approved'?'b-ok':'b-red'}">${esc(ev.status||'Pending')}</span></span></div>
+          ${ev.items&&ev.items.length?`
+          <div style="margin-top:12px">
+            <div class="card-ttl" style="margin-bottom:8px">Ration Items (${ev.items.length})</div>
+            <div class="ev-items-list">
+              ${ev.items.map(it=>`<div class="ev-item-row"><span>${esc(it.name)}</span><span style="font-weight:700;color:var(--navy)">${it.qty} ${it.unit}</span></div>`).join('')}
+            </div>
+          </div>`:''}
+        </div>
+      </div>
+      <div class="modal-footer"><button class="btn btn-navy btn-sm" onclick="S.eventDetail=null;render()">Close</button></div>
+    </div>
+  </div>`;
+}
+
+/* ════════════════════════════════════════════
+   DEMO DATA
+════════════════════════════════════════════ */
+function getDemoOrders(){
+  return lsG('fb_demo_orders',[]).map(o=>({...o,status:o.status||'Pending'}));
+}
+function getDemoApproved(){
+  return lsG('fb_demo_orders',[]).filter(o=>o.status==='Manager Approved').flatMap(o=>(o.items||[]).map(it=>({...it,...o,status:'Manager Approved'})));
+}
+function getDemoLeaves(){
+  const all=[];
+  DEMO_USERS.forEach(u=>{const arr=lsG('fb_leaves_'+u.userId,[]);all.push(...arr);});
+  return all.sort((a,b)=>b.submittedAt>a.submittedAt?1:-1);
+}
+function getDemoStaff(){return DEMO_USERS;}
+function getDemoAttAll(){return lsG('fb_att_all_'+today(),[]);}
+
+
+function doLogout(){
+  lsS('fb_session',null);
+  S.user=null;S.myLeaves=[];S.todayAtt=null;
+  S.pendingOrders=[];S.pendingLeaves=[];S.todayAttAll=[];
+  S.approvedOrders=[];S.allStaff=[];S.allLeaves=[];S.allLocations=[];
+  S.upcomingEvents=[];S.eventDetail=null;
+  S.loginUser='';S.loginPw='';S.loginError='';
+  go('login');
+}
+
+/* ════════════════════════════════════════════
+   INIT
+════════════════════════════════════════════ */
+function doLogout(){
+  lsS('fb_session',null);
+  S.user=null;S.myLeaves=[];S.todayAtt=null;
+  S.pendingOrders=[];S.pendingLeaves=[];S.todayAttAll=[];
+  S.approvedOrders=[];S.allStaff=[];S.allLeaves=[];S.allLocations=[];
+  S.loginUser='';S.loginPw='';S.loginError='';
+  go('login');
+}
+
+/* ════════════════════════════════════════════
+   INIT
+════════════════════════════════════════════ */
+async function loadUserData(){
+  if(!S.user)return;
+  const uid=S.user.userId;
+  if(isBackendSet()){
+    const rl=await api({action:'getLeaves',userId:uid});
+    if(rl?.leaves)S.myLeaves=rl.leaves;
+    const ra=await api({action:'getAttendance',userId:uid,date:today()});
+    if(ra?.record)S.todayAtt=ra.record;
+    if(S.user.role==='manager'||S.user.role==='admin') await loadManagerData();
+    if(S.user.role==='admin') await loadAdminData();
+  }else{
+    S.myLeaves=lsG('fb_leaves_'+uid,[]);
+    S.todayAtt=lsG('fb_att_'+today(),null);
+    if(S.user.role==='manager'||S.user.role==='admin'){
+      S.pendingOrders=lsG('fb_demo_orders',[]).filter(o=>o.status==='Pending');
+      S.pendingLeaves=getDemoLeaves().filter(l=>l.status==='Pending');
+      S.todayAttAll=getDemoAttAll();
+    }
+    if(S.user.role==='admin'){
+      S.approvedOrders=getDemoApproved();
+      S.allStaff=lsG('fb_custom_staff',null)||getDemoStaff();
+      S.allLeaves=getDemoLeaves();
+      S.allLocations=lsG('fb_custom_locations',null)||DEMO_LOCATIONS.slice();
+    }
+  }
+}
+
+window.addEventListener('DOMContentLoaded',async()=>{
+  const saved=lsG('fb_session',null);
+  if(saved){
+    S.user=saved;
+    await loadUserData();
+    go(homeScreen());
+  }else{
+    go('login');
+  }
+});
+</script>
+</body>
+</html>
