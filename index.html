@@ -393,7 +393,7 @@ for(const[sup,cats] of Object.entries(ITEMS))
   for(const[cat,items] of Object.entries(cats))
     items.forEach(([name,unit])=>ALL_FLAT.push({sup,cat,name,unit}));
 function getAllItems(){
-  const custom=lsG('fb_custom_items',[]);
+  const custom=S.customItems.length?S.customItems:lsG('fb_custom_items',[]);
   return [...ALL_FLAT,...custom];
 }
 
@@ -462,6 +462,8 @@ let S = {
   // events
   upcomingEvents:[],
   eventDetail:null,
+  // custom items (synced from backend)
+  customItems:[],
   // ui
   loading:false,error:'',loginError:'',
   loginUser:'',loginPw:'',showPw:false,
@@ -476,7 +478,7 @@ function genId(loc){const l=(loc||'').includes('Nawada')?'NAW':(loc||'').include
 function cartCount(){return Object.values(S.cart).filter(v=>v.qty>0).length;}
 function cartItems(){const a=[];for(const[k,v]of Object.entries(S.cart)){if(v.qty>0){const[sup,cat,name]=k.split('|');a.push({sup,cat,name,qty:v.qty,unit:v.unit});}}return a;}
 function esc(s){if(s==null)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
-function isBackendSet(){return CFG.BACKEND_URL&&CFG.BACKEND_URL!=='https://script.google.com/macros/s/AKfycbzboKx0FesXXp3k4MOCfYwyjAnYgCbDFd_-8mI-D_tngA_1v1JIe0uQeB_qipBpj4zNTg/exec';}
+function isBackendSet(){return !!(CFG.BACKEND_URL&&CFG.BACKEND_URL.startsWith('https://script.google.com'));}
 /* ════════════════════════════════════════════
    API
 ════════════════════════════════════════════ */
@@ -705,6 +707,8 @@ async function loadStaffData(){
     if(r?.record) S.todayAtt=r.record;
     const rl=await api({action:'getLeaves',userId:user.userId});
     if(rl?.leaves) S.myLeaves=rl.leaves;
+    const rci=await api({action:'getCustomItems'});
+    if(rci?.items){S.customItems=rci.items;lsS('fb_custom_items',rci.items);}
   } else {
     S.todayAtt=lsG('fb_att_'+today(),null);
     S.myLeaves=lsG('fb_leaves_'+user.userId,[]);
@@ -1444,11 +1448,14 @@ async function loadAdminData(){
     if(rl?.leaves) S.allLeaves=rl.leaves;
     const rloc=await api({action:'getLocations'});
     if(rloc?.locations) S.allLocations=rloc.locations;
+    const rci2=await api({action:'getCustomItems'});
+    if(rci2?.items){S.customItems=rci2.items;lsS('fb_custom_items',rci2.items);}
   } else {
     S.approvedOrders=getDemoApproved();
     S.allStaff=lsG('fb_custom_staff',null)||getDemoStaff();
     S.allLeaves=getDemoLeaves();
     S.allLocations=lsG('fb_custom_locations',null)||DEMO_LOCATIONS.slice();
+    S.customItems=lsG('fb_custom_items',[]);
   }
   loadCateringEvents();
 }
@@ -1682,14 +1689,12 @@ function renderAdmYTD(){
    ADMIN — MANAGE ITEMS
 ════════════════════════════════════════════ */
 function renderAdmItems(){
-  const custom=lsG('fb_custom_items',[]);
-  const sups=[...SUP_ORDER,'CUSTOM'];
+  const custom=S.customItems;
   const supMeta={...SUP_META,CUSTOM:{e:'➕',l:'Custom'}};
-  const bySup={};
-  custom.forEach(i=>{if(!bySup[i.sup])bySup[i.sup]=[];bySup[i.sup].push(i);});
   return`<div>
     <div class="card" style="margin-bottom:12px">
       <div class="card-ttl">Add New Ration Item</div>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:10px">Items added here appear in the ration request list for all staff and are saved to the spreadsheet.</p>
       <label class="fl">Supplier / Category *</label>
       <select class="fi" id="ni-sup">
         ${SUP_ORDER.map(s=>`<option value="${s}">${supMeta[s]?.l||s}</option>`).join('')}
@@ -1707,37 +1712,52 @@ function renderAdmItems(){
     </div>
     ${custom.length?`
     <div class="card">
-      <div class="card-ttl">Custom Items Added (${custom.length})</div>
+      <div class="card-ttl">Custom Items Added (${custom.length}) — Saved to Spreadsheet</div>
       ${custom.map((it,i)=>`
       <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f0f2f8;font-size:13px">
-        <div><strong>${esc(it.name)}</strong> <span style="color:var(--muted)">${it.unit} · ${it.cat||it.sup}</span></div>
+        <div><strong>${esc(it.name)}</strong> <span style="color:var(--muted)">${it.unit} · ${esc(it.cat||it.sup)}</span></div>
         <button onclick="removeCustomItem(${i})" style="background:none;border:none;color:#dc2626;cursor:pointer;font-size:16px">✕</button>
       </div>`).join('')}
-    </div>`:''}
+    </div>`:'<div class="card" style="color:var(--muted);font-size:13px;text-align:center;padding:20px">No custom items yet. Add items above to extend the ration list.</div>'}
   </div>`;
 }
 
-function addCustomItem(){
+async function addCustomItem(){
   const sup=document.getElementById('ni-sup')?.value||'CUSTOM';
   const cat=document.getElementById('ni-cat')?.value?.trim();
   const name=document.getElementById('ni-name')?.value?.trim();
   const unit=document.getElementById('ni-unit')?.value||'KG';
   if(!name||!cat){alert('Please enter item name and category.');return;}
-  const custom=lsG('fb_custom_items',[]);
-  if(custom.find(i=>i.name.toLowerCase()===name.toLowerCase())){alert('Item already exists.');return;}
-  custom.push({sup,cat,name,unit,custom:true});
-  lsS('fb_custom_items',custom);
+  if(S.customItems.find(i=>i.name.toLowerCase()===name.toLowerCase())){alert('Item already exists.');return;}
+  const newItem={sup,cat,name,unit,custom:true};
+  if(isBackendSet()){
+    const r=await apiData('addCustomItem',newItem);
+    if(r?.success||r?.items){
+      S.customItems=r.items||[...S.customItems,newItem];
+      lsS('fb_custom_items',S.customItems);
+    } else {alert('Failed to save item. Please try again.');}
+  } else {
+    S.customItems=[...S.customItems,newItem];
+    lsS('fb_custom_items',S.customItems);
+  }
   render();
 }
 
-function removeCustomItem(idx){
+async function removeCustomItem(idx){
   if(!confirm('Remove this item?'))return;
-  const custom=lsG('fb_custom_items',[]);
-  custom.splice(idx,1);
-  lsS('fb_custom_items',custom);
+  const item=S.customItems[idx];
+  if(isBackendSet()&&item){
+    const r=await apiData('deleteCustomItem',{name:item.name});
+    if(r?.success||r?.items){
+      S.customItems=r.items||S.customItems.filter((_,i)=>i!==idx);
+      lsS('fb_custom_items',S.customItems);
+    } else {alert('Failed to remove item.');}
+  } else {
+    S.customItems=S.customItems.filter((_,i)=>i!==idx);
+    lsS('fb_custom_items',S.customItems);
+  }
   render();
 }
-
 /* ════════════════════════════════════════════
    ADMIN — ASSIGN LEAVE TO STAFF
 ════════════════════════════════════════════ */
