@@ -26,7 +26,7 @@ body{font-family:'Segoe UI',system-ui,Arial,sans-serif;background:var(--bg);colo
 .hdr-back:hover{opacity:1}
 .hdr-brand{flex:1}
 .hdr-brand-name{font-size:16px;font-weight:800;letter-spacing:.5px}
-.hdr-brand-name span{color:var(--gold)}
+.hdr-brand-name span{color:var(--gold,#C9A668)}
 .hdr-brand-sub{font-size:10px;opacity:.6;margin-top:1px;letter-spacing:.3px}
 .hdr-right{text-align:right;font-size:11px;opacity:.75;flex-shrink:0;line-height:1.5}
 .hdr-role{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
@@ -43,7 +43,7 @@ body{font-family:'Segoe UI',system-ui,Arial,sans-serif;background:var(--bg);colo
 .login-wrap{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;background:linear-gradient(135deg,var(--navy) 0%,var(--navy2) 60%,#1a1a3e 100%)}
 .login-logo{text-align:center;margin-bottom:28px}
 .login-logo-name{font-size:36px;font-weight:900;color:#fff;letter-spacing:2px}
-.login-logo-name span{color:var(--gold)}
+.login-logo-name span{color:var(--gold,#C9A668)}
 .login-logo-sub{font-size:12px;color:rgba(255,255,255,.5);letter-spacing:2px;text-transform:uppercase;margin-top:4px}
 .login-divider{width:40px;height:2px;background:var(--gold);margin:12px auto}
 .login-card{background:#fff;border-radius:14px;padding:28px 24px;width:100%;max-width:360px;box-shadow:0 20px 60px rgba(0,0,0,.4)}
@@ -314,8 +314,8 @@ tr:hover td{background:#fafbfe}
   .stat-row{grid-template-columns:repeat(3,1fr)}
 }
 
-.hdr-photo{width:36px;height:36px;border-radius:50%;object-fit:cover;border:2px solid var(--gold);cursor:pointer;flex-shrink:0}
-.hdr-photo-init{width:36px;height:36px;border-radius:50%;background:var(--gold);color:var(--navy);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;cursor:pointer;flex-shrink:0;border:2px solid var(--gold)}
+.hdr-photo{width:36px;height:36px;border-radius:50%;object-fit:cover;border:2px solid var(--gold,#C9A668);cursor:pointer;flex-shrink:0}
+.hdr-photo-init{width:36px;height:36px;border-radius:50%;background:var(--gold,#C9A668);color:var(--navy,#1A2642);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;cursor:pointer;flex-shrink:0;border:2px solid var(--gold,#C9A668)}
 .hdr-user-col{display:flex;flex-direction:column;align-items:flex-end;gap:2px}
 </style>
 </head>
@@ -1192,16 +1192,19 @@ async function loadManagerData(){
     if(rl?.leaves) S.pendingLeaves=rl.leaves;
     const ra=await api({action:'getAttendance',date:today()});
     if(ra?.records) S.todayAttAll=ra.records;
+    const rml=await api({action:'getMyLeaves',userId:S.user?.userId});
+    if(rml?.leaves) S.myLeaves=rml.leaves;
   } else {
     S.pendingOrders=getDemoOrders();
     S.pendingLeaves=getDemoLeaves();
     S.todayAttAll=getDemoAtt();
+    S.myLeaves=lsG('fb_leaves_'+(S.user?.userId||'mgr'),[]);
   }
   loadCateringEvents();
 }
 
 function renderMgrHome(){
-  const tabs=[{id:'ration',l:'📋 Ration',n:S.pendingOrders.length},{id:'leaves',l:'🗓️ Leaves',n:S.pendingLeaves.length},{id:'attend',l:'✅ Attendance',n:0},{id:'events',l:'🎉 Events',n:S.upcomingEvents.length}];
+  const tabs=[{id:'ration',l:'📋 Ration',n:S.pendingOrders.length},{id:'leaves',l:'🗓️ Leaves',n:S.pendingLeaves.length},{id:'attend',l:'✅ Attendance',n:0},{id:'events',l:'🎉 Events',n:S.upcomingEvents.length},{id:'myleave',l:'🗓️ My Leave',n:0}];
   return`<div class="scr on scr-wide">
     <div class="id-bar" style="max-width:600px">
       <div class="id-info"><strong>${esc(S.user.name)}</strong>Operations Manager</div>
@@ -1213,7 +1216,7 @@ function renderMgrHome(){
       <div class="stat ok"><div class="stat-n">${S.todayAttAll.length}</div><div class="stat-l">Present Today</div></div>
     </div>
     <div class="tabs">${tabs.map(t=>`<button class="tb ${S.mTab===t.id?'on':''}" onclick="S.mTab='${t.id}';render()">${t.l}${t.n?`<span class="tb-cnt">${t.n}</span>`:''}</button>`).join('')}</div>
-    ${S.mTab==='ration'?renderMgrRationTab():S.mTab==='leaves'?renderMgrLeavesTab():S.mTab==='events'?renderUpcomingEvents('manager'):renderMgrAttTab()}
+    ${S.mTab==='ration'?renderMgrRationTab():S.mTab==='leaves'?renderMgrLeavesTab():S.mTab==='events'?renderUpcomingEvents('manager'):S.mTab==='myleave'?renderMgrMyLeaveTab():renderMgrAttTab()}
     <div style="margin-top:14px"><button class="btn btn-out btn-sm" style="width:auto" onclick="loadManagerData().then(render)">🔄 Refresh</button></div>
   </div>`;
 }
@@ -1324,6 +1327,82 @@ async function decideLeave(leaveId,status){
   await apiData('updateLeave',{leaveId,status,managerNote:note});
   S.pendingLeaves=S.pendingLeaves.filter(l=>l.leaveId!==leaveId);
   render();
+}
+
+function renderMgrMyLeaveTab(){
+  const al=(S.user.annualLeave||0);
+  const cl=(S.user.casualLeave||0);
+  const leaves=S.myLeaves||[];
+  const pending=leaves.filter(l=>l.status==='Pending').length;
+  const leaveDays=S.leaveFrom&&S.leaveTo?Math.max(0,Math.round((new Date(S.leaveTo)-new Date(S.leaveFrom))/(86400000))+1):0;
+  const notEnoughAnnual=S.leaveType==='Annual Leave'&&leaveDays>al;
+  const notEnoughCasual=S.leaveType==='Casual Leave'&&leaveDays>cl;
+  const sickExceeds2=S.leaveType==='Sick Leave'&&leaveDays>2;
+  const notEnoughSick=S.leaveType==='Sick Leave'&&leaveDays>al;
+  const disableSubmit=!S.leaveType||!S.leaveFrom||!S.leaveTo||!S.leaveReason||notEnoughAnnual||notEnoughCasual||sickExceeds2||notEnoughSick||S.loading;
+  return`<div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+      <div style="background:#f0f2fa;border-radius:10px;padding:12px;text-align:center">
+        <div style="font-size:22px;font-weight:800;color:var(--navy,#1A2642)">${al.toFixed(2)*1}</div>
+        <div style="font-size:11px;font-weight:700;color:var(--muted,#64748b);text-transform:uppercase;letter-spacing:.5px">Annual Leave</div>
+      </div>
+      <div style="background:#fff5f5;border-radius:10px;padding:12px;text-align:center">
+        <div style="font-size:22px;font-weight:800;color:#dc2626">${cl.toFixed(2)*1}</div>
+        <div style="font-size:11px;font-weight:700;color:var(--muted,#64748b);text-transform:uppercase;letter-spacing:.5px">Casual Leave</div>
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:12px">
+      <div class="card-ttl">Apply for Leave</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+        <div onclick="S.leaveType='Annual Leave';render()" style="border:2px solid ${S.leaveType==='Annual Leave'?'var(--navy,#1A2642)':'var(--border,#e2e8f0)'};background:${S.leaveType==='Annual Leave'?'#f0f2fa':'#fff'};border-radius:9px;padding:10px;cursor:pointer;text-align:center">
+          <div style="font-size:13px;font-weight:700;color:var(--navy,#1A2642)">Annual Leave</div>
+          <div style="font-size:10px;color:var(--muted,#64748b)">No salary deduction</div>
+        </div>
+        <div onclick="S.leaveType='Casual Leave';render()" style="border:2px solid ${S.leaveType==='Casual Leave'?'#dc2626':'var(--border,#e2e8f0)'};background:${S.leaveType==='Casual Leave'?'#fff5f5':'#fff'};border-radius:9px;padding:10px;cursor:pointer;text-align:center">
+          <div style="font-size:13px;font-weight:700;color:#dc2626">Casual Leave</div>
+          <div style="font-size:10px;color:var(--muted,#64748b)">Salary deducted</div>
+        </div>
+      </div>
+      <div onclick="S.leaveType='Sick Leave';render()" style="border:2px solid ${S.leaveType==='Sick Leave'?'#b45309':'var(--border,#e2e8f0)'};background:${S.leaveType==='Sick Leave'?'#fffbeb':'#fff'};border-radius:9px;padding:10px;cursor:pointer;text-align:center;margin-bottom:10px">
+        <div style="font-size:13px;font-weight:700;color:#b45309">Sick Leave</div>
+        <div style="font-size:10px;color:var(--muted,#64748b)">Max 2 days · Deducted from Annual Leave</div>
+      </div>
+      <label class="fl">From Date *</label>
+      <input class="fi" type="date" value="${esc(S.leaveFrom)}" min="${today()}" oninput="S.leaveFrom=this.value;render()">
+      <label class="fl">To Date *</label>
+      <input class="fi" type="date" value="${esc(S.leaveTo)}" min="${S.leaveFrom||today()}" oninput="S.leaveTo=this.value;render()">
+      ${leaveDays>0?`<div style="font-size:12px;color:var(--muted,#64748b);margin-bottom:8px">${leaveDays} day${leaveDays>1?'s':''} selected</div>`:''}
+      ${notEnoughAnnual?`<div class="alert alert-warn">Only ${al} Annual Leave days remaining.</div>`:''}
+      ${notEnoughCasual?`<div class="alert alert-warn">Only ${cl} Casual Leave days remaining.</div>`:''}
+      ${sickExceeds2?'<div class="alert alert-warn">Sick Leave limited to 2 days per application.</div>':''}
+      <label class="fl">Reason *</label>
+      <textarea class="ft" rows="3" placeholder="Briefly explain the reason..." oninput="S.leaveReason=this.value">${esc(S.leaveReason)}</textarea>
+      <button class="btn btn-gold" style="margin-top:8px" onclick="submitMgrLeave()" ${disableSubmit?'disabled':''}>
+        ${S.loading?'<span class="spin"></span> Submitting...':'Submit Leave Application'}
+      </button>
+    </div>
+    <div class="card">
+      <div class="card-ttl">My Leave History ${pending?`<span class="tb-cnt">${pending}</span>`:''}  </div>
+      ${!leaves.length?'<div class="empty"><div class="empty-icon">🗓️</div><div>No leave applications yet</div></div>':
+      leaves.slice(0,10).map(l=>`<div class="leave-card">
+        <div class="lc-top">
+          <div><div class="lc-name">${esc(l.leaveType)}</div><div class="lc-dates">${fmtDate(l.fromDate)} → ${fmtDate(l.toDate)}</div></div>
+          <div class="lc-stat ${l.status==='Approved'?'ok':l.status==='Rejected'?'err':'warn'}">${l.status}</div>
+        </div>
+        <div class="lc-reason">${esc(l.reason||'')}</div>
+      </div>`).join('')}
+    </div>
+  </div>`;
+}
+
+async function submitMgrLeave(){
+  S.loading=true;render();
+  const leave={leaveId:'LV-'+Date.now(),userId:S.user.userId,staffName:S.user.name,location:S.user.location,leaveType:S.leaveType,fromDate:S.leaveFrom,toDate:S.leaveTo,reason:S.leaveReason,submittedAt:new Date().toISOString(),status:'Pending'};
+  await apiData('submitLeave',leave);
+  if(!isBackendSet()){const arr=lsG('fb_leaves_'+S.user.userId,[]);arr.unshift(leave);lsS('fb_leaves_'+S.user.userId,arr.slice(0,30));S.myLeaves=[leave,...S.myLeaves];}
+  else{await loadManagerData();}
+  S.loading=false;S.leaveType='';S.leaveFrom='';S.leaveTo='';S.leaveReason='';
+  alert('Leave application submitted!');render();
 }
 
 function renderMgrAttTab(){
@@ -1818,8 +1897,12 @@ async function saveLoc(){
   const name=document.getElementById('lm-name').value.trim();
   if(!name){alert('Location name is required.');return;}
   await apiData('addLocation',{name});
-  S.allLocations.push(name);
-  if(!isBackendSet()) lsS('fb_custom_locations',S.allLocations);
+  if(!isBackendSet()){
+    S.allLocations.push(name);
+    lsS('fb_custom_locations',S.allLocations);
+  } else {
+    await loadAdminData();
+  }
   closeLocModal();
 }
 
