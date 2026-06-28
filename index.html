@@ -705,6 +705,11 @@ function renderSHome(){
 
 async function loadStaffData(){
   const {user}=S;
+  // Pre-populate from cache so UI shows data immediately (before backend responds)
+  if(!S.todayAtt) S.todayAtt=lsG('fb_att_'+today(),null);
+  if(!S.myLeaves?.length) S.myLeaves=lsG('fb_leaves_'+user.userId,[]);
+  if(!S.customItems?.length) S.customItems=lsG('fb_custom_items',[]);
+  if(!S.upcomingEvents?.length) S.upcomingEvents=getLocalCateringEvents();
   if(isBackendSet()){
     const [r,rl,rci,rc]=await Promise.all([
       api({action:'getAttendance',userId:user.userId,date:today()}),
@@ -712,8 +717,13 @@ async function loadStaffData(){
       api({action:'getCustomItems'}),
       api({action:'getCateringEvents'})
     ]);
-    if(r?.record) S.todayAtt=r.record;
-    if(rl?.leaves) S.myLeaves=rl.leaves;
+    if(r?.record){S.todayAtt=r.record;lsS('fb_att_'+today(),r.record);}
+    if(rl?.leaves){
+      // Merge: keep optimistically-added local leaves not yet confirmed by backend
+      const sIds=new Set(rl.leaves.map(l=>l.leaveId));
+      S.myLeaves=[...S.myLeaves.filter(l=>!sIds.has(l.leaveId)),...rl.leaves];
+      lsS('fb_leaves_'+user.userId,S.myLeaves.slice(0,50));
+    }
     if(rci?.items){S.customItems=rci.items;lsS('fb_custom_items',rci.items);}
     if(rc?.events&&rc.events.length) S.upcomingEvents=rc.events;
     else S.upcomingEvents=getLocalCateringEvents();
@@ -1197,25 +1207,32 @@ function renderAttendance(){
    MANAGER SCREENS
 ════════════════════════════════════════════ */
 async function loadManagerData(){
+  const uid=S.user?.userId||'mgr';
+  // Pre-populate from cache so stats show instantly
+  if(!S.pendingOrders?.length) S.pendingOrders=lsG('fb_mgr_orders',[]);
+  if(!S.pendingLeaves?.length) S.pendingLeaves=lsG('fb_mgr_leaves',[]);
+  if(!S.todayAttAll?.length) S.todayAttAll=lsG('fb_mgr_att',[]);
+  if(!S.myLeaves?.length) S.myLeaves=lsG('fb_leaves_'+uid,[]);
+  if(!S.upcomingEvents?.length) S.upcomingEvents=getLocalCateringEvents();
   if(isBackendSet()){
     const [ro,rl,ra,rml,rc]=await Promise.all([
       api({action:'getOrders',status:'Pending'}),
       api({action:'getLeaves',status:'Pending'}),
       api({action:'getAttendance',date:today()}),
-      api({action:'getMyLeaves',userId:S.user?.userId}),
+      api({action:'getMyLeaves',userId:uid}),
       api({action:'getCateringEvents'})
     ]);
-    if(ro?.orders) S.pendingOrders=ro.orders;
-    if(rl?.leaves) S.pendingLeaves=rl.leaves;
-    if(ra?.records) S.todayAttAll=ra.records;
-    if(rml?.leaves) S.myLeaves=rml.leaves;
+    if(ro?.orders){S.pendingOrders=ro.orders;lsS('fb_mgr_orders',ro.orders);}
+    if(rl?.leaves){S.pendingLeaves=rl.leaves;lsS('fb_mgr_leaves',rl.leaves);}
+    if(ra?.records){S.todayAttAll=ra.records;lsS('fb_mgr_att',ra.records);}
+    if(rml?.leaves){S.myLeaves=rml.leaves;lsS('fb_leaves_'+uid,rml.leaves);}
     if(rc?.events&&rc.events.length) S.upcomingEvents=rc.events;
     else S.upcomingEvents=getLocalCateringEvents();
   } else {
     S.pendingOrders=getDemoOrders();
     S.pendingLeaves=getDemoLeaves();
     S.todayAttAll=getDemoAtt();
-    S.myLeaves=lsG('fb_leaves_'+(S.user?.userId||'mgr'),[]);
+    S.myLeaves=lsG('fb_leaves_'+uid,[]);
     S.upcomingEvents=getLocalCateringEvents();
   }
 }
@@ -1453,6 +1470,13 @@ async function logAttendance(type){
    ADMIN SCREENS
 ════════════════════════════════════════════ */
 async function loadAdminData(){
+  // Pre-populate from cache so stats show instantly
+  if(!S.approvedOrders?.length) S.approvedOrders=lsG('fb_adm_orders',[]);
+  if(!S.allStaff?.length) S.allStaff=lsG('fb_custom_staff',null)||getDemoStaff();
+  if(!S.allLeaves?.length) S.allLeaves=lsG('fb_adm_leaves',[]);
+  if(!S.allLocations?.length) S.allLocations=lsG('fb_custom_locations',null)||DEMO_LOCATIONS.slice();
+  if(!S.customItems?.length) S.customItems=lsG('fb_custom_items',[]);
+  if(!S.upcomingEvents?.length) S.upcomingEvents=getLocalCateringEvents();
   if(isBackendSet()){
     const [ro,rs,rl,rloc,rci,rc]=await Promise.all([
       api({action:'getOrders',status:'Manager Approved'}),
@@ -1462,10 +1486,10 @@ async function loadAdminData(){
       api({action:'getCustomItems'}),
       api({action:'getCateringEvents'})
     ]);
-    if(ro?.orders) S.approvedOrders=ro.orders;
-    if(rs?.staff) S.allStaff=rs.staff;
-    if(rl?.leaves) S.allLeaves=rl.leaves;
-    if(rloc?.locations) S.allLocations=rloc.locations;
+    if(ro?.orders){S.approvedOrders=ro.orders;lsS('fb_adm_orders',ro.orders);}
+    if(rs?.staff){S.allStaff=rs.staff;lsS('fb_custom_staff',rs.staff);}
+    if(rl?.leaves){S.allLeaves=rl.leaves;lsS('fb_adm_leaves',rl.leaves);}
+    if(rloc?.locations){S.allLocations=rloc.locations;lsS('fb_custom_locations',rloc.locations);}
     if(rci?.items){S.customItems=rci.items;lsS('fb_custom_items',rci.items);}
     if(rc?.events&&rc.events.length) S.upcomingEvents=rc.events;
     else S.upcomingEvents=getLocalCateringEvents();
