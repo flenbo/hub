@@ -46,7 +46,7 @@ const SH_DAIRY2    = 'DAIRY';
 const SH_CLN       = 'CLEANING';
 const SH_DISP      = 'DISPOSABLES';
 const SH_SR        = 'STAFF RATION';
-const RATION_CATS  = ['HYPERPURE','BEVERAGES','FROZEN','VEGETABLES','DAIRY','CLEANING','DISPOSABLES','STAFF RATION'];
+const RATION_CATS  = ['HYPERPURE','BEVERAGES','FROZEN','VEGETABLES','DAIRY','CLEANING','DISPOSABLES','BIKANERVALA','STAFF RATION'];
 const HDR_RATION   = ['Item #','Name','Unit','Added On','Added By'];
 
 const HDR_STAFF     = ['User ID','Name','Profile','Username','Password','Role','Location','Phone','Join Date','Annual Leave','Casual Leave','Casual Used Month','Status'];
@@ -689,6 +689,7 @@ function setupBaseItems() {
     'DAIRY': [['DAHI','KG'],['KHOYA','KG'],['MILK','Litres'],['PANEER','KG']],
     'CLEANING': [['DETERGENT','KG'],['DETTOL','Bottles'],['DISH WASH LIQUID','Bottles'],['GARBAGE BAGS','Pcs'],['JHADU','Pcs'],['MICRO FIBER','Pcs'],['PHENYLE','Litres'],['POCHA','Pcs'],['RED CADDY','Pcs'],['SCOTCH BRITE','Pcs'],['SPONGE','Pcs'],['SPRAY BOTTLES','Pcs'],['STEEL SCRUB','Pcs'],['VIM BAR','Pcs'],['WIPER','Pcs']],
     'DISPOSABLES': [['3 CP CORNSTARCH CONTAINER','Pcs'],['300 ML GLASS BOTTLES WITH CAP','Pcs'],['300 ML PAPER CONTAINER WITH CAP','Pcs'],['300 ML PLASTIC SIPPER WITH CAP','Pcs'],['5 CP CORNSTARCH CONTAINER','Pcs'],['500 ML PAPER CONTAINER WITH CAP','Pcs'],['6 INCH PAPER PLATES','Pcs'],['650 ML PAPER RECTANGLE CONTAINER WITH PLASTIC COVER','Pcs'],['750 ML PAPER BOWL CONTAINER WITH CAP','Pcs'],['750 ML PAPER CONTAINER WITH CAP','Pcs'],['750 ML PLASTIC BOWL CONTAINER WITH CAP','Pcs'],['8 CP CORNSTARCH CONTAINER','Pcs'],['ALUMUNIUM FOIL','Rolls'],['BAGASS BOWLS','Pcs'],['BROWN PAPER BAG','Pcs'],['CLING WRAP','Rolls'],['DOUBLE PLY TISSUE','Rolls'],['FRUIT FORK','Pcs'],['HAIR NET','Pcs'],['PAPER CARRY BAGS','Pcs'],['PAPER STRAW','Pcs'],['PRINTER PAPER ROLL','Rolls'],['SHOE POLISH','Pcs'],['SINGLE PLY TISSUE','Rolls'],['TABLE SPRAY BOTTLE','Pcs'],['TOOTHPICK','Pcs'],['WHITE GLOVES','Pcs'],['WOODEN FORK','Pcs'],['WOODEN SPOONS','Pcs'],['WOODEN SPORK','Pcs'],['WOODEN STIRRER','Pcs'],['ZOMATO RED TAPES','Pcs']],
+    'BIKANERVALA': [['GAJAR HALVA','KG'],['JALEBI','KG'],['KAJU KATLI','KG'],['MOONG DAL HALVA','KG'],['PHIRNI','KG'],['RASGULLA','KG'],['RASMALAI','KG'],['SPONGE RASGULLA','KG']],
     'STAFF RATION': [['AALOO','KG'],['BAIGAN','KG'],['BEANS','KG'],['BESAN','KG'],['BHINDI','KG'],['CABBAGE','KG'],['CARROT','KG'],['CAULIFLOWER','KG'],['CHAAT MASALA','KG'],['DAAL- ARHAR','KG'],['DAAL- DHULI MOONG','KG'],['DAAL- MIX','KG'],['GREEN CHILLY','KG'],['KALA CHANA','KG'],['LAUKI','KG'],['MUSTARD OIL','Litres'],['PALAK','KG'],['PYAAZ','KG'],['RAJMA','KG'],['REFINED OIL','Litres'],['STAFF AATA','KG'],['STAFF RICE','KG'],['SUGAR','KG'],['TAMATAR','KG'],['TATA SALT','KG'],['TEA- TATA AGNI CARDAMOM','KG']]
   };
   var today = now().split(' ')[0];
