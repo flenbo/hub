@@ -1240,7 +1240,7 @@ async function loadManagerData(){
 }
 
 function renderMgrHome(){
-  const tabs=[{id:'ration',l:'📋 Ration',n:S.pendingOrders.length},{id:'leaves',l:'🗓️ Leaves',n:S.pendingLeaves.length},{id:'attend',l:'✅ Attendance',n:0},{id:'events',l:'🎉 Events',n:S.upcomingEvents.length},{id:'myleave',l:'🗓️ My Leave',n:0}];
+  const tabs=[{id:'ration',l:'📋 Ration',n:S.pendingOrders.length},{id:'leaves',l:'🗓️ Leaves',n:S.pendingLeaves.length},{id:'attend',l:'✅ Attendance',n:0},{id:'myleave',l:'🗓️ My Leave',n:0}];
   return`<div class="scr on scr-wide">
     <div class="id-bar" style="max-width:600px">
       <div class="id-info"><strong>${esc(S.user.name)}</strong>Operations Manager</div>
@@ -1252,7 +1252,8 @@ function renderMgrHome(){
       <div class="stat ok"><div class="stat-n">${S.todayAttAll.length}</div><div class="stat-l">Present Today</div></div>
     </div>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:14px;max-width:600px">${tabs.map(t=>`<button onclick="S.mTab='${t.id}';render()" style="position:relative;background:${S.mTab===t.id?'var(--purple2)':'var(--card)'};color:${S.mTab===t.id?'#fff':'var(--txt)'};border:1.5px solid ${S.mTab===t.id?'var(--purple2)':'var(--border)'};border-radius:10px;padding:10px 6px;font-size:11px;font-weight:700;cursor:pointer;text-align:center;line-height:1.4;width:100%">${t.l}${t.n?`<span style="position:absolute;top:4px;right:6px;background:#e53935;color:#fff;border-radius:10px;padding:0 5px;font-size:9px;font-weight:800">${t.n}</span>`:''}</button>`).join('')}</div>
-    ${S.mTab==='ration'?renderMgrRationTab():S.mTab==='leaves'?renderMgrLeavesTab():S.mTab==='events'?renderUpcomingEvents('manager'):S.mTab==='myleave'?renderMgrMyLeaveTab():renderMgrAttTab()}
+    ${S.mTab==='ration'?renderMgrRationTab():S.mTab==='leaves'?renderMgrLeavesTab():S.mTab==='myleave'?renderMgrMyLeaveTab():renderMgrAttTab()}
+    ${renderUpcomingEvents('manager')}
     <div style="margin-top:14px"><button class="btn btn-out btn-sm" style="width:auto" onclick="loadManagerData().then(render)">🔄 Refresh</button></div>
   </div>`;
 }
@@ -1514,7 +1515,7 @@ async function loadAdminData(){
 }
 
 function renderAdminHome(){
-  const tabs=[{id:'procurement',l:'🛒 Procurement'},{id:'staff',l:'👥 Staff'},{id:'locations',l:'📍 Locations'},{id:'leaves',l:'🗓️ Leaves'},{id:'assignleave',l:'✏️ Assign Leave'},{id:'items',l:'📦 Manage Items'},{id:'events',l:'🎉 Events'},{id:'monthly',l:'📊 Monthly Report'},{id:'ytd',l:'📋 YTD Leaves'}];
+  const tabs=[{id:'procurement',l:'🛒 Procurement'},{id:'staff',l:'👥 Staff'},{id:'locations',l:'📍 Locations'},{id:'leaves',l:'🗓️ Leaves'},{id:'assignleave',l:'✏️ Assign Leave'},{id:'items',l:'📦 Manage Items'},{id:'monthly',l:'📊 Monthly Report'},{id:'ytd',l:'📋 YTD Leaves'}];
   return`<div class="scr on scr-wide">
     <div class="id-bar" style="max-width:700px">
       <div class="id-info"><strong>${esc(S.user.name)}</strong>Master Admin — All Locations</div>
@@ -1529,7 +1530,8 @@ function renderAdminHome(){
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:14px;max-width:700px">${tabs.map(t=>`
       <button onclick="S.aTab='${t.id}';render()" style="background:${S.aTab===t.id?'var(--purple2)':'var(--card)'};color:${S.aTab===t.id?'#fff':'var(--txt)'};border:1.5px solid ${S.aTab===t.id?'var(--purple2)':'var(--border)'};border-radius:10px;padding:10px 6px;font-size:11px;font-weight:700;cursor:pointer;text-align:center;line-height:1.4;width:100%">${t.l}</button>`).join('')}
     </div>
-    ${S.aTab==='procurement'?renderAdmProcurement():S.aTab==='staff'?renderAdmStaff():S.aTab==='locations'?renderAdmLocations():S.aTab==='monthly'?renderAdmMonthlyReport():S.aTab==='ytd'?renderAdmYTD():S.aTab==='items'?renderAdmItems():S.aTab==='assignleave'?renderAdmAssignLeave():S.aTab==='events'?renderUpcomingEvents('admin'):renderAdmLeaves()}
+    ${S.aTab==='procurement'?renderAdmProcurement():S.aTab==='staff'?renderAdmStaff():S.aTab==='locations'?renderAdmLocations():S.aTab==='monthly'?renderAdmMonthlyReport():S.aTab==='ytd'?renderAdmYTD():S.aTab==='items'?renderAdmItems():S.aTab==='assignleave'?renderAdmAssignLeave():renderAdmLeaves()}
+    ${renderUpcomingEvents('admin')}
     <div style="margin-top:14px"><button class="btn btn-out btn-sm" style="width:auto" onclick="loadAdminData().then(()=>{loadCateringEvents();render();})">🔄 Refresh</button></div>
   </div>`;
 }
