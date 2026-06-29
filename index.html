@@ -1700,7 +1700,8 @@ function renderAdmYTD(){
     const fd=l.fromDate||l['From Date']||'';
     return fd.startsWith(String(yr))&&(l.status||l['Status']||'')==='Approved';
   });
-  const staffRows=DEMO_USERS.filter(u=>u.role!=='admin').map(u=>{
+  const baseStaff=(S.allStaff&&S.allStaff.length?S.allStaff:DEMO_USERS);
+  const staffRows=baseStaff.filter(u=>(u.role||u['Role'])!=='admin').map(u=>{
     const uLeaves=yearLeaves.filter(l=>(l.userId||l['User ID'])===u.userId);
     let annualTotal=0,casualTotal=0;
     uLeaves.forEach(l=>{
