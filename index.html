@@ -110,7 +110,7 @@ body{font-family:'Segoe UI',system-ui,Arial,sans-serif;background:var(--bg);colo
 .tile-label{font-size:14px;font-weight:800;color:var(--txt)}
 .tile-sub{font-size:11px;color:var(--muted);line-height:1.3}
 
-/* ── TABS ── */
+/* ── TABS (legacy, kept for any other use) ── */
 .tabs{display:flex;background:var(--card);border-radius:9px;padding:3px;margin-bottom:12px;border:1px solid var(--border);gap:2px;overflow-x:auto}
 .tb{flex:1;min-width:70px;padding:8px 5px;border-radius:7px;border:none;background:transparent;cursor:pointer;font-size:10px;font-weight:700;text-align:center;color:var(--muted);white-space:nowrap;text-transform:uppercase;letter-spacing:.4px;transition:all .15s;font-family:inherit}
 .tb.on{background:var(--navy);color:#fff}
@@ -367,35 +367,42 @@ const MAX_CASUAL_PER_MONTH = 2;
 ════════════════════════════════════════════ */
 const UNITS = ['KG','Grams','Litres','ML','Pcs','Packets','Bottles','Dozen','Bunch','Rolls','Trays','Boxes'];
 const ITEMS = {
-  HYPERPURE:{
-    '🥦 Vegetables & Produce':[['Aaloo (Potato)','KG'],['Pyaaz (Onion)','KG'],['Tamatar (Tomato)','KG'],['Adrak (Ginger)','KG'],['Lehsun (Garlic)','KG'],['Phool Gobhi (Cauliflower)','KG'],['Methi Leaves','KG'],['Palak (Spinach)','KG'],['Lauki (Bottle Gourd)','KG'],['Hari Mirch (Green Chilly)','KG'],['Capsicum Green','KG'],['Red Capsicum','KG'],['Yellow Capsicum','KG'],['Gajar (Carrot)','KG'],['Patta Gobhi (Cabbage)','KG'],['Beans (French Beans)','KG'],['Nimbu (Lemon)','KG'],['Hara Dhaniya (Coriander)','Bunch'],['Basil Fresh','Bunch'],['Pudina (Mint)','Bunch'],['Mushroom','KG'],['Frozen Corn','KG'],['Frozen Peas','KG']],
-    '🍗 Meat & Seafood':[['Eggs','Dozen'],['Chicken Thigh','KG'],['Chicken Tandoori Cut','KG'],['Chicken Wings','KG'],['Chicken Seekh Kabab Frozen','KG'],['Basa Fish','KG'],['Prawns','KG']],
-    '🌾 Grains & Flours':[['Dawat Biryani Rice','KG'],['Staff Rice','KG'],['Aashirvaad Aata','KG'],['Aashirvaad Maida','KG'],['Rajdhani Besan','KG'],['Cornflour','KG'],['Bread Crumbs Panko','KG'],['Pasta','KG'],['Noodles','KG']],
-    '🫘 Pulses & Legumes':[['Arhar Dal','KG'],['Chana Dal','KG'],['Dhuli Moong Dal','KG'],['Kali Urad','KG'],['Rajma','KG'],['Mix Dal','KG']],
-    '🌶 Spices & Masalas':[['Tata Salt','KG'],['Kala Namak','Grams'],['Saboot Jeera','Grams'],['Kali Mirch Saboot','Grams'],['White Pepper Powder','Grams'],['Dhaniya Powder','Grams'],['Lal Mirch Powder','Grams'],['Deggi Mirch','Grams'],['Haldi Powder','Grams'],['Garam Masala','Grams'],['Kitchen King Masala','Grams'],['Chicken Masala','Grams'],['Chaat Masala','Grams'],['Chole Masala','Grams'],['Rajma Masala','Grams'],['Ajina Moto (MSG)','Grams'],['Hing (Asafoetida)','Grams'],['Lal Mirch Saboot','Grams'],['Kasoori Methi','Grams'],['Jaifal (Nutmeg)','Grams'],['Choti Elaichi','Grams'],['Badi Elaichi','Grams'],['Ajwain','Grams'],['Laung (Cloves)','Grams'],['Tej Patta (Bay Leaves)','Grams'],['Dalchini (Cinnamon)','Grams']],
-    '🫙 Oils & Fats':[['Fortune Sunflower Oil','Litres'],['Mustard Oil','Litres'],['Ghee','KG'],['Amul Butter','KG'],['Amul Cream','KG']],
-    '🍶 Sauces & Condiments':[['Tomato Sauce (Veeba)','Bottles'],['Green Chilly Sauce','Bottles'],['Schezwan Sauce (Veeba)','Bottles'],['Light Soya Sauce','Bottles'],['Dark Soya Sauce','Bottles'],['Vinegar (Tops)','Bottles'],['Oyster Sauce','Bottles'],['Tomato Puree','KG'],['Imlli (Tamarind)','KG'],['Gud / Jaggery','KG'],['Honey','KG'],['Olives','KG'],['Amul Cheese','KG']],
-    '🥜 Nuts & Dry Fruits':[['Cashew (Kaju)','KG'],['Magaj (Melon Seeds)','KG']],
-    '☕ Beverages & Sugar':[['Tea','KG'],['Coffee','KG'],['Sugar','KG'],['Sugar Sachets','Packets'],['Frappe Powder','KG']],
-    '❄️ Frozen & Ready':[['French Fries Frozen','KG'],['Spring Roll Sheet','Packets'],['Spring Rolls Frozen','KG'],['Cheese Balls Frozen','KG'],['Pizza Base','Pcs'],['Gulab Jamun 40gm Frozen','KG'],['Brownie Frozen','Pcs']],
-    '🍪 Bakery & Confectionery':[['Oreo Biscuits','Packets'],['Nutella','KG'],['Cocoa Powder','KG'],['Cookies','Packets']],
-    '🗑️ Miscellaneous':[['Garbage Bags','Packets']],
-  },
-  DAIRY:{'🥛 Dairy Products':[['Dahi / Curd','KG'],['Malai Paneer','KG']]},
-  ZEPTO:{'🧹 Cleaning & Household':[['Milk','Litres'],['Wiper / Mop','Pcs'],['Pocha (Floor Cloth)','Pcs'],['Scotch Brite','Pcs'],['Sponge','Pcs'],['Phenyl','Litres'],['Dish Wash Liquid','Bottles'],['Dettol','Bottles'],['Detergent','KG'],['Vim Bar','Pcs'],['Jhadu (Broom)','Pcs']]},
-  BIKANERVALA:{'🍮 Sweets & Desserts':[['Rasmalai','KG'],['Gajar Halwa','KG'],['Moong Dal Halwa','KG'],['Jalebi','KG'],['Rasgulla','KG'],['Sponge Rasgulla','KG'],['Other Desserts & Sweets','KG']]},
+  HYPERPURE:{'🥬 Hyperpure':[['AASHIRVAAD AATA','KG'],['AASHIRVAAD MAIDA','KG'],['AJINA MOTO- GOLDEN CROWN','KG'],['AJWAIN','KG'],['ALMOND','KG'],['AMUL BUTTER 500 GMS','Pcs'],['AMUL CHEESE BLOCK 1 KG','KG'],['AMUL CHEESE DICED BLEND KG','KG'],['AMUL CREAM 1 LTR','Litres'],['ARHAR DAAL- GROWTH','KG'],['AROMATIC POWDER- KNORR','KG'],['BADI ELAICHI','KG'],['BEDMI POORI AATA- GM FOODS','KG'],['BESAN- RAJDHANI','KG'],['BREAD BROWN- BON','Pcs'],['BREAD CRUMS- PANCO','KG'],['BREAD WHITE- BON','Pcs'],['CASHEW','KG'],['CHAAT MASALA- EASTMADE','KG'],['CHANA DAAL- GROWTH','KG'],['CHICKEN MASALA- MDH','KG'],['CHILLY FLAKES SACHET- CHEFS ART','Packets'],['CHOLE MASALA- MDH','KG'],['CHOTI ELAICHI','KG'],['COCO POWDER- HERSHEY\'S','KG'],['COOKIES CASHEW BADAM- UNIBIC (450 GM)','Pcs'],['CORNFLOUR- JEECON','KG'],['DALCHINI','KG'],['DAWAT BIRYANI RICE- LONGEST GRAINS','KG'],['DEGGI MIRCH- MDH','KG'],['DHANIYA POWDER- CATCH/MDH','KG'],['DHULI MOONG DAAL','KG'],['EGGS','Dozen'],['FRAPPE POWDER- FRAPPIK','KG'],['GARAM MASALA','KG'],['GHEE- AMUL','KG'],['GREEN CHILLY SAUCE- TOPS/CHINGZ','Litres'],['GUD/JAGGERY','KG'],['HALDI POWDER- CATCH/MDH','KG'],['HING- MDH','KG'],['HONEY- NATURES NECTAR','KG'],['IMLLI SUKHI','KG'],['JAIFAL','KG'],['KALA NAMAK- CATCH/MDH','KG'],['KALI MIRCH SABOOT','KG'],['KALI URAD','KG'],['KASOORI METHI- MDH','KG'],['KESAR- BABY/MDH','KG'],['KITCHEN KING MASALA- MDH','KG'],['KITKAT','Pcs'],['LAL MIRCH POWDER- CATCH/MDH','KG'],['LAL MIRCH SABOOT WITHOUT STEM','KG'],['LAUNG','KG'],['LIGHT SOYA SAUCE- LEE KUM KEE','Litres'],['MAGAJ','KG'],['MIX DAAL','KG'],['MOUTH FRESHNER SWEET','KG'],['MUSTARD OIL- FORTUNE KACCHI GHANI','Litres'],['NACHOS- CORNITOS','Pcs'],['NOODLES- KIMS','Pcs'],['NUTELLA','Pcs'],['OLIVES','KG'],['OREGANO SACHET- CHEFS ART','Packets'],['OREO BISCUIT','Pcs'],['OYSTER SAUCE VEG- LEE KUM KEE','Litres'],['PAPAD','KG'],['PASTA PENNE- REGGIA','Pcs'],['PERI PERI MASALA- SNAPIN','KG'],['PILI SARSO','KG'],['POPPY SEEDS','KG'],['RAJMA MASALA- MDH/CATCH','KG'],['RAJMA- TRIPTI','KG'],['SABOOT JEERA- EASTMADE','KG'],['SHEZWAN SAUCE- VEEBA','Litres'],['SOYA SAUCE DARK- LEE KUM KEE','Litres'],['SOYA SAUCE LIGHT- LEE KUM KEE','Litres'],['SUGAR','KG'],['SUGAR FREE- GOLD','KG'],['SUGAR SACHET- DHAMPUR','Packets'],['SUNFLOWER OIL- FORTUNE','Litres'],['TATA SALT','KG'],['TEA- TATA AGNI CARDAMOM','KG'],['TEJ PATTA','KG'],['TOMATO KETCHUP- KISAN','Litres'],['TOMATO PUREE- GOLDEN CROWN','Litres'],['TOMATO SAUCE- VEEBA','Litres'],['VINEGAR- TOPS 1 LTR','Litres'],['WHITE PEPPER','KG']]},
+  BEVERAGES:{'🥤 Beverages':[['BISLERI 250 ML','Pcs'],['BLUE CURACAO SYRUP- 1 LTR','Litres'],['COFFEE BEANS 1 KG','KG'],['COKE- 2 LTRS','Pcs'],['COKE- 180 ML CAN','Pcs'],['COKE- 300 ML CAN','Pcs'],['COSMOPOLITAN- 250 ML CAN','Pcs'],['FRAPPE POWDER','KG'],['LEMON SYRUP- HABIT','Litres'],['ICE CUBES','KG'],['MINT SYRUP- MONIN','Litres'],['NESCAFE COFFEE POWDER','KG'],['REAL CANBERRY JUICE- 1 LTR','Litres'],['REAL MIX FRUIT JUICE- 1 LTR','Litres'],['REAL ORANGE JUICE- 1 LTR','Litres'],['REAL PINEAPPLE JUICE- 1 LTR','Litres'],['RED SUGAR SYRUP','Litres'],['SPRITE- 180 ML CAN','Pcs'],['SPRITE- 2 LTRS','Pcs'],['SPRITE- 300 ML CAN','Pcs'],['THUMS UP- 180 ML CAN','Pcs'],['THUMS UP- 2 LTRS','Pcs'],['THUMS UP- 300 ML CAN','Pcs']]},
+  FROZEN:{'🧊 Frozen':[['BASA FISH','KG'],['BROWNIE','KG'],['CHEESE BALLS','KG'],['CHICKEN MOMO','KG'],['CHICKEN SEEKH KABAB','KG'],['CHICKEN TANDOORI','KG'],['CHICKEN THIGH','KG'],['CHICKEN WINGS','KG'],['FRENCH FRIES','KG'],['FROZEN CORN','KG'],['FROZEN PEAS','KG'],['GULAB JAMUN 40GMS','KG'],['MUTTON','KG'],['PIZZA','KG'],['POTATO WEDGES','KG'],['PRAWNS','KG'],['SOYA CHAAP','KG'],['SPRING ROLL SHEET','KG'],['SPRING ROLLS','KG'],['VEG MOMO','KG']]},
+  VEGETABLES:{'🥦 Vegetables':[['AALOO','KG'],['BAIGAN','KG'],['BASIL','KG'],['BEANS','KG'],['BEETROOT','KG'],['BHINDI','KG'],['BROCOLLI','KG'],['CABBAGE','KG'],['CAPSICUM','KG'],['CARROT','KG'],['CAULIFLOWER','KG'],['GARLIC','KG'],['GINGER','KG'],['GREEN CHILLY','KG'],['HARA DHANIYA','KG'],['LAUKI','KG'],['LEMON','KG'],['METHI','KG'],['MINT','KG'],['MUSHROOM','KG'],['PALAK','KG'],['PYAAZ','KG'],['RED CPSICUM','KG'],['TAMATAR','KG'],['YELLOW CAPSICUM','KG']]},
+  DAIRY:{'🥛 Dairy':[['DAHI','KG'],['KHOYA','KG'],['MILK','Litres'],['PANEER','KG']]},
+  CLEANING:{'🧹 Cleaning':[['DETERGENT','KG'],['DETTOL','Bottles'],['DISH WASH LIQUID','Bottles'],['GARBAGE BAGS','Pcs'],['JHADU','Pcs'],['MICRO FIBER','Pcs'],['PHENYLE','Litres'],['POCHA','Pcs'],['RED CADDY','Pcs'],['SCOTCH BRITE','Pcs'],['SPONGE','Pcs'],['SPRAY BOTTLES','Pcs'],['STEEL SCRUB','Pcs'],['VIM BAR','Pcs'],['WIPER','Pcs']]},
+  DISPOSABLES:{'🗑️ Disposables':[['3 CP CORNSTARCH CONTAINER','Pcs'],['300 ML GLASS BOTTLES WITH CAP','Pcs'],['300 ML PAPER CONTAINER WITH CAP','Pcs'],['300 ML PLASTIC SIPPER WITH CAP','Pcs'],['5 CP CORNSTARCH CONTAINER','Pcs'],['500 ML PAPER CONTAINER WITH CAP','Pcs'],['6 INCH PAPER PLATES','Pcs'],['650 ML PAPER RECTANGLE CONTAINER WITH PLASTIC COVER','Pcs'],['750 ML PAPER BOWL CONTAINER WITH CAP','Pcs'],['750 ML PAPER CONTAINER WITH CAP','Pcs'],['750 ML PLASTIC BOWL CONTAINER WITH CAP','Pcs'],['8 CP CORNSTARCH CONTAINER','Pcs'],['ALUMUNIUM FOIL','Rolls'],['BAGASS BOWLS','Pcs'],['BROWN PAPER BAG','Pcs'],['CLING WRAP','Rolls'],['DOUBLE PLY TISSUE','Rolls'],['FRUIT FORK','Pcs'],['HAIR NET','Pcs'],['PAPER CARRY BAGS','Pcs'],['PAPER STRAW','Pcs'],['PRINTER PAPER ROLL','Rolls'],['SHOE POLISH','Pcs'],['SINGLE PLY TISSUE','Rolls'],['TABLE SPRAY BOTTLE','Pcs'],['TOOTHPICK','Pcs'],['WHITE GLOVES','Pcs'],['WOODEN FORK','Pcs'],['WOODEN SPOONS','Pcs'],['WOODEN SPORK','Pcs'],['WOODEN STIRRER','Pcs'],['ZOMATO RED TAPES','Pcs']]},
+  STAFF_RATION:{'👥 Staff Ration':[['AALOO','KG'],['BAIGAN','KG'],['BEANS','KG'],['BESAN','KG'],['BHINDI','KG'],['CABBAGE','KG'],['CARROT','KG'],['CAULIFLOWER','KG'],['CHAAT MASALA','KG'],['DAAL- ARHAR','KG'],['DAAL- DHULI MOONG','KG'],['DAAL- MIX','KG'],['GREEN CHILLY','KG'],['KALA CHANA','KG'],['LAUKI','KG'],['MUSTARD OIL','Litres'],['PALAK','KG'],['PYAAZ','KG'],['RAJMA','KG'],['REFINED OIL','Litres'],['STAFF AATA','KG'],['STAFF RICE','KG'],['SUGAR','KG'],['TAMATAR','KG'],['TATA SALT','KG'],['TEA- TATA AGNI CARDAMOM','KG']]},
 };
-const SUP_ORDER = ['HYPERPURE','DAIRY','ZEPTO','BIKANERVALA'];
-const SUP_META = {HYPERPURE:{e:'🥬',l:'Hyperpure'},DAIRY:{e:'🥛',l:'Dairy'},ZEPTO:{e:'🧹',l:'Zepto'},BIKANERVALA:{e:'🍮',l:'Bikanervala'}};
+const SUP_ORDER = ['HYPERPURE','BEVERAGES','FROZEN','VEGETABLES','DAIRY','CLEANING','DISPOSABLES','STAFF_RATION'];
+const SUP_META = {HYPERPURE:{e:'🥬',l:'Hyperpure'},BEVERAGES:{e:'🥤',l:'Beverages'},FROZEN:{e:'🧊',l:'Frozen'},VEGETABLES:{e:'🥦',l:'Vegetables'},DAIRY:{e:'🥛',l:'Dairy'},CLEANING:{e:'🧹',l:'Cleaning'},DISPOSABLES:{e:'🗑️',l:'Disposables'},STAFF_RATION:{e:'👥',l:'Staff Ration'}};
 
 const ALL_FLAT = [];
 for(const[sup,cats] of Object.entries(ITEMS))
   for(const[cat,items] of Object.entries(cats))
     items.forEach(([name,unit])=>ALL_FLAT.push({sup,cat,name,unit}));
+
+// Build flat list from backend baseItems (replaces hardcoded data if available)
+function getBaseFlat(){
+  const bi=S?.baseItems||lsG('fb_base_items',null);
+  if(!bi) return null;
+  const flat=[];
+  // Map sheet names to ITEMS keys: 'STAFF RATION' → 'STAFF_RATION', rest match directly
+  const keyMap={'STAFF RATION':'STAFF_RATION'};
+  Object.entries(bi).forEach(([sheet,items])=>{
+    const sup=keyMap[sheet]||sheet;
+    const cat=SUP_META[sup]?.e+' '+SUP_META[sup]?.l||sheet;
+    (items||[]).forEach(([name,unit])=>flat.push({sup,cat,name,unit}));
+  });
+  return flat.length?flat:null;
+}
+
 function getAllItems(){
-  // S.customItems is loaded from backend on login; falls back to localStorage for offline
+  const base=getBaseFlat()||ALL_FLAT;
   const custom=S.customItems.length?S.customItems:lsG('fb_custom_items',[]);
-  return [...ALL_FLAT,...custom];
+  return [...base,...custom];
 }
 
 const ORDER_TYPES = [
@@ -403,6 +410,7 @@ const ORDER_TYPES = [
   {id:'Catering',label:'Catering Event',e:'🎉',desc:'Enter PAX below'},
   {id:'Cloud Kitchen',label:'Cloud Kitchen',e:'🏭',desc:'Delivery orders'},
   {id:'Canteen',label:'Canteen',e:'🏢',desc:'Coming soon',disabled:true},
+  {id:'Staff Ration',label:'Staff Ration',e:'👥',desc:'Kitchen staff items'},
 ];
 const LEAVE_TYPES = ['Annual Leave','Casual Leave','Sick Leave'];
 
@@ -465,6 +473,10 @@ let S = {
   eventDetail:null,
   // custom items (synced from backend)
   customItems:[],
+  // base ration items from spreadsheet (overrides hardcoded ITEMS when loaded)
+  baseItems:null,
+  // manage items UI
+  niSup:'HYPERPURE',
   // ui
   loading:false,error:'',loginError:'',
   loginUser:'',loginPw:'',showPw:false,
@@ -712,11 +724,12 @@ async function loadStaffData(){
   if(!S.upcomingEvents?.length) S.upcomingEvents=getLocalCateringEvents();
   render(); // show cached data immediately before awaiting backend
   if(isBackendSet()){
-    const [r,rl,rci,rc]=await Promise.all([
+    const [r,rl,rci,rc,rbi]=await Promise.all([
       api({action:'getAttendance',userId:user.userId,date:today()}),
       api({action:'getLeaves',userId:user.userId}),
       api({action:'getCustomItems'}),
-      api({action:'getCateringEvents'})
+      api({action:'getCateringEvents'}),
+      api({action:'getBaseItems'})
     ]);
     if(r?.record){S.todayAtt=r.record;lsS('fb_att_'+today(),r.record);}
     if(rl?.leaves){
@@ -728,11 +741,13 @@ async function loadStaffData(){
     if(rci?.items){S.customItems=rci.items;lsS('fb_custom_items',rci.items);}
     if(rc?.events&&rc.events.length) S.upcomingEvents=rc.events;
     else S.upcomingEvents=getLocalCateringEvents();
+    if(rbi?.items){S.baseItems=rbi.items;lsS('fb_base_items',rbi.items);}
   } else {
     S.todayAtt=lsG('fb_att_'+today(),null);
     S.myLeaves=lsG('fb_leaves_'+user.userId,[]);
     S.customItems=lsG('fb_custom_items',[]);
     S.upcomingEvents=getLocalCateringEvents();
+    S.baseItems=lsG('fb_base_items',null);
   }
   render();
 }
@@ -783,6 +798,7 @@ function nextFromType(){
   else if(S.orderType==='Cloud Kitchen') go('s-ration-ck');
   else go('s-ration-setup');
 }
+function isStaffRation(){return S.orderType==='Staff Ration';}
 
 /* Cloud Kitchen location selection */
 function renderRationCK(){
@@ -906,16 +922,23 @@ function renderRationSetup(){
 
 function renderRationItems(){
   const freq=getFreqItems();
-  const tabs=['FREQUENT',...SUP_ORDER];
+  const staffRation=isStaffRation();
+  // Staff Ration only shows STAFF_RATION; all others show all except STAFF_RATION
+  const supTabs=staffRation?['STAFF_RATION']:SUP_ORDER.filter(s=>s!=='STAFF_RATION');
+  const tabs=staffRation?['STAFF_RATION']:['FREQUENT',...supTabs];
+  // Auto-select first valid tab if current tab is invalid for this order type
+  if(!tabs.includes(S.tab)) S.tab=tabs[0];
   const cnt=cartCount();
   const search=S.search.toLowerCase();
   return`<div class="scr on">
-    <div class="tabs">${tabs.map(t=>{
-      const n=t==='FREQUENT'?freq.length:(Object.entries(S.cart).filter(([k,v])=>k.startsWith(t+'|')&&v.qty>0).length);
-      return`<button class="tb ${S.tab===t?'on':''}" onclick="S.tab='${t}';render()">${t==='FREQUENT'?'⭐ Frequent':((SUP_META[t]?.e||'')+' '+(SUP_META[t]?.l||t))}${n?`<span class="tb-cnt">${n}</span>`:''}</button>`;
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">${tabs.map(t=>{
+      const n=t==='FREQUENT'?freq.filter(f=>f.sup!=='STAFF_RATION').length:(Object.entries(S.cart).filter(([k,v])=>k.startsWith(t+'|')&&v.qty>0).length);
+      const active=S.tab===t;
+      const lbl=t==='FREQUENT'?'⭐ Frequent':((SUP_META[t]?.e||'')+' '+(SUP_META[t]?.l||t));
+      return`<button onclick="S.tab='${t}';render()" style="padding:8px 14px;border-radius:9px;border:1.5px solid ${active?'var(--navy)':'var(--border)'};background:${active?'var(--navy)':'var(--card)'};color:${active?'#fff':'var(--txt)'};font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:inherit">${lbl}${n?`<span style="display:inline-flex;align-items:center;justify-content:center;background:${active?'#fff':'var(--gold)'};color:${active?'var(--navy)':'var(--navy)'};font-size:9px;width:15px;height:15px;border-radius:50%;margin-left:4px;font-weight:800;vertical-align:middle">${n}</span>`:''}</button>`;
     }).join('')}</div>
     <div class="srch"><span class="si">🔍</span><input class="fi" placeholder="Search items…" value="${esc(S.search)}" oninput="S.search=this.value;render()"></div>
-    ${S.tab==='FREQUENT'?renderFreqTab(freq,search):renderSupTab(S.tab,search)}
+    ${S.tab==='FREQUENT'?renderFreqTab(freq.filter(f=>f.sup!=='STAFF_RATION'),search):renderSupTab(S.tab,search)}
   </div>
   <button class="fab ${cnt?'':'hide'}" onclick="go('s-ration-review')">Review Order <span class="fab-cnt">${cnt}</span></button>`;
 }
@@ -938,8 +961,20 @@ function renderFreqTab(freq,search){
   }).join('')}</div>`;
 }
 
+function getSupItems(sup){
+  // If backend base items loaded, use those; otherwise fall back to hardcoded ITEMS
+  const bi=S?.baseItems||lsG('fb_base_items',null);
+  if(bi){
+    const sheetName=CAT_TO_SHEET[sup]||sup;
+    const rows=bi[sheetName]||bi[sup]||[];
+    if(!rows.length)return null;
+    const catLabel=(SUP_META[sup]?.e||'')+' '+(SUP_META[sup]?.l||sup);
+    return{[catLabel]:rows};
+  }
+  return ITEMS[sup]||null;
+}
 function renderSupTab(sup,search){
-  const cats=ITEMS[sup];if(!cats)return`<div class="no-res">No items</div>`;
+  const cats=getSupItems(sup);if(!cats)return`<div class="no-res">No items</div>`;
   return Object.entries(cats).map(([cat,items])=>{
     const filtered=search?items.filter(([n])=>n.toLowerCase().includes(search)):items;
     if(!filtered.length&&search)return'';
@@ -1482,13 +1517,14 @@ async function loadAdminData(){
   if(!S.upcomingEvents?.length) S.upcomingEvents=getLocalCateringEvents();
   render(); // show cached data immediately before awaiting backend
   if(isBackendSet()){
-    const [ro,rs,rl,rloc,rci,rc]=await Promise.all([
+    const [ro,rs,rl,rloc,rci,rc,rbi]=await Promise.all([
       api({action:'getOrders',status:'Manager Approved'}),
       api({action:'getStaff'}),
       api({action:'getLeaves'}),
       api({action:'getLocations'}),
       api({action:'getCustomItems'}),
-      api({action:'getCateringEvents'})
+      api({action:'getCateringEvents'}),
+      api({action:'getBaseItems'})
     ]);
     if(ro?.orders){S.approvedOrders=ro.orders;lsS('fb_adm_orders',ro.orders);}
     if(rs?.staff){
@@ -1504,6 +1540,7 @@ async function loadAdminData(){
     if(rci?.items){S.customItems=rci.items;lsS('fb_custom_items',rci.items);}
     if(rc?.events&&rc.events.length) S.upcomingEvents=rc.events;
     else S.upcomingEvents=getLocalCateringEvents();
+    if(rbi?.items){S.baseItems=rbi.items;lsS('fb_base_items',rbi.items);}
   } else {
     S.approvedOrders=getDemoApproved();
     S.allStaff=lsG('fb_custom_staff',null)||getDemoStaff();
@@ -1511,6 +1548,7 @@ async function loadAdminData(){
     S.allLocations=lsG('fb_custom_locations',null)||DEMO_LOCATIONS.slice();
     S.customItems=lsG('fb_custom_items',[]);
     S.upcomingEvents=getLocalCateringEvents();
+    S.baseItems=lsG('fb_base_items',null);
   }
 }
 
@@ -1747,52 +1785,71 @@ function renderAdmYTD(){
 function renderAdmItems(){
   const custom=S.customItems;
   const supMeta={...SUP_META,CUSTOM:{e:'➕',l:'Custom'}};
+  const selCat=S.niSup||'HYPERPURE';
+  const isBase=BASE_CATS.includes(selCat);
   return`<div>
     <div class="card" style="margin-bottom:12px">
       <div class="card-ttl">Add New Ration Item</div>
-      <p style="font-size:12px;color:var(--muted);margin-bottom:10px">Items added here appear in the ration request list for all staff and are saved to the spreadsheet.</p>
-      <label class="fl">Supplier / Category *</label>
-      <select class="fi" id="ni-sup">
-        ${SUP_ORDER.map(s=>`<option value="${s}">${supMeta[s]?.l||s}</option>`).join('')}
-        <option value="CUSTOM">Custom / Other</option>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:10px">Select a category — the item is saved directly to that category's sheet in the Google Spreadsheet and appears immediately in the ration list.</p>
+      <label class="fl">Category *</label>
+      <select class="fi" id="ni-sup" onchange="S.niSup=this.value;render()">
+        ${SUP_ORDER.map(s=>`<option value="${s}" ${selCat===s?'selected':''}>${supMeta[s]?.e||''} ${supMeta[s]?.l||s}</option>`).join('')}
+        <option value="CUSTOM" ${selCat==='CUSTOM'?'selected':''}>➕ Custom / Other</option>
       </select>
-      <label class="fl">Item Category *</label>
-      <input class="fi" id="ni-cat" placeholder="e.g. 🥦 Vegetables & Produce">
+      ${isBase?`<div class="alert" style="background:#f0fdf4;border-color:#86efac;font-size:12px;margin-bottom:8px">✅ Item will be added to the <strong>${supMeta[selCat]?.l}</strong> sheet in the spreadsheet</div>`:''}
+      ${!isBase?`<div><label class="fl">Sub-Category Label *</label><input class="fi" id="ni-cat" placeholder="e.g. 🥦 Fresh Produce"></div>`:'<input type="hidden" id="ni-cat">'}
       <label class="fl">Item Name *</label>
-      <input class="fi" id="ni-name" placeholder="e.g. Broccoli">
+      <input class="fi" id="ni-name" placeholder="e.g. BROCCOLI">
       <label class="fl">Unit *</label>
       <select class="fi" id="ni-unit">
         ${UNITS.map(u=>`<option value="${u}">${u}</option>`).join('')}
       </select>
-      <button class="btn btn-navy" style="margin-top:10px" onclick="addCustomItem()">+ Add Item</button>
+      <button class="btn btn-navy" style="margin-top:10px" onclick="addCustomItem()">+ Add to Spreadsheet</button>
     </div>
     ${custom.length?`
     <div class="card">
-      <div class="card-ttl">Custom Items Added (${custom.length}) — Saved to Spreadsheet</div>
+      <div class="card-ttl">Custom Items (${custom.length}) — Extra Items Sheet</div>
       ${custom.map((it,i)=>`
       <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f0f2f8;font-size:13px">
         <div><strong>${esc(it.name)}</strong> <span style="color:var(--muted)">${it.unit} · ${esc(it.cat||it.sup)}</span></div>
         <button onclick="removeCustomItem(${i})" style="background:none;border:none;color:#dc2626;cursor:pointer;font-size:16px">✕</button>
       </div>`).join('')}
-    </div>`:'<div class="card" style="color:var(--muted);font-size:13px;text-align:center;padding:20px">No custom items yet. Add items above to extend the ration list.</div>'}
+    </div>`:''}
   </div>`;
 }
 
+// Recognized categories write to their own spreadsheet sheet via addBaseItem
+const BASE_CATS=['HYPERPURE','BEVERAGES','FROZEN','VEGETABLES','DAIRY','CLEANING','DISPOSABLES','STAFF_RATION'];
+const CAT_TO_SHEET={'STAFF_RATION':'STAFF RATION'};
+
 async function addCustomItem(){
   const sup=document.getElementById('ni-sup')?.value||'CUSTOM';
-  const cat=document.getElementById('ni-cat')?.value?.trim();
   const name=document.getElementById('ni-name')?.value?.trim();
   const unit=document.getElementById('ni-unit')?.value||'KG';
-  if(!name||!cat){alert('Please enter item name and category.');return;}
-  if(S.customItems.find(i=>i.name.toLowerCase()===name.toLowerCase())){alert('Item already exists.');return;}
-  const newItem={sup,cat,name,unit,custom:true};
+  if(!name){alert('Please enter item name.');return;}
+  const isBase=BASE_CATS.includes(sup);
+  const sheetName=CAT_TO_SHEET[sup]||sup; // 'STAFF_RATION' → 'STAFF RATION'
+  const cat=isBase?(SUP_META[sup]?.e+' '+SUP_META[sup]?.l):(document.getElementById('ni-cat')?.value?.trim()||sup);
+  if(!isBase&&!cat){alert('Please enter a sub-category label.');return;}
   if(isBackendSet()){
-    const r=await apiData('addCustomItem',newItem);
-    if(r?.success){
-      S.customItems=r.items||[...S.customItems,newItem];
-      lsS('fb_custom_items',S.customItems);
-    } else {alert('Failed to save item. Please try again.');}
+    if(isBase){
+      // Save to category sheet in spreadsheet
+      const r=await apiData('addBaseItem',{cat:sheetName,name,unit,addedBy:S.user?.name||''});
+      if(r?.success){
+        S.baseItems=r.items;lsS('fb_base_items',r.items);
+        alert(`✅ "${name}" added to ${SUP_META[sup]?.l} sheet in spreadsheet!`);
+      } else {alert(r?.error||'Failed to save item.');}
+    } else {
+      const newItem={sup,cat,name,unit,custom:true};
+      const r=await apiData('addCustomItem',newItem);
+      if(r?.success){
+        S.customItems=r.items||[...S.customItems,newItem];
+        lsS('fb_custom_items',S.customItems);
+      } else {alert('Failed to save item. Please try again.');}
+    }
   } else {
+    // Offline: add to local ALL_FLAT-equivalent via customItems
+    const newItem={sup,cat,name,unit,custom:true};
     S.customItems=[...S.customItems,newItem];
     lsS('fb_custom_items',S.customItems);
   }
