@@ -513,19 +513,28 @@ function isBackendSet(){return !!CFG.BACKEND_URL;}
 /* ════════════════════════════════════════════
    API
 ════════════════════════════════════════════ */
-async function api(params){
+async function api(params, _retry){
   if(!isBackendSet()) return null;
   try{
     const url=CFG.BACKEND_URL+'?'+new URLSearchParams(params);
     const r=await fetch(url);
+    if(!r.ok){
+      // GAS cold-start returns 404/500 on first request — retry once after 3s
+      if(!_retry){console.warn('API cold-start retry:',r.status);await new Promise(res=>setTimeout(res,3000));return api(params,true);}
+      return null;
+    }
     return await r.json();
   }catch(e){console.warn('API error',e);return null;}
 }
-async function apiData(action,data){
+async function apiData(action,data,_retry){
   if(!isBackendSet()) return null;
   try{
     const url=CFG.BACKEND_URL+'?action='+encodeURIComponent(action)+'&data='+encodeURIComponent(JSON.stringify(data));
     const r=await fetch(url);
+    if(!r.ok){
+      if(!_retry){console.warn('API cold-start retry:',r.status);await new Promise(res=>setTimeout(res,3000));return apiData(action,data,true);}
+      return null;
+    }
     return await r.json();
   }catch(e){console.warn('API error',e);return null;}
 }
@@ -2540,6 +2549,7 @@ async function loadUserData(){
     render(); // refresh UI with fresh data
     if(S.user.role==='manager'||S.user.role==='admin') await loadManagerData();
     if(S.user.role==='admin') await loadAdminData();
+    render(); // final render after all data loaded
   }else{
     S.myLeaves=lsG('fb_leaves_'+uid,[]);
     S.todayAtt=lsG('fb_att_'+today(),null);
