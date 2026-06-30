@@ -26,7 +26,7 @@ body{font-family:'Segoe UI',system-ui,Arial,sans-serif;background:var(--bg);colo
 .hdr-back:hover{opacity:1}
 .hdr-brand{flex:1}
 .hdr-brand-name{font-size:16px;font-weight:800;letter-spacing:.5px}
-.hdr-brand-name span{color:var(--gold,#C9A668)}
+.hdr-brand-name span{color:var(--gold)}
 .hdr-brand-sub{font-size:10px;opacity:.6;margin-top:1px;letter-spacing:.3px}
 .hdr-right{text-align:right;font-size:11px;opacity:.75;flex-shrink:0;line-height:1.5}
 .hdr-role{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
@@ -43,7 +43,7 @@ body{font-family:'Segoe UI',system-ui,Arial,sans-serif;background:var(--bg);colo
 .login-wrap{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;background:linear-gradient(135deg,var(--navy) 0%,var(--navy2) 60%,#1a1a3e 100%)}
 .login-logo{text-align:center;margin-bottom:28px}
 .login-logo-name{font-size:36px;font-weight:900;color:#fff;letter-spacing:2px}
-.login-logo-name span{color:var(--gold,#C9A668)}
+.login-logo-name span{color:var(--gold)}
 .login-logo-sub{font-size:12px;color:rgba(255,255,255,.5);letter-spacing:2px;text-transform:uppercase;margin-top:4px}
 .login-divider{width:40px;height:2px;background:var(--gold);margin:12px auto}
 .login-card{background:#fff;border-radius:14px;padding:28px 24px;width:100%;max-width:360px;box-shadow:0 20px 60px rgba(0,0,0,.4)}
@@ -110,7 +110,7 @@ body{font-family:'Segoe UI',system-ui,Arial,sans-serif;background:var(--bg);colo
 .tile-label{font-size:14px;font-weight:800;color:var(--txt)}
 .tile-sub{font-size:11px;color:var(--muted);line-height:1.3}
 
-/* ── TABS (legacy, kept for any other use) ── */
+/* ── TABS ── */
 .tabs{display:flex;background:var(--card);border-radius:9px;padding:3px;margin-bottom:12px;border:1px solid var(--border);gap:2px;overflow-x:auto}
 .tb{flex:1;min-width:70px;padding:8px 5px;border-radius:7px;border:none;background:transparent;cursor:pointer;font-size:10px;font-weight:700;text-align:center;color:var(--muted);white-space:nowrap;text-transform:uppercase;letter-spacing:.4px;transition:all .15s;font-family:inherit}
 .tb.on{background:var(--navy);color:#fff}
@@ -314,8 +314,8 @@ tr:hover td{background:#fafbfe}
   .stat-row{grid-template-columns:repeat(3,1fr)}
 }
 
-.hdr-photo{width:36px;height:36px;border-radius:50%;object-fit:cover;border:2px solid var(--gold,#C9A668);cursor:pointer;flex-shrink:0}
-.hdr-photo-init{width:36px;height:36px;border-radius:50%;background:var(--gold,#C9A668);color:var(--navy,#1A2642);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;cursor:pointer;flex-shrink:0;border:2px solid var(--gold,#C9A668)}
+.hdr-photo{width:36px;height:36px;border-radius:50%;object-fit:cover;border:2px solid var(--gold);cursor:pointer;flex-shrink:0}
+.hdr-photo-init{width:36px;height:36px;border-radius:50%;background:var(--gold);color:var(--navy);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;cursor:pointer;flex-shrink:0;border:2px solid var(--gold)}
 .hdr-user-col{display:flex;flex-direction:column;align-items:flex-end;gap:2px}
 </style>
 </head>
@@ -352,8 +352,31 @@ const DEMO_LOCATIONS = ['Flenbo Nawada','Emaar DigiHomes'];
 // ── POLICY DATA from Flenbo Policy.xlsx ──────────────────
 const EVENT_TYPES     = ['BIRTHDAY','ANNIVERSARY','BABY SHOWER','KITTY PARTY','SOCIAL GATHERINGS','HOUSE WARMING','WEDDING','ENGAGEMENT','CORPORATE / OFFICIAL','RELIGIOUS / POOJA','FAREWELL','RETIREMENT','HIGH TEA','BARSI / TERVI / SHRAAD','OTHERS'];
 const EVENT_TIMES     = ['BREAKFAST','BRUNCH','LUNCH','HIGH TEA','DINNER'];
+const MEAL_SLOTS      = ['Breakfast','Lunch','Hi-Tea','Dinner','Cocktails','Full Day'];
 const CK_LOCATIONS    = ['EMAAR DIGIHOMES','FLENBO NAWADA','SAAN VERDANTE','GODREJ ICON','OTHERS'];
-const EVENT_LOCATIONS = ['EMAAR DIGIHOMES','SAAN VERDANTE','GODREJ ICON','NEW LOCATION'];
+const EVENT_LOCATIONS = ['EMAAR DIGIHOMES','FLENBO NAWADA','SAAN VERDANTE','GODREJ ICON','OTHERS','NEW LOCATION'];
+
+// ── CATERING MENU from MENU.xlsx ─────────────────────────────────────────
+const CATERING_MENU = {"Starters":{"Veg":["Chilly Paneer","Paneer Kurkure","Paneer Tikka","Kesar Malai Paneer Tikka","Mushroom Tikka","Tandoori Stuffed Mushroom","Tandoori Soya Chaap","Tandoori Afghani Soya Chaap","Masala Broccoli","Tandoori Malai Broccoli","Tandoori Broccoli with Mustard Cream","Tandoori Stuffed Aaloo","Spring Rolls","Cheese Cigar Roll","Beetroot Kofta with Poppy Seed Cream","Makhana (Fox Nut) and Almond Crisps","Veg Dumplings","Hariyali Kebabs","Dahi ke Kebabs","Beetroot Kebabs","Corn Seekh Kebabs","Smoked Corn and Spinach Seekh","Dahi ke Sholey"],"Non-Veg":["Chilly Chicken","Chicken Lollypop","Chicken Dumplings","Chicken Hara Bhara Kebabs","Chicken Peri Peri Strips","Chicken Malai Tikka","Lehsuni Chicken Tikka","Chicken Tikka","Tandoori Chicken","Chicken Seekh Kebabs","Fish Fingers with Tartar Sauce","Fish Tikka","Amritsari Fish Fries","Mutton Galoti Kebabs","Mutton Burra","Mutton Seekh Kebabs","Mutton Sukha","Tandoori Prawns","Golden Fried Prawns","Chilly Garlic Prawns","Butter Garlic Prawns"]},"Crispy Bites":{"Veg":["Crispy Corn","Crispy Corn Chilly Pepper","Onion Rings","Assorted Pakoras","Nachos","Honey Chilly","Chilly Potato","French Fries","Masala French Fries","Potato Wedges","Potato Pops"]},"Main Course":{"Veg":["Kadhai Paneer","Palak Paneer","Paneer Jalfarezi","Tawa Paneer Masala","Khade Masale Ka Paneer","Paneer Lababdar","Paneer Kali Mirch","Paneer Ki Khurchan","Paneer Makhan Wala","Mewa Makhani Paneer","Zafrani Paneer","Paneer Kesariya","Lehsuni Methi Paneer","Sahi Paneer","Yakhni Paneer","Kaju Matar Makhane","Khoya Matar Masala","Palak Mutter Makhane","Methi Malai Matar","Aloo Gobhi Matar","Dum Aloo Banarasi","Aloo Taka-Tak","Dum Aloo Kashmiri","Jeera Aloo","Bhindi Amchoor Wali","Bhindi Do Pyaza","Malai Kofta","Mewa Paneer Kofta","Handi Kofta Curry","Soya Chaap Lababdar","Rogani Soya Chaap","Subz Panchratna","Shimla Mirch Ka Salan","Aloo Gobhi Adrki","Gobhi Mussalam","Makai Palak","Mushroom Takatak","Vegetable Jalfarezi","Navratna Korma","Karela Do Pyaza","Gatta Curry","Chole","Veg Noodles","Veg Manchurian Gravy"],"Non-Veg":["Murgh Makhni","Kadahi Murgh","Murgh Lababdaar","Murgh Kali Mirch","Murgh Do Pyaza","Murgh Changeji","Murgh Akhbari","Murgh Tikka Gravy","Bhuna Murgh Masala","Lagan Ka Murgh","Murgh Lahori","Murgh Makhni Masala","Murgh Korma","Chicken Chettinad","Chicken Curry","Murgh Awadhi Korma","Murgh Begam Bahar","Nawabi Murgh","Hyderabadi Murgh","Murgh Ghee Roast","Mutton Rogan Josh","Mutton Masala","Laal Maas","Fish Curry","Chicken Noodles","Chicken Manchurian"]},"Lentils":{"Veg":["Dal Makhani","Dal Maharani","Dal Panchratna","Yellow Dal Tadka","Dal Sultani","Dal Amritsari","Dal Palak","Moong Dal Tadka","Dal Hariyali","Rajma Masaledar","Dal Shekhawati","Banarasi Dal","Dal Awadhi"]},"Breads":{"Veg":["Tandoori Roti","Butter Tandoori Roti","Plain Naan","Butter Naan","Garlic Naan","Green Chilly Naan","Laccha Paratha","Missi Roti","Ajwain Poori","Matar Poori (Seasonal)"]},"Rice":{"Veg":["Veg Pulao","Jeera Rice","Steamed Rice","Peas Pulao","Jodhpuri Pulao","Kashmiri Pulao","Tamatar Pulao","Tamatar Aur Pudina Pulao","Laung Aur Kesari Pulao","Lemon Rice","Zafrani Pulao","Subz Dum Biryani"],"Non-Veg":["Hyderabadi Chicken Biryani"]},"Soups":{"Veg":["Veg Sweet Corn","Manchow","Hot & Sour","Tomato & Pepper","Carrot Tomato","Pasta e Fagioli","Cream of Mushroom","Cream Of Tomato","Cream Of Broccoli","Cream Of Cauliflower","Vegetable Clear Soup","Spinach","Minestrone","Gazpacho"],"Non-Veg":["Chicken Manchow","Chicken Hot & Sour","Chicken Shorba","Chicken Noodle Soup","Ginger Garlic Chicken","Mulligatawny Chicken","Cream Of Chicken","Chicken & Roasted Garlic","Smoked Chicken with Thyme","Tom Yum"]},"Salads":{"Veg":["Garden Fresh Salad","Fruit Salad with Sesame Dressing","Fattoush Salad","American Corn Salad","Cold Pasta Salad","Russian Salad","Lettuce Salad","Watermelon Feta Salad","Papaya Salad","Greek Salad","Sprouts Salad","Chikpea Salad","Quinoa Salad"],"Non-Veg":["Chicken Caesar Salad","Chicken Cheese Salad","Fish Salad","Grilled Chicken Salad"]},"Desserts":{"Veg":["Gulab Jamun","Gajar Ka Halva","Moong Dal Halva","Rasmalai","Sponge Rasgulla","Phirni","Jalebi + Rabri","Ice Cream"]},"Beverages":{"Veg":["Aam Panna","Coconut Water","Iced Tea","Lemonade/Soda","Sunrise Mocktails","Watermelon Mojito","Fruit Punches","Virgin Mojito","Blue Lagoon","Granita","Agua Fresca","Tea","Coffee","Fruit Juice","Cold Drinks","Jal Jeera","Butter Milk"]},"Curd Preparations":{"Veg":["Boondi Raita","Pineapple Raita","Veg Raita","Fruit Raita","Mint Raita","Pudina Raita","Anar Raita","Aloo Raita","Lauki Raita","Dahi Bhalle"]},"Live Counters":{"Veg":["Moong Daal Cheela","Aloo Tikki Chat","Gol Gappe","Papdi Chaat","Bhalla Papdi","Pasta Alfredo","Pasta Arrabbiata","Pizza","Tawa Fried Veggies","Hot Badam Milk","Veg Noodles","Veg Dumplings"]},"Festivities (Non-Onion/Non-Garlic)":{"Veg":["Paneer Butter Masala","Jeera Aloo Dry","Aloo Tamatar Gravy","Dal Tadka","Dal Makhni","Rajma","Chole","Khatta Meetha Pumpkin","Palak Ka Saag","Boondi Raita","Green Salad","Wheat Poori","Bedmi Poori","Kuttu Ki Poori","Jeera Rice","Veg Pulao","Dry Fruit Kheer","Gulab Jamun","Papad","Kheer","Rasmalai","Sponge Rasgulla"]}};
+
+const EV_STATUS_LABELS = {
+  event_created:'Event Created',
+  ration_pending:'Ration Order Pending',
+  ration_submitted:'Awaiting Mgr Approval',
+  manager_approved:'Mgr Approved · Awaiting Admin',
+  manager_rejected:'Mgr Rejected · Needs Revision',
+  admin_approved:'✅ Admin Approved',
+  admin_rejected:'Admin Rejected · Needs Revision'
+};
+const EV_STATUS_COLORS = {
+  event_created:'#e8eaf6,#1a2642',
+  ration_pending:'#fef3c7,#92400e',
+  ration_submitted:'#fef3c7,#92400e',
+  manager_approved:'#d1fae5,#065f46',
+  manager_rejected:'#fee2e2,#991b1b',
+  admin_approved:'#d1fae5,#065f46',
+  admin_rejected:'#fee2e2,#991b1b'
+};
 
 // ── LEAVE POLICY ─────────────────────────────────────────
 // Annual Leave: 15/yr, 1.25/month on last day; no salary deduction; max 15 (excess goes to Casual)
@@ -367,43 +390,34 @@ const MAX_CASUAL_PER_MONTH = 2;
 ════════════════════════════════════════════ */
 const UNITS = ['KG','Grams','Litres','ML','Pcs','Packets','Bottles','Dozen','Bunch','Rolls','Trays','Boxes'];
 const ITEMS = {
-  HYPERPURE:{'🥬 Hyperpure':[['AASHIRVAAD AATA','KG'],['AASHIRVAAD MAIDA','KG'],['AJINA MOTO- GOLDEN CROWN','KG'],['AJWAIN','KG'],['ALMOND','KG'],['AMUL BUTTER 500 GMS','Pcs'],['AMUL CHEESE BLOCK 1 KG','KG'],['AMUL CHEESE DICED BLEND KG','KG'],['AMUL CREAM 1 LTR','Litres'],['ARHAR DAAL- GROWTH','KG'],['AROMATIC POWDER- KNORR','KG'],['BADI ELAICHI','KG'],['BEDMI POORI AATA- GM FOODS','KG'],['BESAN- RAJDHANI','KG'],['BREAD BROWN- BON','Pcs'],['BREAD CRUMS- PANCO','KG'],['BREAD WHITE- BON','Pcs'],['CASHEW','KG'],['CHAAT MASALA- EASTMADE','KG'],['CHANA DAAL- GROWTH','KG'],['CHICKEN MASALA- MDH','KG'],['CHILLY FLAKES SACHET- CHEFS ART','Packets'],['CHOLE MASALA- MDH','KG'],['CHOTI ELAICHI','KG'],['COCO POWDER- HERSHEY\'S','KG'],['COOKIES CASHEW BADAM- UNIBIC (450 GM)','Pcs'],['CORNFLOUR- JEECON','KG'],['DALCHINI','KG'],['DAWAT BIRYANI RICE- LONGEST GRAINS','KG'],['DEGGI MIRCH- MDH','KG'],['DHANIYA POWDER- CATCH/MDH','KG'],['DHULI MOONG DAAL','KG'],['EGGS','Dozen'],['FRAPPE POWDER- FRAPPIK','KG'],['GARAM MASALA','KG'],['GHEE- AMUL','KG'],['GREEN CHILLY SAUCE- TOPS/CHINGZ','Litres'],['GUD/JAGGERY','KG'],['HALDI POWDER- CATCH/MDH','KG'],['HING- MDH','KG'],['HONEY- NATURES NECTAR','KG'],['IMLLI SUKHI','KG'],['JAIFAL','KG'],['KALA NAMAK- CATCH/MDH','KG'],['KALI MIRCH SABOOT','KG'],['KALI URAD','KG'],['KASOORI METHI- MDH','KG'],['KESAR- BABY/MDH','KG'],['KITCHEN KING MASALA- MDH','KG'],['KITKAT','Pcs'],['LAL MIRCH POWDER- CATCH/MDH','KG'],['LAL MIRCH SABOOT WITHOUT STEM','KG'],['LAUNG','KG'],['LIGHT SOYA SAUCE- LEE KUM KEE','Litres'],['MAGAJ','KG'],['MIX DAAL','KG'],['MOUTH FRESHNER SWEET','KG'],['MUSTARD OIL- FORTUNE KACCHI GHANI','Litres'],['NACHOS- CORNITOS','Pcs'],['NOODLES- KIMS','Pcs'],['NUTELLA','Pcs'],['OLIVES','KG'],['OREGANO SACHET- CHEFS ART','Packets'],['OREO BISCUIT','Pcs'],['OYSTER SAUCE VEG- LEE KUM KEE','Litres'],['PAPAD','KG'],['PASTA PENNE- REGGIA','Pcs'],['PERI PERI MASALA- SNAPIN','KG'],['PILI SARSO','KG'],['POPPY SEEDS','KG'],['RAJMA MASALA- MDH/CATCH','KG'],['RAJMA- TRIPTI','KG'],['SABOOT JEERA- EASTMADE','KG'],['SHEZWAN SAUCE- VEEBA','Litres'],['SOYA SAUCE DARK- LEE KUM KEE','Litres'],['SOYA SAUCE LIGHT- LEE KUM KEE','Litres'],['SUGAR','KG'],['SUGAR FREE- GOLD','KG'],['SUGAR SACHET- DHAMPUR','Packets'],['SUNFLOWER OIL- FORTUNE','Litres'],['TATA SALT','KG'],['TEA- TATA AGNI CARDAMOM','KG'],['TEJ PATTA','KG'],['TOMATO KETCHUP- KISAN','Litres'],['TOMATO PUREE- GOLDEN CROWN','Litres'],['TOMATO SAUCE- VEEBA','Litres'],['VINEGAR- TOPS 1 LTR','Litres'],['WHITE PEPPER','KG']]},
-  BEVERAGES:{'🥤 Beverages':[['BISLERI 250 ML','Pcs'],['BLUE CURACAO SYRUP- 1 LTR','Litres'],['COFFEE BEANS 1 KG','KG'],['COKE- 2 LTRS','Pcs'],['COKE- 180 ML CAN','Pcs'],['COKE- 300 ML CAN','Pcs'],['COSMOPOLITAN- 250 ML CAN','Pcs'],['FRAPPE POWDER','KG'],['LEMON SYRUP- HABIT','Litres'],['ICE CUBES','KG'],['MINT SYRUP- MONIN','Litres'],['NESCAFE COFFEE POWDER','KG'],['REAL CANBERRY JUICE- 1 LTR','Litres'],['REAL MIX FRUIT JUICE- 1 LTR','Litres'],['REAL ORANGE JUICE- 1 LTR','Litres'],['REAL PINEAPPLE JUICE- 1 LTR','Litres'],['RED SUGAR SYRUP','Litres'],['SPRITE- 180 ML CAN','Pcs'],['SPRITE- 2 LTRS','Pcs'],['SPRITE- 300 ML CAN','Pcs'],['THUMS UP- 180 ML CAN','Pcs'],['THUMS UP- 2 LTRS','Pcs'],['THUMS UP- 300 ML CAN','Pcs']]},
-  FROZEN:{'🧊 Frozen':[['BASA FISH','KG'],['BROWNIE','KG'],['CHEESE BALLS','KG'],['CHICKEN MOMO','KG'],['CHICKEN SEEKH KABAB','KG'],['CHICKEN TANDOORI','KG'],['CHICKEN THIGH','KG'],['CHICKEN WINGS','KG'],['FRENCH FRIES','KG'],['FROZEN CORN','KG'],['FROZEN PEAS','KG'],['GULAB JAMUN 40GMS','KG'],['MUTTON','KG'],['PIZZA','KG'],['POTATO WEDGES','KG'],['PRAWNS','KG'],['SOYA CHAAP','KG'],['SPRING ROLL SHEET','KG'],['SPRING ROLLS','KG'],['VEG MOMO','KG']]},
-  VEGETABLES:{'🥦 Vegetables':[['AALOO','KG'],['BAIGAN','KG'],['BASIL','KG'],['BEANS','KG'],['BEETROOT','KG'],['BHINDI','KG'],['BROCOLLI','KG'],['CABBAGE','KG'],['CAPSICUM','KG'],['CARROT','KG'],['CAULIFLOWER','KG'],['GARLIC','KG'],['GINGER','KG'],['GREEN CHILLY','KG'],['HARA DHANIYA','KG'],['LAUKI','KG'],['LEMON','KG'],['METHI','KG'],['MINT','KG'],['MUSHROOM','KG'],['PALAK','KG'],['PYAAZ','KG'],['RED CPSICUM','KG'],['TAMATAR','KG'],['YELLOW CAPSICUM','KG']]},
-  DAIRY:{'🥛 Dairy':[['DAHI','KG'],['KHOYA','KG'],['MILK','Litres'],['PANEER','KG']]},
-  CLEANING:{'🧹 Cleaning':[['DETERGENT','KG'],['DETTOL','Bottles'],['DISH WASH LIQUID','Bottles'],['GARBAGE BAGS','Pcs'],['JHADU','Pcs'],['MICRO FIBER','Pcs'],['PHENYLE','Litres'],['POCHA','Pcs'],['RED CADDY','Pcs'],['SCOTCH BRITE','Pcs'],['SPONGE','Pcs'],['SPRAY BOTTLES','Pcs'],['STEEL SCRUB','Pcs'],['VIM BAR','Pcs'],['WIPER','Pcs']]},
-  DISPOSABLES:{'🗑️ Disposables':[['3 CP CORNSTARCH CONTAINER','Pcs'],['300 ML GLASS BOTTLES WITH CAP','Pcs'],['300 ML PAPER CONTAINER WITH CAP','Pcs'],['300 ML PLASTIC SIPPER WITH CAP','Pcs'],['5 CP CORNSTARCH CONTAINER','Pcs'],['500 ML PAPER CONTAINER WITH CAP','Pcs'],['6 INCH PAPER PLATES','Pcs'],['650 ML PAPER RECTANGLE CONTAINER WITH PLASTIC COVER','Pcs'],['750 ML PAPER BOWL CONTAINER WITH CAP','Pcs'],['750 ML PAPER CONTAINER WITH CAP','Pcs'],['750 ML PLASTIC BOWL CONTAINER WITH CAP','Pcs'],['8 CP CORNSTARCH CONTAINER','Pcs'],['ALUMUNIUM FOIL','Rolls'],['BAGASS BOWLS','Pcs'],['BROWN PAPER BAG','Pcs'],['CLING WRAP','Rolls'],['DOUBLE PLY TISSUE','Rolls'],['FRUIT FORK','Pcs'],['HAIR NET','Pcs'],['PAPER CARRY BAGS','Pcs'],['PAPER STRAW','Pcs'],['PRINTER PAPER ROLL','Rolls'],['SHOE POLISH','Pcs'],['SINGLE PLY TISSUE','Rolls'],['TABLE SPRAY BOTTLE','Pcs'],['TOOTHPICK','Pcs'],['WHITE GLOVES','Pcs'],['WOODEN FORK','Pcs'],['WOODEN SPOONS','Pcs'],['WOODEN SPORK','Pcs'],['WOODEN STIRRER','Pcs'],['ZOMATO RED TAPES','Pcs']]},
-  STAFF_RATION:{'👥 Staff Ration':[['AALOO','KG'],['BAIGAN','KG'],['BEANS','KG'],['BESAN','KG'],['BHINDI','KG'],['CABBAGE','KG'],['CARROT','KG'],['CAULIFLOWER','KG'],['CHAAT MASALA','KG'],['DAAL- ARHAR','KG'],['DAAL- DHULI MOONG','KG'],['DAAL- MIX','KG'],['GREEN CHILLY','KG'],['KALA CHANA','KG'],['LAUKI','KG'],['MUSTARD OIL','Litres'],['PALAK','KG'],['PYAAZ','KG'],['RAJMA','KG'],['REFINED OIL','Litres'],['STAFF AATA','KG'],['STAFF RICE','KG'],['SUGAR','KG'],['TAMATAR','KG'],['TATA SALT','KG'],['TEA- TATA AGNI CARDAMOM','KG']]},
-  BIKANERVALA:{'🍮 Bikanervala':[['GAJAR HALVA','KG'],['JALEBI','KG'],['KAJU KATLI','KG'],['MOONG DAL HALVA','KG'],['PHIRNI','KG'],['RASGULLA','KG'],['RASMALAI','KG'],['SPONGE RASGULLA','KG']]},
+  HYPERPURE:{
+    '🥦 Vegetables & Produce':[['Aaloo (Potato)','KG'],['Pyaaz (Onion)','KG'],['Tamatar (Tomato)','KG'],['Adrak (Ginger)','KG'],['Lehsun (Garlic)','KG'],['Phool Gobhi (Cauliflower)','KG'],['Methi Leaves','KG'],['Palak (Spinach)','KG'],['Lauki (Bottle Gourd)','KG'],['Hari Mirch (Green Chilly)','KG'],['Capsicum Green','KG'],['Red Capsicum','KG'],['Yellow Capsicum','KG'],['Gajar (Carrot)','KG'],['Patta Gobhi (Cabbage)','KG'],['Beans (French Beans)','KG'],['Nimbu (Lemon)','KG'],['Hara Dhaniya (Coriander)','Bunch'],['Basil Fresh','Bunch'],['Pudina (Mint)','Bunch'],['Mushroom','KG'],['Frozen Corn','KG'],['Frozen Peas','KG']],
+    '🍗 Meat & Seafood':[['Eggs','Dozen'],['Chicken Thigh','KG'],['Chicken Tandoori Cut','KG'],['Chicken Wings','KG'],['Chicken Seekh Kabab Frozen','KG'],['Basa Fish','KG'],['Prawns','KG']],
+    '🌾 Grains & Flours':[['Dawat Biryani Rice','KG'],['Staff Rice','KG'],['Aashirvaad Aata','KG'],['Aashirvaad Maida','KG'],['Rajdhani Besan','KG'],['Cornflour','KG'],['Bread Crumbs Panko','KG'],['Pasta','KG'],['Noodles','KG']],
+    '🫘 Pulses & Legumes':[['Arhar Dal','KG'],['Chana Dal','KG'],['Dhuli Moong Dal','KG'],['Kali Urad','KG'],['Rajma','KG'],['Mix Dal','KG']],
+    '🌶 Spices & Masalas':[['Tata Salt','KG'],['Kala Namak','Grams'],['Saboot Jeera','Grams'],['Kali Mirch Saboot','Grams'],['White Pepper Powder','Grams'],['Dhaniya Powder','Grams'],['Lal Mirch Powder','Grams'],['Deggi Mirch','Grams'],['Haldi Powder','Grams'],['Garam Masala','Grams'],['Kitchen King Masala','Grams'],['Chicken Masala','Grams'],['Chaat Masala','Grams'],['Chole Masala','Grams'],['Rajma Masala','Grams'],['Ajina Moto (MSG)','Grams'],['Hing (Asafoetida)','Grams'],['Lal Mirch Saboot','Grams'],['Kasoori Methi','Grams'],['Jaifal (Nutmeg)','Grams'],['Choti Elaichi','Grams'],['Badi Elaichi','Grams'],['Ajwain','Grams'],['Laung (Cloves)','Grams'],['Tej Patta (Bay Leaves)','Grams'],['Dalchini (Cinnamon)','Grams']],
+    '🫙 Oils & Fats':[['Fortune Sunflower Oil','Litres'],['Mustard Oil','Litres'],['Ghee','KG'],['Amul Butter','KG'],['Amul Cream','KG']],
+    '🍶 Sauces & Condiments':[['Tomato Sauce (Veeba)','Bottles'],['Green Chilly Sauce','Bottles'],['Schezwan Sauce (Veeba)','Bottles'],['Light Soya Sauce','Bottles'],['Dark Soya Sauce','Bottles'],['Vinegar (Tops)','Bottles'],['Oyster Sauce','Bottles'],['Tomato Puree','KG'],['Imlli (Tamarind)','KG'],['Gud / Jaggery','KG'],['Honey','KG'],['Olives','KG'],['Amul Cheese','KG']],
+    '🥜 Nuts & Dry Fruits':[['Cashew (Kaju)','KG'],['Magaj (Melon Seeds)','KG']],
+    '☕ Beverages & Sugar':[['Tea','KG'],['Coffee','KG'],['Sugar','KG'],['Sugar Sachets','Packets'],['Frappe Powder','KG']],
+    '❄️ Frozen & Ready':[['French Fries Frozen','KG'],['Spring Roll Sheet','Packets'],['Spring Rolls Frozen','KG'],['Cheese Balls Frozen','KG'],['Pizza Base','Pcs'],['Gulab Jamun 40gm Frozen','KG'],['Brownie Frozen','Pcs']],
+    '🍪 Bakery & Confectionery':[['Oreo Biscuits','Packets'],['Nutella','KG'],['Cocoa Powder','KG'],['Cookies','Packets']],
+    '🗑️ Miscellaneous':[['Garbage Bags','Packets']],
+  },
+  DAIRY:{'🥛 Dairy Products':[['Dahi / Curd','KG'],['Malai Paneer','KG']]},
+  ZEPTO:{'🧹 Cleaning & Household':[['Milk','Litres'],['Wiper / Mop','Pcs'],['Pocha (Floor Cloth)','Pcs'],['Scotch Brite','Pcs'],['Sponge','Pcs'],['Phenyl','Litres'],['Dish Wash Liquid','Bottles'],['Dettol','Bottles'],['Detergent','KG'],['Vim Bar','Pcs'],['Jhadu (Broom)','Pcs']]},
+  BIKANERVALA:{'🍮 Sweets & Desserts':[['Rasmalai','KG'],['Gajar Halwa','KG'],['Moong Dal Halwa','KG'],['Jalebi','KG'],['Rasgulla','KG'],['Sponge Rasgulla','KG'],['Other Desserts & Sweets','KG']]},
 };
-const SUP_ORDER = ['HYPERPURE','BEVERAGES','FROZEN','VEGETABLES','DAIRY','CLEANING','DISPOSABLES','BIKANERVALA','STAFF_RATION'];
-const SUP_META = {HYPERPURE:{e:'🥬',l:'Hyperpure'},BEVERAGES:{e:'🥤',l:'Beverages'},FROZEN:{e:'🧊',l:'Frozen'},VEGETABLES:{e:'🥦',l:'Vegetables'},DAIRY:{e:'🥛',l:'Dairy'},CLEANING:{e:'🧹',l:'Cleaning'},DISPOSABLES:{e:'🗑️',l:'Disposables'},BIKANERVALA:{e:'🍮',l:'Bikanervala'},STAFF_RATION:{e:'👥',l:'Staff Ration'}};
+const SUP_ORDER = ['HYPERPURE','DAIRY','ZEPTO','BIKANERVALA'];
+const SUP_META = {HYPERPURE:{e:'🥬',l:'Hyperpure'},DAIRY:{e:'🥛',l:'Dairy'},ZEPTO:{e:'🧹',l:'Zepto'},BIKANERVALA:{e:'🍮',l:'Bikanervala'}};
 
 const ALL_FLAT = [];
 for(const[sup,cats] of Object.entries(ITEMS))
   for(const[cat,items] of Object.entries(cats))
     items.forEach(([name,unit])=>ALL_FLAT.push({sup,cat,name,unit}));
-
-// Build flat list from backend baseItems (replaces hardcoded data if available)
-function getBaseFlat(){
-  const bi=S?.baseItems||lsG('fb_base_items',null);
-  if(!bi) return null;
-  const flat=[];
-  // Map sheet names to ITEMS keys: 'STAFF RATION' → 'STAFF_RATION', rest match directly
-  const keyMap={'STAFF RATION':'STAFF_RATION'};
-  Object.entries(bi).forEach(([sheet,items])=>{
-    const sup=keyMap[sheet]||sheet;
-    const cat=SUP_META[sup]?.e+' '+SUP_META[sup]?.l||sheet;
-    (items||[]).forEach(([name,unit])=>flat.push({sup,cat,name,unit}));
-  });
-  return flat.length?flat:null;
-}
-
 function getAllItems(){
-  const base=getBaseFlat()||ALL_FLAT;
-  const custom=S.customItems.length?S.customItems:lsG('fb_custom_items',[]);
-  return [...base,...custom];
+  const custom=lsG('fb_custom_items',[]);
+  return [...ALL_FLAT,...custom];
 }
 
 const ORDER_TYPES = [
@@ -411,7 +425,6 @@ const ORDER_TYPES = [
   {id:'Catering',label:'Catering Event',e:'🎉',desc:'Enter PAX below'},
   {id:'Cloud Kitchen',label:'Cloud Kitchen',e:'🏭',desc:'Delivery orders'},
   {id:'Canteen',label:'Canteen',e:'🏢',desc:'Coming soon',disabled:true},
-  {id:'Staff Ration',label:'Staff Ration',e:'👥',desc:'Kitchen staff items'},
 ];
 const LEAVE_TYPES = ['Annual Leave','Casual Leave','Sick Leave'];
 
@@ -472,12 +485,16 @@ let S = {
   // events
   upcomingEvents:[],
   eventDetail:null,
-  // custom items (synced from backend)
-  customItems:[],
-  // base ration items from spreadsheet (overrides hardcoded ITEMS when loaded)
-  baseItems:null,
-  // manage items UI
-  niSup:'HYPERPURE',
+  // catering event management (admin/manager create; staff order ration)
+  cevForm:{type:'',mealSlot:'',date:'',time:'',pax:'',clientName:'',clientMobile:'',location:''},
+  cevMenu:{},           // selected menu items {cat:{Veg:[],Non-Veg:[]}}
+  cevCatOpen:{},        // accordion open state for menu picker
+  cevEditId:null,       // eventId being edited (null = new)
+  cevSelEventId:null,   // event selected for ration ordering
+  cevRationCart:{},     // {catKey:{itemName:{qty,unit}}}
+  cevRationCatTab:'',   // active category tab in ration screen
+  cevMgrNote:'',
+  cevAdminNote:'',
   // ui
   loading:false,error:'',loginError:'',
   loginUser:'',loginPw:'',showPw:false,
@@ -492,7 +509,7 @@ function genId(loc){const l=(loc||'').includes('Nawada')?'NAW':(loc||'').include
 function cartCount(){return Object.values(S.cart).filter(v=>v.qty>0).length;}
 function cartItems(){const a=[];for(const[k,v]of Object.entries(S.cart)){if(v.qty>0){const[sup,cat,name]=k.split('|');a.push({sup,cat,name,qty:v.qty,unit:v.unit});}}return a;}
 function esc(s){if(s==null)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
-function isBackendSet(){return !!(CFG.BACKEND_URL&&CFG.BACKEND_URL.startsWith('https://script.google.com'));}
+function isBackendSet(){return !!CFG.BACKEND_URL;}
 /* ════════════════════════════════════════════
    API
 ════════════════════════════════════════════ */
@@ -517,35 +534,49 @@ async function apiData(action,data){
    RENDER ENGINE
 ════════════════════════════════════════════ */
 function render(){
+  // Bug2 fix: preserve focus across re-renders
+  const focId = document.activeElement ? document.activeElement.id : '';
+  const focSel = document.activeElement && document.activeElement.selectionStart != null ? document.activeElement.selectionStart : null;
+
   const root=document.getElementById('root');
   const {screen,user}=S;
   if(screen==='login'){root.innerHTML=renderLogin();return;}
-  // All authenticated screens get header
   const role=user?.role||'staff';
   const hdrHtml=renderHeader();
   let body='';
   switch(screen){
     // STAFF
-    case 's-home':       body=renderSHome();break;
-    case 's-ration-type':body=renderRationType();break;
-    case 's-ration-ck':  body=renderRationCK();break;
-    case 's-ration-event':body=renderRationEvent();break;
-    case 's-ration-setup':body=renderRationSetup();break;
-    case 's-ration-items':body=renderRationItems();break;
+    case 's-home':         body=renderSHome();break;
+    case 's-ration-type':  body=renderRationType();break;
+    case 's-ration-ck':    body=renderRationCK();break;
+    case 's-ration-event': body=renderRationEvent();break;
+    case 's-ration-setup': body=renderRationSetup();break;
+    case 's-ration-items': body=renderRationItems();break;
     case 's-ration-review':body=renderRationReview();break;
     case 's-ration-confirm':body=renderRationConfirm();break;
-    case 's-leave':      body=renderLeaveForm();break;
-    case 's-leave-done': body=renderLeaveDone();break;
-    case 's-leave-hist': body=renderLeaveHistory();break;
-    case 's-attend':     body=renderAttendance();break;
+    case 's-leave':        body=renderLeaveForm();break;
+    case 's-leave-done':   body=renderLeaveDone();break;
+    case 's-leave-hist':   body=renderLeaveHistory();break;
+    case 's-attend':       body=renderAttendance();break;
     // MANAGER
-    case 'm-home':       body=renderMgrHome();break;
-    case 'm-review':     body=renderMgrReview();break;
+    case 'm-home':         body=renderMgrHome();break;
+    case 'm-review':       body=renderMgrReview();break;
     // ADMIN
-    case 'a-home':       body=renderAdminHome();break;
-    default:             body='<div class="scr on"><p>Screen not found</p></div>';
+    case 'a-home':         body=renderAdminHome();break;
+    // CATERING EVENT SCREENS
+    case 'cev-create':     body=renderCevCreate();break;
+    case 'cev-ration':     body=renderCevRation();break;
+    case 'cev-mgr':        body=renderCevMgrApprove();break;
+    case 'cev-admin':      body=renderCevAdminApprove();break;
+    default:               body='<div class="scr on"><p>Screen not found</p></div>';
   }
   root.innerHTML=hdrHtml+body+renderModals();
+
+  // Bug2 fix: restore focus after DOM swap
+  if(focId){
+    const el=document.getElementById(focId);
+    if(el){ el.focus(); if(focSel!==null&&el.setSelectionRange){try{el.setSelectionRange(focSel,focSel);}catch(e){}} }
+  }
 }
 
 function renderHeader(){
@@ -644,9 +675,6 @@ async function doLogin(){
   }
   S.loading=false;
   if(!user){S.loginError='Invalid username or password.';render();return;}
-  // Merge backend user with demo data — backend may not return annualLeave/casualLeave
-  const demoMatch=DEMO_USERS.find(d=>d.userId===user.userId||d.username===(user.username||user.Username));
-  if(demoMatch) user={...demoMatch,...user}; // demo as base, backend overrides core fields
   S.user=user;lsS('fb_session',user);
   S.screen=homeScreen();
   if(user.role==='manager') loadManagerData();
@@ -718,38 +746,17 @@ function renderSHome(){
 
 async function loadStaffData(){
   const {user}=S;
-  // Pre-populate from cache so UI shows data immediately (before backend responds)
-  if(!S.todayAtt) S.todayAtt=lsG('fb_att_'+today(),null);
-  if(!S.myLeaves?.length) S.myLeaves=lsG('fb_leaves_'+user.userId,[]);
-  if(!S.customItems?.length) S.customItems=lsG('fb_custom_items',[]);
-  if(!S.upcomingEvents?.length) S.upcomingEvents=getLocalCateringEvents();
-  render(); // show cached data immediately before awaiting backend
+  // Load attendance
   if(isBackendSet()){
-    const [r,rl,rci,rc,rbi]=await Promise.all([
-      api({action:'getAttendance',userId:user.userId,date:today()}),
-      api({action:'getLeaves',userId:user.userId}),
-      api({action:'getCustomItems'}),
-      api({action:'getCateringEvents'}),
-      api({action:'getBaseItems'})
-    ]);
-    if(r?.record){S.todayAtt=r.record;lsS('fb_att_'+today(),r.record);}
-    if(rl?.leaves){
-      // Merge: keep optimistically-added local leaves not yet confirmed by backend
-      const sIds=new Set(rl.leaves.map(l=>l.leaveId));
-      S.myLeaves=[...S.myLeaves.filter(l=>!sIds.has(l.leaveId)),...rl.leaves];
-      lsS('fb_leaves_'+user.userId,S.myLeaves.slice(0,50));
-    }
-    if(rci?.items){S.customItems=rci.items;lsS('fb_custom_items',rci.items);}
-    if(rc?.events&&rc.events.length) S.upcomingEvents=rc.events;
-    else S.upcomingEvents=getLocalCateringEvents();
-    if(rbi?.items){S.baseItems=rbi.items;lsS('fb_base_items',rbi.items);}
+    const r=await api({action:'getAttendance',userId:user.userId,date:today()});
+    if(r?.record) S.todayAtt=r.record;
+    const rl=await api({action:'getLeaves',userId:user.userId});
+    if(rl?.leaves) S.myLeaves=rl.leaves;
   } else {
     S.todayAtt=lsG('fb_att_'+today(),null);
     S.myLeaves=lsG('fb_leaves_'+user.userId,[]);
-    S.customItems=lsG('fb_custom_items',[]);
-    S.upcomingEvents=getLocalCateringEvents();
-    S.baseItems=lsG('fb_base_items',null);
   }
+  loadCateringEvents();
   render();
 }
 
@@ -780,26 +787,48 @@ function renderRationType(){
     :`<div class="alert alert-warn" style="margin-bottom:12px">
         🔴 <strong>Ordering is closed.</strong> Ration orders can only be placed between <strong>8:00 AM and 8:00 PM</strong> daily.
       </div>`;
+  // For Catering: show dropdown of upcoming events created by admin/manager
+  const cevList=(S.upcomingEvents||[]).filter(e=>['event_created','manager_rejected','admin_rejected'].includes(e.status));
+  const selEv=S.cevSelEventId ? cevList.find(e=>e.eventId===S.cevSelEventId) : null;
+  const cevDropdown = S.orderType==='Catering' ? `
+    <div class="card" style="margin-top:8px">
+      <div class="card-ttl">Select Catering Event</div>
+      ${cevList.length===0
+        ? '<p style="color:var(--muted);font-size:13px;margin:0">No events awaiting ration orders. Ask your manager to create an event first.</p>'
+        : `<select class="fi" onchange="S.cevSelEventId=this.value;render()">
+             <option value="">— Select event —</option>
+             ${cevList.map(e=>`<option value="${e.eventId}" ${S.cevSelEventId===e.eventId?'selected':''}>[${e.eventCode}] ${e.eventType} · ${e.clientName} · ${fmtDate(e.eventDate)}</option>`).join('')}
+           </select>
+           ${selEv?`<div style="background:#f0f2fa;border-radius:8px;padding:10px;margin-top:8px;font-size:13px;line-height:1.6">
+             <b>${esc(selEv.eventType)}</b> — ${esc(selEv.clientName)}<br>
+             📅 ${fmtDate(selEv.eventDate)} &nbsp;·&nbsp; 🍽 ${esc(selEv.mealSlot||'—')} &nbsp;·&nbsp; 👥 ${esc(selEv.pax)} pax<br>
+             📍 ${esc(selEv.location)}
+           </div>`:''}`}
+    </div>` : '';
+  const canContinue = !!S.orderType && isOrderingOpen() && (S.orderType!=='Catering' || !!S.cevSelEventId);
   return`<div class="scr on">
     ${bannerHtml}
     <div class="card"><div class="card-ttl">What is this order for?</div>
     <div class="type-grid">${ORDER_TYPES.map(t=>`
-      <div class="type-tile ${S.orderType===t.id?'sel':''} ${t.disabled?'disabled':''}" onclick="${t.disabled?'':'S.orderType=\''+t.id+'\';render()'}">
+      <div class="type-tile ${S.orderType===t.id?'sel':''} ${t.disabled?'disabled':''}" onclick="${t.disabled?'':'S.orderType=\''+t.id+'\';S.cevSelEventId=null;render()'}">
         <div class="tt-icon">${t.e}</div>
         <div class="tt-name">${t.label}</div>
         <div class="tt-desc">${t.desc}</div>
         ${t.disabled?'<span class="tt-soon">Coming Soon</span>':''}
       </div>`).join('')}
     </div></div>
-    <button class="btn btn-navy" onclick="nextFromType()" ${!S.orderType||!isOrderingOpen()?'disabled':''}>Continue →</button>
+    ${cevDropdown}
+    <button class="btn btn-navy" onclick="nextFromType()" ${!canContinue?'disabled':''}>Continue →</button>
   </div>`;
 }
 function nextFromType(){
-  if(S.orderType==='Catering') go('s-ration-event');
-  else if(S.orderType==='Cloud Kitchen') go('s-ration-ck');
+  if(S.orderType==='Catering'){
+    S.cevRationCart={};
+    S.cevRationCatTab=Object.keys(ITEMS)[0];
+    go('cev-ration');
+  } else if(S.orderType==='Cloud Kitchen') go('s-ration-ck');
   else go('s-ration-setup');
 }
-function isStaffRation(){return S.orderType==='Staff Ration';}
 
 /* Cloud Kitchen location selection */
 function renderRationCK(){
@@ -890,7 +919,7 @@ function renderRationSetup(){
     : S.orderType==='Cloud Kitchen'
     ? `<div class="alert" style="background:#f0f2fa;border-color:var(--navy2);margin-bottom:10px;font-size:12px">🏭 Cloud Kitchen: <strong>${esc(S.ckLocation)}</strong></div>`
     : '';
-  const needLocDrop = S.orderType==='Restaurant';
+  const needLocDrop = S.orderType==='Restaurant' || S.orderType==='Staff Ration';
   const hr=new Date().getHours();
   const urgentOff=hr>=20;
   return`<div class="scr on">
@@ -923,23 +952,16 @@ function renderRationSetup(){
 
 function renderRationItems(){
   const freq=getFreqItems();
-  const staffRation=isStaffRation();
-  // Staff Ration only shows STAFF_RATION; all others show all except STAFF_RATION
-  const supTabs=staffRation?['STAFF_RATION']:SUP_ORDER.filter(s=>s!=='STAFF_RATION');
-  const tabs=staffRation?['STAFF_RATION']:['FREQUENT',...supTabs];
-  // Auto-select first valid tab if current tab is invalid for this order type
-  if(!tabs.includes(S.tab)) S.tab=tabs[0];
+  const tabs=['FREQUENT',...SUP_ORDER];
   const cnt=cartCount();
   const search=S.search.toLowerCase();
   return`<div class="scr on">
-    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">${tabs.map(t=>{
-      const n=t==='FREQUENT'?freq.filter(f=>f.sup!=='STAFF_RATION').length:(Object.entries(S.cart).filter(([k,v])=>k.startsWith(t+'|')&&v.qty>0).length);
-      const active=S.tab===t;
-      const lbl=t==='FREQUENT'?'⭐ Frequent':((SUP_META[t]?.e||'')+' '+(SUP_META[t]?.l||t));
-      return`<button onclick="S.tab='${t}';render()" style="padding:8px 14px;border-radius:9px;border:1.5px solid ${active?'var(--navy)':'var(--border)'};background:${active?'var(--navy)':'var(--card)'};color:${active?'#fff':'var(--txt)'};font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:inherit">${lbl}${n?`<span style="display:inline-flex;align-items:center;justify-content:center;background:${active?'#fff':'var(--gold)'};color:${active?'var(--navy)':'var(--navy)'};font-size:9px;width:15px;height:15px;border-radius:50%;margin-left:4px;font-weight:800;vertical-align:middle">${n}</span>`:''}</button>`;
+    <div class="tabs">${tabs.map(t=>{
+      const n=t==='FREQUENT'?freq.length:(Object.entries(S.cart).filter(([k,v])=>k.startsWith(t+'|')&&v.qty>0).length);
+      return`<button class="tb ${S.tab===t?'on':''}" onclick="S.tab='${t}';render()">${t==='FREQUENT'?'⭐ Frequent':((SUP_META[t]?.e||'')+' '+(SUP_META[t]?.l||t))}${n?`<span class="tb-cnt">${n}</span>`:''}</button>`;
     }).join('')}</div>
-    <div class="srch"><span class="si">🔍</span><input class="fi" placeholder="Search items…" value="${esc(S.search)}" oninput="S.search=this.value;render()"></div>
-    ${S.tab==='FREQUENT'?renderFreqTab(freq.filter(f=>f.sup!=='STAFF_RATION'),search):renderSupTab(S.tab,search)}
+    <div class="srch"><span class="si">🔍</span><input id="srch-inp" class="fi" placeholder="Search items…" value="${esc(S.search)}" oninput="S.search=this.value;render()"></div>
+    ${S.tab==='FREQUENT'?renderFreqTab(freq,search):renderSupTab(S.tab,search)}
   </div>
   <button class="fab ${cnt?'':'hide'}" onclick="go('s-ration-review')">Review Order <span class="fab-cnt">${cnt}</span></button>`;
 }
@@ -962,20 +984,8 @@ function renderFreqTab(freq,search){
   }).join('')}</div>`;
 }
 
-function getSupItems(sup){
-  // If backend base items loaded, use those; otherwise fall back to hardcoded ITEMS
-  const bi=S?.baseItems||lsG('fb_base_items',null);
-  if(bi){
-    const sheetName=CAT_TO_SHEET[sup]||sup;
-    const rows=bi[sheetName]||bi[sup]||[];
-    if(!rows.length)return null;
-    const catLabel=(SUP_META[sup]?.e||'')+' '+(SUP_META[sup]?.l||sup);
-    return{[catLabel]:rows};
-  }
-  return ITEMS[sup]||null;
-}
 function renderSupTab(sup,search){
-  const cats=getSupItems(sup);if(!cats)return`<div class="no-res">No items</div>`;
+  const cats=ITEMS[sup];if(!cats)return`<div class="no-res">No items</div>`;
   return Object.entries(cats).map(([cat,items])=>{
     const filtered=search?items.filter(([n])=>n.toLowerCase().includes(search)):items;
     if(!filtered.length&&search)return'';
@@ -1047,6 +1057,7 @@ function renderRationReview(){
 
 async function submitOrder(){
   const items=cartItems();if(!items.length)return;
+  S.loading=true;render();
   S.orderId=genId(S.user.location);
   const resolvedLoc = S.orderType==='Catering'?(S.eventLocation==='NEW LOCATION'?S.eventLocationNew:S.eventLocation):(S.ckLocation||S.user.location);
   const order={
@@ -1058,7 +1069,8 @@ async function submitOrder(){
     deliveryDate:S.deliveryDate,urgency:S.urgency,remarks:S.remarks,
     submittedAt:new Date().toISOString(),items,status:'Pending',
   };
-  if(isBackendSet()) apiData('submit',order); // background, no await
+  const res=await apiData('submit',order);
+  if(!res&&!isBackendSet()){/* demo */}
   // Save catering event for upcoming events section
   if(S.orderType==='Catering'){
     const evList=lsG('fb_catering_events',[]);
@@ -1074,6 +1086,7 @@ async function submitOrder(){
     S.upcomingEvents=getLocalCateringEvents();
   }
   saveItemHist(items);
+  S.loading=false;
   go('s-ration-confirm');
 }
 
@@ -1174,14 +1187,12 @@ function updateLeaveBtn(){
   btn.disabled=bad;
 }
 async function submitLeave(){
+  S.loading=true;render();
   const leave={leaveId:'LV-'+Date.now(),userId:S.user.userId,staffName:S.user.name,location:S.user.location,leaveType:S.leaveType,fromDate:S.leaveFrom,toDate:S.leaveTo,reason:S.leaveReason,submittedAt:new Date().toISOString(),status:'Pending'};
-  // Optimistic: add to local state and go to success screen immediately
-  S.myLeaves=[leave,...S.myLeaves];
-  const arr=lsG('fb_leaves_'+S.user.userId,[]);arr.unshift(leave);lsS('fb_leaves_'+S.user.userId,arr.slice(0,30));
-  S.leaveType='';S.leaveFrom='';S.leaveTo='';S.leaveReason='';
+  await apiData('submitLeave',leave);
+  if(!isBackendSet()){const arr=lsG('fb_leaves_'+S.user.userId,[]);arr.unshift(leave);lsS('fb_leaves_'+S.user.userId,arr.slice(0,30));S.myLeaves=[leave,...S.myLeaves];}
+  S.loading=false;S.leaveType='';S.leaveFrom='';S.leaveTo='';S.leaveReason='';
   go('s-leave-done');
-  // Submit to backend in background (no await)
-  if(isBackendSet()) apiData('submitLeave',leave);
 }
 
 function renderLeaveDone(){
@@ -1244,39 +1255,30 @@ function renderAttendance(){
    MANAGER SCREENS
 ════════════════════════════════════════════ */
 async function loadManagerData(){
-  const uid=S.user?.userId||'mgr';
-  // Pre-populate from cache so stats show instantly
-  if(!S.pendingOrders?.length) S.pendingOrders=lsG('fb_mgr_orders',[]);
-  if(!S.pendingLeaves?.length) S.pendingLeaves=lsG('fb_mgr_leaves',[]);
-  if(!S.todayAttAll?.length) S.todayAttAll=lsG('fb_mgr_att',[]);
-  if(!S.myLeaves?.length) S.myLeaves=lsG('fb_leaves_'+uid,[]);
-  if(!S.upcomingEvents?.length) S.upcomingEvents=getLocalCateringEvents();
-  render(); // show cached data immediately before awaiting backend
   if(isBackendSet()){
-    const [ro,rl,ra,rml,rc]=await Promise.all([
-      api({action:'getOrders',status:'Pending'}),
-      api({action:'getLeaves',status:'Pending'}),
-      api({action:'getAttendance',date:today()}),
-      api({action:'getMyLeaves',userId:uid}),
-      api({action:'getCateringEvents'})
-    ]);
-    if(ro?.orders){S.pendingOrders=ro.orders;lsS('fb_mgr_orders',ro.orders);}
-    if(rl?.leaves){S.pendingLeaves=rl.leaves;lsS('fb_mgr_leaves',rl.leaves);}
-    if(ra?.records){S.todayAttAll=ra.records;lsS('fb_mgr_att',ra.records);}
-    if(rml?.leaves){S.myLeaves=rml.leaves;lsS('fb_leaves_'+uid,rml.leaves);}
-    if(rc?.events&&rc.events.length) S.upcomingEvents=rc.events;
-    else S.upcomingEvents=getLocalCateringEvents();
+    const ro=await api({action:'getOrders',status:'Pending'});
+    if(ro?.orders) S.pendingOrders=ro.orders;
+    const rl=await api({action:'getLeaves',status:'Pending'});
+    if(rl?.leaves) S.pendingLeaves=rl.leaves;
+    const ra=await api({action:'getAttendance',date:today()});
+    if(ra?.records) S.todayAttAll=ra.records;
   } else {
     S.pendingOrders=getDemoOrders();
     S.pendingLeaves=getDemoLeaves();
     S.todayAttAll=getDemoAtt();
-    S.myLeaves=lsG('fb_leaves_'+uid,[]);
-    S.upcomingEvents=getLocalCateringEvents();
   }
+  loadCateringEvents();
 }
 
 function renderMgrHome(){
-  const tabs=[{id:'ration',l:'📋 Ration',n:S.pendingOrders.length},{id:'leaves',l:'🗓️ Leaves',n:S.pendingLeaves.length},{id:'attend',l:'✅ Attendance',n:0},{id:'myleave',l:'🗓️ My Leave',n:0}];
+  const evPending=(S.upcomingEvents||[]).filter(e=>e.status==='ration_submitted').length;
+  const tabs=[
+    {id:'ration',l:'📋 Ration',n:S.pendingOrders.length},
+    {id:'evapprove',l:'🎉 Approve',n:evPending},
+    {id:'leaves',l:'🗓️ Leaves',n:S.pendingLeaves.length},
+    {id:'attend',l:'✅ Attend',n:0},
+    {id:'myleave',l:'📅 My Leave',n:0}
+  ];
   return`<div class="scr on scr-wide">
     <div class="id-bar" style="max-width:600px">
       <div class="id-info"><strong>${esc(S.user.name)}</strong>Operations Manager</div>
@@ -1287,11 +1289,26 @@ function renderMgrHome(){
       <div class="stat gold"><div class="stat-n">${S.pendingLeaves.length}</div><div class="stat-l">Leave Requests</div></div>
       <div class="stat ok"><div class="stat-n">${S.todayAttAll.length}</div><div class="stat-l">Present Today</div></div>
     </div>
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:14px;max-width:600px">${tabs.map(t=>`<button onclick="S.mTab='${t.id}';render()" style="position:relative;background:${S.mTab===t.id?'var(--purple2)':'var(--card)'};color:${S.mTab===t.id?'#fff':'var(--txt)'};border:1.5px solid ${S.mTab===t.id?'var(--purple2)':'var(--border)'};border-radius:10px;padding:10px 6px;font-size:11px;font-weight:700;cursor:pointer;text-align:center;line-height:1.4;width:100%">${t.l}${t.n?`<span style="position:absolute;top:4px;right:6px;background:#e53935;color:#fff;border-radius:10px;padding:0 5px;font-size:9px;font-weight:800">${t.n}</span>`:''}</button>`).join('')}</div>
-    ${S.mTab==='ration'?renderMgrRationTab():S.mTab==='leaves'?renderMgrLeavesTab():S.mTab==='myleave'?renderMgrMyLeaveTab():renderMgrAttTab()}
+    <button class="btn btn-navy" style="width:100%;max-width:600px;margin-bottom:12px" onclick="openCevCreate(null)">➕ Create Catering Event</button>
+    <div class="tabs">${tabs.map(t=>`<button class="tb ${S.mTab===t.id?'on':''}" style="position:relative" onclick="S.mTab='${t.id}';render()">${t.l}${t.n?`<span class="tb-cnt">${t.n}</span>`:''}</button>`).join('')}</div>
+    ${S.mTab==='ration'?renderMgrRationTab():S.mTab==='evapprove'?renderMgrEvApproveTab():S.mTab==='leaves'?renderMgrLeavesTab():S.mTab==='myleave'?renderMgrMyLeaveTab():renderMgrAttTab()}
     ${renderUpcomingEvents('manager')}
     <div style="margin-top:14px"><button class="btn btn-out btn-sm" style="width:auto" onclick="loadManagerData().then(render)">🔄 Refresh</button></div>
   </div>`;
+}
+
+function renderMgrEvApproveTab(){
+  const evs=(S.upcomingEvents||[]).filter(e=>e.status==='ration_submitted');
+  if(!evs.length) return`<div class="empty"><div class="empty-icon">✅</div><div>No event ration orders awaiting your approval</div></div>`;
+  return evs.map(e=>`<div class="req-card">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
+      <div><span style="background:#fef3c7;color:#92400e;font-size:11px;font-weight:800;padding:2px 7px;border-radius:6px">[${esc(e.eventCode)}]</span> <strong>${esc(e.eventType)}</strong></div>
+      <span style="font-size:11px;color:var(--muted)">${fmtDate(e.eventDate)}</span>
+    </div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:8px">👤 ${esc(e.clientName)} · 👥 ${esc(e.pax)} pax · 📍 ${esc(e.location)}</div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:10px">Submitted by: ${esc(e.submittedBy||'—')}</div>
+    <button class="btn btn-navy btn-sm" style="width:100%" onclick="openCevMgrApprove('${esc(e.eventId)}')">Review Ration Order →</button>
+  </div>`).join('');
 }
 
 function renderMgrRationTab(){
@@ -1352,6 +1369,22 @@ async function mgrDecision(orderId,status){
   S.loading=false;render();
 }
 
+function renderMgrMyLeaveTab(){
+  const leaves=S.myLeaves||[];
+  return`<div style="margin-top:8px">
+    <div class="card-ttl" style="margin-bottom:8px">📅 My Leave Applications</div>
+    ${!leaves.length?`<div class="empty"><div class="empty-icon">🗓️</div><div>No leave applications</div></div>`:
+    leaves.map(l=>`<div class="leave-card">
+      <div class="lc-top">
+        <div><div class="lc-name">${esc(l.leaveType)}</div><div class="lc-dates">📅 ${fmtDate(l.fromDate)} → ${fmtDate(l.toDate)}</div></div>
+        <span class="badge ${l.status==='Approved'?'b-ok':l.status==='Rejected'?'b-red':'b-warn'}">${l.status}</span>
+      </div>
+      ${l.reason?`<div style="font-size:12px;color:var(--muted);margin-top:5px">${esc(l.reason)}</div>`:''}
+    </div>`).join('')}
+    <button class="btn btn-out btn-sm" style="margin-top:10px" onclick="go('s-leave')">+ New Application</button>
+  </div>`;
+}
+
 function renderMgrLeavesTab(){
   if(!S.pendingLeaves.length)return`<div class="empty"><div class="empty-icon">🗓️</div><div>No pending leave requests</div></div>`;
   return S.pendingLeaves.map(l=>{
@@ -1402,83 +1435,6 @@ async function decideLeave(leaveId,status){
   render();
 }
 
-function renderMgrMyLeaveTab(){
-  const al=(S.user.annualLeave||0);
-  const cl=(S.user.casualLeave||0);
-  const leaves=S.myLeaves||[];
-  const pending=leaves.filter(l=>l.status==='Pending').length;
-  const leaveDays=S.leaveFrom&&S.leaveTo?Math.max(0,Math.round((new Date(S.leaveTo)-new Date(S.leaveFrom))/(86400000))+1):0;
-  const notEnoughAnnual=S.leaveType==='Annual Leave'&&leaveDays>al;
-  const notEnoughCasual=S.leaveType==='Casual Leave'&&leaveDays>cl;
-  const sickExceeds2=S.leaveType==='Sick Leave'&&leaveDays>2;
-  const notEnoughSick=S.leaveType==='Sick Leave'&&leaveDays>al;
-  const disableSubmit=!S.leaveType||!S.leaveFrom||!S.leaveTo||!S.leaveReason||notEnoughAnnual||notEnoughCasual||sickExceeds2||notEnoughSick||S.loading;
-  return`<div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
-      <div style="background:#f0f2fa;border-radius:10px;padding:12px;text-align:center">
-        <div style="font-size:22px;font-weight:800;color:var(--navy,#1A2642)">${al.toFixed(2)*1}</div>
-        <div style="font-size:11px;font-weight:700;color:var(--muted,#64748b);text-transform:uppercase;letter-spacing:.5px">Annual Leave</div>
-      </div>
-      <div style="background:#fff5f5;border-radius:10px;padding:12px;text-align:center">
-        <div style="font-size:22px;font-weight:800;color:#dc2626">${cl.toFixed(2)*1}</div>
-        <div style="font-size:11px;font-weight:700;color:var(--muted,#64748b);text-transform:uppercase;letter-spacing:.5px">Casual Leave</div>
-      </div>
-    </div>
-    <div class="card" style="margin-bottom:12px">
-      <div class="card-ttl">Apply for Leave</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
-        <div onclick="S.leaveType='Annual Leave';render()" style="border:2px solid ${'{'}S.leaveType==='Annual Leave'?'var(--navy,#1A2642)':'var(--border,#e2e8f0)'{'}'};background:${'{'} S.leaveType==='Annual Leave'?'#f0f2fa':'#fff'{'}'};border-radius:9px;padding:10px;cursor:pointer;text-align:center">
-          <div style="font-size:13px;font-weight:700;color:var(--navy,#1A2642)">Annual Leave</div>
-          <div style="font-size:10px;color:var(--muted,#64748b)">✅ No salary deduction</div>
-        </div>
-        <div onclick="S.leaveType='Casual Leave';render()" style="border:2px solid ${'{'} S.leaveType==='Casual Leave'?'#dc2626':'var(--border,#e2e8f0)'{'}'};background:${'{'} S.leaveType==='Casual Leave'?'#fff5f5':'#fff'{'}'};border-radius:9px;padding:10px;cursor:pointer;text-align:center">
-          <div style="font-size:13px;font-weight:700;color:#dc2626">Casual Leave</div>
-          <div style="font-size:10px;color:var(--muted,#64748b)">⚠️ Salary deducted</div>
-        </div>
-      </div>
-      <div onclick="S.leaveType='Sick Leave';render()" style="border:2px solid ${'{'} S.leaveType==='Sick Leave'?'#b45309':'var(--border,#e2e8f0)'{'}'};background:${'{'} S.leaveType==='Sick Leave'?'#fffbeb':'#fff'{'}'};border-radius:9px;padding:10px;cursor:pointer;text-align:center;margin-bottom:10px">
-        <div style="font-size:13px;font-weight:700;color:#b45309">🤒 Sick Leave</div>
-        <div style="font-size:10px;color:var(--muted,#64748b)">Max 2 days · Deducted from Annual Leave</div>
-      </div>
-      <label class="fl">From Date *</label>
-      <input class="fi" type="date" value="${esc(S.leaveFrom)}" min="${today()}" oninput="S.leaveFrom=this.value;render()">
-      <label class="fl">To Date *</label>
-      <input class="fi" type="date" value="${esc(S.leaveTo)}" min="${S.leaveFrom||today()}" oninput="S.leaveTo=this.value;render()">
-      ${leaveDays>0?`<div style="font-size:12px;color:var(--muted,#64748b);margin-bottom:8px">📅 ${leaveDays} day${leaveDays>1?'s':''} selected</div>`:''}
-      ${notEnoughAnnual?`<div class="alert alert-warn">⚠️ Only ${al} Annual Leave days remaining.</div>`:''}
-      ${notEnoughCasual?`<div class="alert alert-warn">⚠️ Only ${cl} Casual Leave days remaining.</div>`:''}
-      ${sickExceeds2?`<div class="alert alert-warn">⚠️ Sick Leave limited to 2 days per application.</div>`:''}
-      <label class="fl">Reason *</label>
-      <textarea class="ft" rows="3" placeholder="Briefly explain the reason…" oninput="S.leaveReason=this.value">${esc(S.leaveReason)}</textarea>
-      <button class="btn btn-gold" style="margin-top:8px" onclick="submitMgrLeave()" ${disableSubmit?'disabled':''}>
-        ${S.loading?'<span class="spin"></span> Submitting…':'Submit Leave Application'}
-      </button>
-    </div>
-    <div class="card">
-      <div class="card-ttl">My Leave History ${pending?`<span class="tb-cnt">${pending}</span>`:''}</div>
-      ${!leaves.length?`<div class="empty"><div class="empty-icon">🗓️</div><div>No leave applications yet</div></div>`:
-      leaves.slice(0,10).map(l=>`<div class="leave-card">
-        <div class="lc-top">
-          <div><div class="lc-name">${esc(l.leaveType)}</div><div class="lc-dates">📅 ${fmtDate(l.fromDate)} → ${fmtDate(l.toDate)}</div></div>
-          <div class="lc-stat ${l.status==='Approved'?'ok':l.status==='Rejected'?'err':'warn'}">${l.status}</div>
-        </div>
-        <div class="lc-reason">${esc(l.reason||'')}</div>
-      </div>`).join('')}
-    </div>
-  </div>`;
-}
-
-async function submitMgrLeave(){
-  S.loading=true;render();
-  const leave={leaveId:'LV-'+Date.now(),userId:S.user.userId,staffName:S.user.name,location:S.user.location,leaveType:S.leaveType,fromDate:S.leaveFrom,toDate:S.leaveTo,reason:S.leaveReason,submittedAt:new Date().toISOString(),status:'Pending'};
-  await apiData('submitLeave',leave);
-  if(!isBackendSet()){const arr=lsG('fb_leaves_'+S.user.userId,[]);arr.unshift(leave);lsS('fb_leaves_'+S.user.userId,arr.slice(0,30));S.myLeaves=[leave,...S.myLeaves];}
-  else{await loadManagerData();}
-  S.loading=false;S.leaveType='';S.leaveFrom='';S.leaveTo='';S.leaveReason='';
-  alert('Leave application submitted! ✅');
-  render();
-}
-
 function renderMgrAttTab(){
   if(!S.todayAttAll.length)return`<div class="empty"><div class="empty-icon">✅</div><div>No attendance records for today</div></div>`;
   return`<div class="card"><div class="card-ttl">Today's Attendance — ${new Date().toLocaleDateString('en-IN',{day:'numeric',month:'short'})}</div>
@@ -1501,60 +1457,45 @@ async function logAttendance(type){
     S.todayAtt={...S.todayAtt,outTime:timeStr};
   }
   lsS('fb_att_'+today(),S.todayAtt);
-  render(); // update UI immediately
-  if(isBackendSet()) apiData('logAttendance',{userId:S.user.userId,staffName:S.user.name,location:S.user.location,date:today(),...S.todayAtt,type}); // background
+  await apiData('logAttendance',{userId:S.user.userId,staffName:S.user.name,location:S.user.location,date:today(),...S.todayAtt,type});
+  render();
 }
 
 /* ════════════════════════════════════════════
    ADMIN SCREENS
 ════════════════════════════════════════════ */
 async function loadAdminData(){
-  // Pre-populate from cache so stats show instantly
-  if(!S.approvedOrders?.length) S.approvedOrders=lsG('fb_adm_orders',[]);
-  if(!S.allStaff?.length) S.allStaff=lsG('fb_custom_staff',null)||getDemoStaff();
-  if(!S.allLeaves?.length) S.allLeaves=lsG('fb_adm_leaves',[]);
-  if(!S.allLocations?.length) S.allLocations=lsG('fb_custom_locations',null)||DEMO_LOCATIONS.slice();
-  if(!S.customItems?.length) S.customItems=lsG('fb_custom_items',[]);
-  if(!S.upcomingEvents?.length) S.upcomingEvents=getLocalCateringEvents();
-  render(); // show cached data immediately before awaiting backend
   if(isBackendSet()){
-    const [ro,rs,rl,rloc,rci,rc,rbi]=await Promise.all([
-      api({action:'getOrders',status:'Manager Approved'}),
-      api({action:'getStaff'}),
-      api({action:'getLeaves'}),
-      api({action:'getLocations'}),
-      api({action:'getCustomItems'}),
-      api({action:'getCateringEvents'}),
-      api({action:'getBaseItems'})
-    ]);
-    if(ro?.orders){S.approvedOrders=ro.orders;lsS('fb_adm_orders',ro.orders);}
-    if(rs?.staff){
-      // Merge backend staff with DEMO_USERS to fill in annualLeave/casualLeave (not in Staff sheet)
-      S.allStaff=rs.staff.map(s=>{
-        const demo=DEMO_USERS.find(d=>d.userId===s.userId||d.username===(s.username||s.Username));
-        return demo?{...demo,...s}:s;
-      });
-      lsS('fb_custom_staff',S.allStaff);
-    }
-    if(rl?.leaves){S.allLeaves=rl.leaves;lsS('fb_adm_leaves',rl.leaves);}
-    if(rloc?.locations){S.allLocations=rloc.locations;lsS('fb_custom_locations',rloc.locations);}
-    if(rci?.items){S.customItems=rci.items;lsS('fb_custom_items',rci.items);}
-    if(rc?.events&&rc.events.length) S.upcomingEvents=rc.events;
-    else S.upcomingEvents=getLocalCateringEvents();
-    if(rbi?.items){S.baseItems=rbi.items;lsS('fb_base_items',rbi.items);}
+    const ro=await api({action:'getOrders',status:'Manager Approved'});
+    if(ro?.orders) S.approvedOrders=ro.orders;
+    const rs=await api({action:'getStaff'});
+    if(rs?.staff) S.allStaff=rs.staff;
+    const rl=await api({action:'getLeaves'});
+    if(rl?.leaves) S.allLeaves=rl.leaves;
+    const rloc=await api({action:'getLocations'});
+    if(rloc?.locations) S.allLocations=rloc.locations;
   } else {
     S.approvedOrders=getDemoApproved();
     S.allStaff=lsG('fb_custom_staff',null)||getDemoStaff();
     S.allLeaves=getDemoLeaves();
     S.allLocations=lsG('fb_custom_locations',null)||DEMO_LOCATIONS.slice();
-    S.customItems=lsG('fb_custom_items',[]);
-    S.upcomingEvents=getLocalCateringEvents();
-    S.baseItems=lsG('fb_base_items',null);
   }
+  loadCateringEvents();
 }
 
 function renderAdminHome(){
-  const tabs=[{id:'procurement',l:'🛒 Procurement'},{id:'staff',l:'👥 Staff'},{id:'locations',l:'📍 Locations'},{id:'leaves',l:'🗓️ Leaves'},{id:'assignleave',l:'✏️ Assign Leave'},{id:'items',l:'📦 Manage Items'},{id:'monthly',l:'📊 Monthly Report'},{id:'ytd',l:'📋 YTD Leaves'}];
+  const evPending=(S.upcomingEvents||[]).filter(e=>e.status==='manager_approved').length;
+  const tabs=[
+    {id:'procurement',l:'🛒 Procurement'},
+    {id:'evapprove',l:'🎉 Approve',n:evPending},
+    {id:'staff',l:'👥 Staff'},
+    {id:'locations',l:'📍 Locations'},
+    {id:'leaves',l:'🗓️ Leaves'},
+    {id:'assignleave',l:'✏️ Assign Leave'},
+    {id:'items',l:'📦 Manage Items'},
+    {id:'monthly',l:'📊 Monthly Report'},
+    {id:'ytd',l:'📋 YTD Leaves'}
+  ];
   return`<div class="scr on scr-wide">
     <div class="id-bar" style="max-width:700px">
       <div class="id-info"><strong>${esc(S.user.name)}</strong>Master Admin — All Locations</div>
@@ -1566,13 +1507,28 @@ function renderAdminHome(){
       <div class="stat gold"><div class="stat-n">${S.allLocations.length}</div><div class="stat-l">Locations</div></div>
       <div class="stat ok"><div class="stat-n">${S.allLeaves.filter(l=>l.status==='Pending'||l['Status']==='Pending').length}</div><div class="stat-l">Leave Pending</div></div>
     </div>
+    <button class="btn btn-navy" style="width:100%;max-width:700px;margin-bottom:12px" onclick="openCevCreate(null)">➕ Create Catering Event</button>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:14px;max-width:700px">${tabs.map(t=>`
-      <button onclick="S.aTab='${t.id}';render()" style="background:${S.aTab===t.id?'var(--purple2)':'var(--card)'};color:${S.aTab===t.id?'#fff':'var(--txt)'};border:1.5px solid ${S.aTab===t.id?'var(--purple2)':'var(--border)'};border-radius:10px;padding:10px 6px;font-size:11px;font-weight:700;cursor:pointer;text-align:center;line-height:1.4;width:100%">${t.l}</button>`).join('')}
+      <button onclick="S.aTab='${t.id}';render()" style="position:relative;background:${S.aTab===t.id?'var(--purple2)':'var(--card)'};color:${S.aTab===t.id?'#fff':'var(--txt)'};border:1.5px solid ${S.aTab===t.id?'var(--purple2)':'var(--border)'};border-radius:10px;padding:10px 6px;font-size:11px;font-weight:700;cursor:pointer;text-align:center;line-height:1.4;width:100%">${t.l}${t.n?`<span style="position:absolute;top:4px;right:5px;background:#e53935;color:#fff;border-radius:10px;padding:0 5px;font-size:9px;font-weight:800">${t.n}</span>`:''}</button>`).join('')}
     </div>
-    ${S.aTab==='procurement'?renderAdmProcurement():S.aTab==='staff'?renderAdmStaff():S.aTab==='locations'?renderAdmLocations():S.aTab==='monthly'?renderAdmMonthlyReport():S.aTab==='ytd'?renderAdmYTD():S.aTab==='items'?renderAdmItems():S.aTab==='assignleave'?renderAdmAssignLeave():renderAdmLeaves()}
+    ${S.aTab==='procurement'?renderAdmProcurement():S.aTab==='evapprove'?renderAdmEvApproveTab():S.aTab==='staff'?renderAdmStaff():S.aTab==='locations'?renderAdmLocations():S.aTab==='monthly'?renderAdmMonthlyReport():S.aTab==='ytd'?renderAdmYTD():S.aTab==='items'?renderAdmItems():S.aTab==='assignleave'?renderAdmAssignLeave():renderAdmLeaves()}
     ${renderUpcomingEvents('admin')}
     <div style="margin-top:14px"><button class="btn btn-out btn-sm" style="width:auto" onclick="loadAdminData().then(()=>{loadCateringEvents();render();})">🔄 Refresh</button></div>
   </div>`;
+}
+
+function renderAdmEvApproveTab(){
+  const evs=(S.upcomingEvents||[]).filter(e=>e.status==='manager_approved');
+  if(!evs.length) return`<div class="empty"><div class="empty-icon">✅</div><div>No event ration orders awaiting final approval</div></div>`;
+  return evs.map(e=>`<div class="req-card">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
+      <div><span style="background:#d1fae5;color:#065f46;font-size:11px;font-weight:800;padding:2px 7px;border-radius:6px">[${esc(e.eventCode)}] ✅ Mgr OK</span> <strong>${esc(e.eventType)}</strong></div>
+      <span style="font-size:11px;color:var(--muted)">${fmtDate(e.eventDate)}</span>
+    </div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:8px">👤 ${esc(e.clientName)} · 👥 ${esc(e.pax)} pax · 📍 ${esc(e.location)}</div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:10px">Mgr Note: ${esc(e.managerNote||'—')}</div>
+    <button class="btn btn-navy btn-sm" style="width:100%" onclick="openCevAdminApprove('${esc(e.eventId)}')">Final Review →</button>
+  </div>`).join('');
 }
 
 
@@ -1741,8 +1697,7 @@ function renderAdmYTD(){
     const fd=l.fromDate||l['From Date']||'';
     return fd.startsWith(String(yr))&&(l.status||l['Status']||'')==='Approved';
   });
-  const baseStaff=(S.allStaff&&S.allStaff.length?S.allStaff:DEMO_USERS);
-  const staffRows=baseStaff.filter(u=>(u.role||u['Role'])!=='admin').map(u=>{
+  const staffRows=DEMO_USERS.filter(u=>u.role==='staff').map(u=>{
     const uLeaves=yearLeaves.filter(l=>(l.userId||l['User ID'])===u.userId);
     let annualTotal=0,casualTotal=0;
     uLeaves.forEach(l=>{
@@ -1784,92 +1739,59 @@ function renderAdmYTD(){
    ADMIN — MANAGE ITEMS
 ════════════════════════════════════════════ */
 function renderAdmItems(){
-  const custom=S.customItems;
+  const custom=lsG('fb_custom_items',[]);
+  const sups=[...SUP_ORDER,'CUSTOM'];
   const supMeta={...SUP_META,CUSTOM:{e:'➕',l:'Custom'}};
-  const selCat=S.niSup||'HYPERPURE';
-  const isBase=BASE_CATS.includes(selCat);
+  const bySup={};
+  custom.forEach(i=>{if(!bySup[i.sup])bySup[i.sup]=[];bySup[i.sup].push(i);});
   return`<div>
     <div class="card" style="margin-bottom:12px">
       <div class="card-ttl">Add New Ration Item</div>
-      <p style="font-size:12px;color:var(--muted);margin-bottom:10px">Select a category — the item is saved directly to that category's sheet in the Google Spreadsheet and appears immediately in the ration list.</p>
-      <label class="fl">Category *</label>
-      <select class="fi" id="ni-sup" onchange="S.niSup=this.value;render()">
-        ${SUP_ORDER.map(s=>`<option value="${s}" ${selCat===s?'selected':''}>${supMeta[s]?.e||''} ${supMeta[s]?.l||s}</option>`).join('')}
-        <option value="CUSTOM" ${selCat==='CUSTOM'?'selected':''}>➕ Custom / Other</option>
+      <label class="fl">Supplier / Category *</label>
+      <select class="fi" id="ni-sup">
+        ${SUP_ORDER.map(s=>`<option value="${s}">${supMeta[s]?.l||s}</option>`).join('')}
+        <option value="CUSTOM">Custom / Other</option>
       </select>
-      ${isBase?`<div class="alert" style="background:#f0fdf4;border-color:#86efac;font-size:12px;margin-bottom:8px">✅ Item will be added to the <strong>${supMeta[selCat]?.l}</strong> sheet in the spreadsheet</div>`:''}
-      ${!isBase?`<div><label class="fl">Sub-Category Label *</label><input class="fi" id="ni-cat" placeholder="e.g. 🥦 Fresh Produce"></div>`:'<input type="hidden" id="ni-cat">'}
+      <label class="fl">Item Category *</label>
+      <input class="fi" id="ni-cat" placeholder="e.g. 🥦 Vegetables & Produce">
       <label class="fl">Item Name *</label>
-      <input class="fi" id="ni-name" placeholder="e.g. BROCCOLI">
+      <input class="fi" id="ni-name" placeholder="e.g. Broccoli">
       <label class="fl">Unit *</label>
       <select class="fi" id="ni-unit">
         ${UNITS.map(u=>`<option value="${u}">${u}</option>`).join('')}
       </select>
-      <button class="btn btn-navy" style="margin-top:10px" onclick="addCustomItem()">+ Add to Spreadsheet</button>
+      <button class="btn btn-navy" style="margin-top:10px" onclick="addCustomItem()">+ Add Item</button>
     </div>
     ${custom.length?`
     <div class="card">
-      <div class="card-ttl">Custom Items (${custom.length}) — Extra Items Sheet</div>
+      <div class="card-ttl">Custom Items Added (${custom.length})</div>
       ${custom.map((it,i)=>`
       <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f0f2f8;font-size:13px">
-        <div><strong>${esc(it.name)}</strong> <span style="color:var(--muted)">${it.unit} · ${esc(it.cat||it.sup)}</span></div>
+        <div><strong>${esc(it.name)}</strong> <span style="color:var(--muted)">${it.unit} · ${it.cat||it.sup}</span></div>
         <button onclick="removeCustomItem(${i})" style="background:none;border:none;color:#dc2626;cursor:pointer;font-size:16px">✕</button>
       </div>`).join('')}
     </div>`:''}
   </div>`;
 }
 
-// Recognized categories write to their own spreadsheet sheet via addBaseItem
-const BASE_CATS=['HYPERPURE','BEVERAGES','FROZEN','VEGETABLES','DAIRY','CLEANING','DISPOSABLES','BIKANERVALA','STAFF_RATION'];
-const CAT_TO_SHEET={'STAFF_RATION':'STAFF RATION'};
-
-async function addCustomItem(){
+function addCustomItem(){
   const sup=document.getElementById('ni-sup')?.value||'CUSTOM';
+  const cat=document.getElementById('ni-cat')?.value?.trim();
   const name=document.getElementById('ni-name')?.value?.trim();
   const unit=document.getElementById('ni-unit')?.value||'KG';
-  if(!name){alert('Please enter item name.');return;}
-  const isBase=BASE_CATS.includes(sup);
-  const sheetName=CAT_TO_SHEET[sup]||sup; // 'STAFF_RATION' → 'STAFF RATION'
-  const cat=isBase?(SUP_META[sup]?.e+' '+SUP_META[sup]?.l):(document.getElementById('ni-cat')?.value?.trim()||sup);
-  if(!isBase&&!cat){alert('Please enter a sub-category label.');return;}
-  if(isBackendSet()){
-    if(isBase){
-      // Save to category sheet in spreadsheet
-      const r=await apiData('addBaseItem',{cat:sheetName,name,unit,addedBy:S.user?.name||''});
-      if(r?.success){
-        S.baseItems=r.items;lsS('fb_base_items',r.items);
-        alert(`✅ "${name}" added to ${SUP_META[sup]?.l} sheet in spreadsheet!`);
-      } else {alert(r?.error||'Failed to save item.');}
-    } else {
-      const newItem={sup,cat,name,unit,custom:true};
-      const r=await apiData('addCustomItem',newItem);
-      if(r?.success){
-        S.customItems=r.items||[...S.customItems,newItem];
-        lsS('fb_custom_items',S.customItems);
-      } else {alert('Failed to save item. Please try again.');}
-    }
-  } else {
-    // Offline: add to local ALL_FLAT-equivalent via customItems
-    const newItem={sup,cat,name,unit,custom:true};
-    S.customItems=[...S.customItems,newItem];
-    lsS('fb_custom_items',S.customItems);
-  }
+  if(!name||!cat){alert('Please enter item name and category.');return;}
+  const custom=lsG('fb_custom_items',[]);
+  if(custom.find(i=>i.name.toLowerCase()===name.toLowerCase())){alert('Item already exists.');return;}
+  custom.push({sup,cat,name,unit,custom:true});
+  lsS('fb_custom_items',custom);
   render();
 }
 
-async function removeCustomItem(idx){
+function removeCustomItem(idx){
   if(!confirm('Remove this item?'))return;
-  const item=S.customItems[idx];
-  if(isBackendSet()&&item){
-    const r=await apiData('deleteCustomItem',{name:item.name});
-    if(r?.success){
-      S.customItems=r.items||S.customItems.filter((_,i)=>i!==idx);
-      lsS('fb_custom_items',S.customItems);
-    } else {alert('Failed to remove item.');}
-  } else {
-    S.customItems=S.customItems.filter((_,i)=>i!==idx);
-    lsS('fb_custom_items',S.customItems);
-  }
+  const custom=lsG('fb_custom_items',[]);
+  custom.splice(idx,1);
+  lsS('fb_custom_items',custom);
   render();
 }
 
@@ -2032,12 +1954,8 @@ async function saveLoc(){
   const name=document.getElementById('lm-name').value.trim();
   if(!name){alert('Location name is required.');return;}
   await apiData('addLocation',{name});
-  if(!isBackendSet()){
-    S.allLocations.push(name);
-    lsS('fb_custom_locations',S.allLocations);
-  } else {
-    await loadAdminData();
-  }
+  S.allLocations.push(name);
+  if(!isBackendSet()) lsS('fb_custom_locations',S.allLocations);
   closeLocModal();
 }
 
@@ -2068,89 +1986,148 @@ function daysUntil(dateStr){
   return diff;
 }
 
+// Status label + colour helpers
+function cevStatusLabel(st){
+  return{event_created:'Event Created',ration_pending:'Ration Pending',ration_submitted:'Awaiting Mgr Approval',manager_approved:'Mgr Approved · Awaiting Admin',manager_rejected:'Mgr Rejected',admin_approved:'✅ Admin Approved',admin_rejected:'Admin Rejected'}[st]||st;
+}
+function cevStatusBg(st){
+  return{event_created:'#e8eaf6,#1a2642',ration_submitted:'#fef3c7,#92400e',manager_approved:'#d1fae5,#065f46',manager_rejected:'#fee2e2,#991b1b',admin_approved:'#d1fae5,#065f46',admin_rejected:'#fee2e2,#991b1b'}[st]||'#f0f2f8,#555';
+}
+function cevStatusStyle(st){const[bg,col]=cevStatusBg(st).split(',');return`background:${bg};color:${col}`;}
+
 function renderUpcomingEvents(role){
-  const {upcomingEvents}=S;
+  const evs=S.upcomingEvents||[];
   const isPriv=role==='admin'||role==='manager';
-  const today3=upcomingEvents.filter(e=>{const d=daysUntil(e.eventDate);return d!==null&&d<=3;}).length;
+  if(!evs.length) return`<div class="ev-section">
+    <div class="ev-section-hdr"><div class="ev-section-ttl">🎉 Upcoming Catering Events</div></div>
+    <div class="card" style="text-align:center;padding:22px 16px">
+      <div style="font-size:32px;margin-bottom:8px">🎉</div>
+      <div style="font-size:13px;color:var(--muted)">No upcoming events</div>
+      ${isPriv?`<button class="btn btn-navy btn-sm" style="margin-top:12px" onclick="openCevCreate(null)">Create First Event</button>`:''}
+    </div>
+  </div>`;
   return`<div class="ev-section">
     <div class="ev-section-hdr">
       <div class="ev-section-ttl">🎉 Upcoming Catering Events</div>
-      ${upcomingEvents.length?`<span class="ev-count">${upcomingEvents.length} event${upcomingEvents.length>1?'s':''}</span>`:''}
+      <span class="ev-count">${evs.length} event${evs.length>1?'s':''}</span>
     </div>
-    ${!upcomingEvents.length
-      ?`<div class="card" style="text-align:center;padding:22px 16px">
-          <div style="font-size:32px;margin-bottom:8px">🎉</div>
-          <div style="font-size:13px;color:var(--muted)">No upcoming catering events</div>
-        </div>`
-      :upcomingEvents.map((ev,i)=>{
-          const d=daysUntil(ev.eventDate);
-          const urgentClass=d!==null&&d<=1?'b-red':d<=3?'b-warn':'b-muted';
-          const dLabel=d===0?'TODAY':d===1?'TOMORROW':d!==null?`In ${d} days`:'';
-          return`<div class="ev-card">
-            <div class="ev-card-hdr">
-              <div class="ev-card-name">${esc(ev.eventType)} — ${esc(ev.eventName)}</div>
-              <div class="ev-card-meta">
-                <span class="ev-pill">📅 ${fmtDate(ev.eventDate)}</span>
-                <span class="ev-pill">🕐 ${esc(ev.eventTime)}</span>
-                <span class="ev-pill">👥 ${esc(ev.pax)} PAX</span>
-                ${dLabel?`<span class="ev-pill" style="background:${d<=1?'rgba(220,38,38,.3)':d<=3?'rgba(217,119,6,.3)':'rgba(255,255,255,.15)'}">${dLabel}</span>`:''}
-              </div>
-            </div>
-            <div class="ev-card-body">
-              <div style="flex:1;min-width:0">
-                <div class="ev-loc">📍 ${esc(ev.eventLocation)}</div>
-                ${isPriv?`<div style="font-size:12px;color:var(--muted);margin-top:3px">👤 ${esc(ev.eventClient)} &nbsp;·&nbsp; 📞 ${esc(ev.eventPhone)}</div>`:''}
-              </div>
-              <button class="btn btn-out btn-xs" onclick="S.eventDetail=${i};render()" style="flex-shrink:0">Details →</button>
-            </div>
-          </div>`;
-        }).join('')}
+    ${evs.map(ev=>{
+      const d=daysUntil(ev.eventDate);
+      const dLabel=d===0?'TODAY':d===1?'TOMORROW':d!==null&&d>0?`In ${d} days`:'';
+      const st=ev.status||'event_created';
+      const canOrder=role==='staff'&&['event_created','manager_rejected','admin_rejected'].includes(st);
+      const isRejected=st==='manager_rejected'||st==='admin_rejected';
+      const rejNote=st==='manager_rejected'?ev.managerNote:ev.adminNote;
+      return`<div class="ev-card">
+        <div class="ev-card-hdr">
+          <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap">
+            <span style="background:#ede9fe;color:#5b21b6;font-size:11px;font-weight:800;padding:2px 7px;border-radius:6px">[${esc(ev.eventCode||'—')}]</span>
+            <div class="ev-card-name">${esc(ev.eventType)} · ${esc(ev.clientName)}</div>
+          </div>
+          <div class="ev-card-meta">
+            <span class="ev-pill">📅 ${fmtDate(ev.eventDate)}</span>
+            ${ev.mealSlot?`<span class="ev-pill">🍽 ${esc(ev.mealSlot)}</span>`:''}
+            <span class="ev-pill">👥 ${esc(ev.pax)} PAX</span>
+            ${dLabel?`<span class="ev-pill" style="background:${d===0?'rgba(220,38,38,.3)':d<=3?'rgba(217,119,6,.3)':'rgba(255,255,255,.15)'}">${dLabel}</span>`:''}
+          </div>
+        </div>
+        <div class="ev-card-body">
+          <div style="flex:1;min-width:0">
+            <div class="ev-loc">📍 ${esc(ev.location||ev.eventLocation||'—')}</div>
+            ${isPriv?`<div style="font-size:12px;color:var(--muted);margin-top:2px">📞 ${esc(ev.clientMobile||ev.eventPhone||'—')}</div>`:''}
+            <div style="margin-top:6px"><span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;${cevStatusStyle(st)}">${cevStatusLabel(st)}</span></div>
+            ${isRejected&&rejNote?`<div style="font-size:11px;color:#b91c1c;background:#fee2e2;border-radius:6px;padding:4px 8px;margin-top:4px">⚠️ ${esc(rejNote)}</div>`:''}
+          </div>
+          <div style="display:flex;flex-direction:column;gap:5px;flex-shrink:0;align-items:flex-end">
+            <button class="btn btn-out btn-xs" onclick="S.eventDetail='${esc(ev.eventId)}';render()">Details →</button>
+            ${canOrder?`<button class="btn btn-navy btn-xs" onclick="openCevRation('${esc(ev.eventId)}')">🧺 Order Ration</button>`:''}
+            ${isPriv?`<button class="btn btn-out btn-xs" onclick="openCevCreate('${esc(ev.eventId)}')">✏️ Edit</button>
+            <button class="btn btn-xs" style="background:#fee2e2;color:#b91c1c;border:none;cursor:pointer;border-radius:7px;padding:4px 9px;font-size:11px;font-weight:700" onclick="cevDelete('${esc(ev.eventId)}')">🗑 Del</button>`:''}
+          </div>
+        </div>
+      </div>`;
+    }).join('')}
   </div>`;
 }
 
 function renderEventDetailModal(){
-  if(S.eventDetail===null)return`<div class="modal-bg" id="ev-modal"></div>`;
-  const ev=S.upcomingEvents[S.eventDetail];
-  if(!ev)return`<div class="modal-bg" id="ev-modal"></div>`;
+  if(!S.eventDetail) return`<div class="modal-bg" id="ev-modal"></div>`;
+  const ev=(S.upcomingEvents||[]).find(e=>e.eventId===S.eventDetail);
+  if(!ev) return`<div class="modal-bg" id="ev-modal"></div>`;
   const role=S.user?.role||'staff';
   const isPriv=role==='admin'||role==='manager';
   const d=daysUntil(ev.eventDate);
-  const dLabel=d===0?'TODAY — ':d===1?'TOMORROW — ':d!==null&&d>0?`In ${d} days — `:'';
+  const dLabel=d===0?'TODAY':'';
+  const st=ev.status||'event_created';
+  const canOrder=role==='staff'&&['event_created','manager_rejected','admin_rejected'].includes(st);
+  const menu=ev.menu||{};
+  const steps=[
+    {k:'event_created',l:'Event Created'},
+    {k:'ration_submitted',l:'Ration Submitted'},
+    {k:'manager_approved',l:'Mgr Approved'},
+    {k:'admin_approved',l:'Admin Approved'}
+  ];
+  const stepOrder=['event_created','ration_submitted','manager_approved','manager_rejected','admin_approved','admin_rejected'];
+  const stepIdx=stepOrder.indexOf(st);
+  const isRejected=st==='manager_rejected'||st==='admin_rejected';
   return`<div class="modal-bg open" id="ev-modal" onclick="if(event.target===this){S.eventDetail=null;render()}">
-    <div class="modal" style="max-width:480px">
-      <div class="modal-hdr" style="background:linear-gradient(135deg,var(--purple2),#4c1d95);color:#fff;border-radius:14px 14px 0 0">
+    <div class="modal" style="max-width:520px;max-height:90vh;overflow-y:auto">
+      <div class="modal-hdr" style="background:linear-gradient(135deg,var(--purple2),#4c1d95);color:#fff;border-radius:14px 14px 0 0;position:sticky;top:0;z-index:2">
         <div>
           <div class="modal-ttl" style="color:#fff">${esc(ev.eventType)}</div>
-          <div style="font-size:12px;opacity:.85;margin-top:2px">${esc(ev.eventName)}</div>
+          <div style="font-size:12px;opacity:.85;margin-top:2px">[${esc(ev.eventCode||'—')}] · ${esc(ev.clientName)}</div>
         </div>
         <button class="modal-close" style="color:#fff" onclick="S.eventDetail=null;render()">✕</button>
       </div>
       <div class="modal-body" style="padding:0">
         <div style="background:var(--purple-bg);padding:10px 16px;font-size:12px;color:var(--purple2);font-weight:700">
-          ${dLabel}${fmtDate(ev.eventDate)} &nbsp;·&nbsp; ${esc(ev.eventTime)}
+          ${fmtDate(ev.eventDate)} · ${esc(ev.mealSlot||ev.eventTime||'—')} ${dLabel?'· '+dLabel:''}
         </div>
         <div style="padding:14px 16px">
-          <div class="ev-detail-row"><span class="ev-detail-label">Event Date</span><span class="ev-detail-val">${fmtDate(ev.eventDate)}</span></div>
-          <div class="ev-detail-row"><span class="ev-detail-label">Time Slot</span><span class="ev-detail-val">${esc(ev.eventTime)}</span></div>
-          <div class="ev-detail-row"><span class="ev-detail-label">Location</span><span class="ev-detail-val">${esc(ev.eventLocation)}</span></div>
-          <div class="ev-detail-row"><span class="ev-detail-label">Guests (PAX)</span><span class="ev-detail-val" style="font-size:16px;font-weight:800;color:var(--purple2)">${esc(ev.pax)}</span></div>
+          <!-- Status pipeline -->
+          <div style="display:flex;align-items:center;gap:0;margin-bottom:14px">
+            ${steps.map((s,i)=>{
+              const done=stepOrder.indexOf(s.k)<=stepOrder.indexOf(isRejected?'manager_rejected':st)&&!(['manager_rejected','admin_rejected'].includes(s.k));
+              const isCur=s.k===st||(st==='manager_rejected'&&s.k==='manager_approved')||(st==='admin_rejected'&&s.k==='admin_approved');
+              const rej=isRejected&&((st==='manager_rejected'&&s.k==='manager_approved')||(st==='admin_rejected'&&s.k==='admin_approved'));
+              return`<div style="flex:1;text-align:center">
+                <div style="width:24px;height:24px;border-radius:50%;margin:0 auto 3px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;background:${rej?'#fee2e2':done?'var(--ok)':'var(--border)'};color:${rej?'#b91c1c':done?'#fff':'var(--muted)'}">${rej?'✕':done?'✓':(i+1)}</div>
+                <div style="font-size:9px;font-weight:${isCur?700:400};color:${rej?'#b91c1c':isCur?'var(--navy)':'var(--muted)'};line-height:1.2">${s.l}</div>
+              </div>${i<steps.length-1?`<div style="flex:0 0 12px;height:2px;background:${done&&i<3?'var(--ok)':'var(--border)'};margin-bottom:14px"></div>`:''}`;
+            }).join('')}
+          </div>
+          ${isRejected?`<div style="background:#fee2e2;border-radius:8px;padding:10px;margin-bottom:12px;font-size:12px;color:#991b1b"><b>⚠️ ${st==='manager_rejected'?'Mgr':'Admin'} rejected:</b> ${esc(st==='manager_rejected'?ev.managerNote:ev.adminNote)}</div>`:''}
+          <div class="ev-detail-row"><span class="ev-detail-label">Date</span><span class="ev-detail-val">${fmtDate(ev.eventDate)}</span></div>
+          <div class="ev-detail-row"><span class="ev-detail-label">Slot</span><span class="ev-detail-val">${esc(ev.mealSlot||ev.eventTime||'—')}</span></div>
+          <div class="ev-detail-row"><span class="ev-detail-label">PAX</span><span class="ev-detail-val" style="font-size:16px;font-weight:800;color:var(--purple2)">${esc(ev.pax)}</span></div>
+          <div class="ev-detail-row"><span class="ev-detail-label">Location</span><span class="ev-detail-val">${esc(ev.location||ev.eventLocation||'—')}</span></div>
           ${isPriv?`
-          <div class="ev-detail-row"><span class="ev-detail-label">Client Name</span><span class="ev-detail-val">${esc(ev.eventClient)}</span></div>
-          <div class="ev-detail-row"><span class="ev-detail-label">Client Phone</span><span class="ev-detail-val"><a href="tel:${esc(ev.eventPhone)}" style="color:var(--navy);text-decoration:none;font-weight:700">📞 ${esc(ev.eventPhone)}</a></span></div>`:''}
-          <div class="ev-detail-row"><span class="ev-detail-label">Ration Delivery</span><span class="ev-detail-val">${fmtDate(ev.deliveryDate)}</span></div>
-          ${ev.remarks?`<div class="ev-detail-row"><span class="ev-detail-label">Notes</span><span class="ev-detail-val">${esc(ev.remarks)}</span></div>`:''}
-          <div class="ev-detail-row"><span class="ev-detail-label">Submitted by</span><span class="ev-detail-val">${esc(ev.staffName)}</span></div>
-          <div class="ev-detail-row"><span class="ev-detail-label">Status</span><span class="ev-detail-val"><span class="badge ${ev.status==='Pending'?'b-warn':ev.status==='Manager Approved'?'b-ok':'b-red'}">${esc(ev.status||'Pending')}</span></span></div>
-          ${ev.items&&ev.items.length?`
+          <div class="ev-detail-row"><span class="ev-detail-label">Client</span><span class="ev-detail-val">${esc(ev.clientName)}</span></div>
+          <div class="ev-detail-row"><span class="ev-detail-label">Mobile</span><span class="ev-detail-val"><a href="tel:${esc(ev.clientMobile||ev.eventPhone||'')}" style="color:var(--navy);font-weight:700">📞 ${esc(ev.clientMobile||ev.eventPhone||'—')}</a></span></div>`:''}
+          ${Object.keys(menu).length?`
+          <div style="margin-top:14px">
+            <div class="card-ttl" style="margin-bottom:8px">📋 Event Menu</div>
+            ${Object.entries(menu).map(([cat,types])=>`
+              <div style="margin-bottom:10px">
+                <div style="font-weight:700;font-size:13px;color:var(--navy);margin-bottom:4px">${esc(cat)}</div>
+                ${Object.entries(types).map(([typ,items])=>items&&items.length?`
+                  <div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:3px">${esc(typ)}</div>
+                  <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:5px">${items.map(it=>`<span style="background:#ede9fe;color:#5b21b6;border-radius:20px;padding:2px 8px;font-size:11px">${esc(it)}</span>`).join('')}</div>`:'').join('')}
+              </div>`).join('')}
+          </div>`:''}
+          ${ev.rationItems&&Object.keys(ev.rationItems).length?`
           <div style="margin-top:12px">
-            <div class="card-ttl" style="margin-bottom:8px">Ration Items (${ev.items.length})</div>
-            <div class="ev-items-list">
-              ${ev.items.map(it=>`<div class="ev-item-row"><span>${esc(it.name)}</span><span style="font-weight:700;color:var(--navy)">${it.qty} ${it.unit}</span></div>`).join('')}
-            </div>
+            <div class="card-ttl" style="margin-bottom:8px">🧺 Ration Order</div>
+            ${Object.entries(ev.rationItems).map(([cat,items])=>`
+              <div style="font-weight:700;font-size:12px;color:var(--navy);margin:6px 0 3px">${esc(cat)}</div>
+              ${Object.entries(items).map(([nm,v])=>`<div style="display:flex;justify-content:space-between;font-size:12px;padding:4px 0;border-bottom:1px solid var(--border)"><span>${esc(nm)}</span><b style="color:var(--navy)">${esc(v.qty)} ${esc(v.unit)}</b></div>`).join('')}`).join('')}
           </div>`:''}
         </div>
       </div>
-      <div class="modal-footer"><button class="btn btn-navy btn-sm" onclick="S.eventDetail=null;render()">Close</button></div>
+      <div class="modal-footer">
+        ${canOrder?`<button class="btn btn-navy btn-sm" onclick="S.eventDetail=null;openCevRation('${esc(ev.eventId)}')">🧺 Order Ration</button>`:''}
+        <button class="btn btn-out btn-sm" onclick="S.eventDetail=null;render()">Close</button>
+      </div>
     </div>
   </div>`;
 }
@@ -2178,21 +2155,372 @@ function doLogout(){
   S.user=null;S.myLeaves=[];S.todayAtt=null;
   S.pendingOrders=[];S.pendingLeaves=[];S.todayAttAll=[];
   S.approvedOrders=[];S.allStaff=[];S.allLeaves=[];S.allLocations=[];
-  S.upcomingEvents=[];S.eventDetail=null;
+  S.upcomingEvents=[];S.eventDetail=null;S.cevSelEventId=null;S.cevEditId=null;
   S.loginUser='';S.loginPw='';S.loginError='';
   go('login');
 }
 
+
 /* ════════════════════════════════════════════
-   INIT
+   CATERING EVENT SYSTEM
 ════════════════════════════════════════════ */
-function doLogout(){
-  lsS('fb_session',null);
-  S.user=null;S.myLeaves=[];S.todayAtt=null;
-  S.pendingOrders=[];S.pendingLeaves=[];S.todayAttAll=[];
-  S.approvedOrders=[];S.allStaff=[];S.allLeaves=[];S.allLocations=[];
-  S.loginUser='';S.loginPw='';S.loginError='';
-  go('login');
+
+// Open create/edit screen (admin/manager only)
+function openCevCreate(eventId){
+  const role=S.user?.role;
+  if(role!=='admin'&&role!=='manager'){alert('Only Admin or Manager can create events.');return;}
+  if(eventId){
+    const ev=(S.upcomingEvents||[]).find(e=>e.eventId===eventId);
+    if(!ev)return;
+    S.cevEditId=eventId;
+    S.cevForm={type:ev.eventType||'',mealSlot:ev.mealSlot||'',date:ev.eventDate||'',time:ev.eventTime||'',pax:ev.pax||'',clientName:ev.clientName||ev.eventClient||'',clientMobile:ev.clientMobile||ev.eventPhone||'',location:ev.location||ev.eventLocation||''};
+    S.cevMenu=JSON.parse(JSON.stringify(ev.menu||{}));
+  } else {
+    S.cevEditId=null;
+    S.cevForm={type:'',mealSlot:'',date:'',time:'',pax:'',clientName:'',clientMobile:'',location:''};
+    S.cevMenu={};
+  }
+  S.cevCatOpen={};
+  go('cev-create');
+}
+
+// Open ration screen for staff
+function openCevRation(eventId){
+  const role=S.user?.role;
+  if(role!=='staff'){alert('Only staff can submit ration orders.');return;}
+  const ev=(S.upcomingEvents||[]).find(e=>e.eventId===eventId);
+  if(!ev){alert('Event not found.');return;}
+  S.cevSelEventId=eventId;
+  S.cevRationCart={};
+  S.cevRationCatTab=Object.keys(ITEMS)[0];
+  go('cev-ration');
+}
+
+// Open manager approve screen
+function openCevMgrApprove(eventId){
+  S.cevSelEventId=eventId;
+  S.cevMgrNote='';
+  go('cev-mgr');
+}
+
+// Open admin final approve screen
+function openCevAdminApprove(eventId){
+  S.cevSelEventId=eventId;
+  S.cevAdminNote='';
+  go('cev-admin');
+}
+
+// Delete event
+async function cevDelete(eventId){
+  if(!confirm('Delete this event permanently?'))return;
+  if(isBackendSet()){
+    const r=await apiData('deleteCateringEvent',{eventId});
+    if(!r?.success){alert('Delete failed: '+(r?.error||'error'));return;}
+  }
+  S.upcomingEvents=(S.upcomingEvents||[]).filter(e=>e.eventId!==eventId);
+  const cached=lsG('fb_catering_events',[]).filter(e=>e.eventId!==eventId);
+  lsS('fb_catering_events',cached);
+  render();
+}
+
+// Toggle menu item in cevMenu
+function cevToggleItem(cat,typ,item){
+  if(!S.cevMenu[cat])S.cevMenu[cat]={};
+  if(!S.cevMenu[cat][typ])S.cevMenu[cat][typ]=[];
+  const arr=S.cevMenu[cat][typ];
+  const i=arr.indexOf(item);
+  if(i>=0)arr.splice(i,1); else arr.push(item);
+  render();
+}
+function cevItemSel(cat,typ,item){return !!(S.cevMenu[cat]&&S.cevMenu[cat][typ]&&S.cevMenu[cat][typ].includes(item));}
+function cevMenuCount(){let n=0;Object.values(S.cevMenu).forEach(t=>Object.values(t).forEach(a=>{n+=a.length;}));return n;}
+
+// ── CREATE / EDIT EVENT SCREEN ─────────────────────────────
+function renderCevCreate(){
+  const f=S.cevForm;
+  const isEdit=!!S.cevEditId;
+  const canSave=f.type&&f.date&&f.pax&&f.clientName&&f.location;
+  return`<div class="scr on scr-wide">
+    <div class="card">
+      <div class="card-ttl">${isEdit?'✏️ Edit Catering Event':'➕ New Catering Event'}</div>
+      <label class="fl">Event Type *</label>
+      <select class="fi" onchange="S.cevForm.type=this.value">
+        <option value="">— Select type —</option>
+        ${EVENT_TYPES.map(t=>`<option value="${esc(t)}" ${f.type===t?'selected':''}>${esc(t)}</option>`).join('')}
+      </select>
+      <label class="fl">Meal / Event Slot *</label>
+      <select class="fi" onchange="S.cevForm.mealSlot=this.value">
+        <option value="">— Select slot —</option>
+        ${MEAL_SLOTS.map(s=>`<option value="${esc(s)}" ${f.mealSlot===s?'selected':''}>${esc(s)}</option>`).join('')}
+      </select>
+      <label class="fl">Event Date *</label>
+      <input id="cev-date" class="fi" type="date" value="${esc(f.date)}" min="${today()}" onchange="S.cevForm.date=this.value">
+      <label class="fl">Event Time</label>
+      <input id="cev-time" class="fi" type="time" value="${esc(f.time)}" onchange="S.cevForm.time=this.value">
+      <label class="fl">PAX *</label>
+      <input id="cev-pax" class="fi" type="number" min="1" placeholder="Number of guests" value="${esc(f.pax)}" oninput="S.cevForm.pax=this.value">
+      <label class="fl">Client Name *</label>
+      <input id="cev-client" class="fi" type="text" placeholder="Client / family name" value="${esc(f.clientName)}" oninput="S.cevForm.clientName=this.value">
+      <label class="fl">Client Mobile</label>
+      <input id="cev-mobile" class="fi" type="tel" placeholder="10-digit number" value="${esc(f.clientMobile)}" oninput="S.cevForm.clientMobile=this.value">
+      <label class="fl">Location *</label>
+      <select class="fi" onchange="S.cevForm.location=this.value">
+        <option value="">— Select location —</option>
+        ${EVENT_LOCATIONS.map(l=>`<option value="${esc(l)}" ${f.location===l?'selected':''}>${esc(l)}</option>`).join('')}
+      </select>
+    </div>
+
+    <div class="card">
+      <div class="card-ttl">📋 Event Menu <span style="font-size:12px;font-weight:400;color:var(--muted)">(${cevMenuCount()} items selected)</span></div>
+      <p style="font-size:12px;color:var(--muted);margin:0 0 10px">Select dishes from each category to build the event menu.</p>
+      ${Object.entries(CATERING_MENU).map(([cat,types])=>{
+        const cnt=Object.values(S.cevMenu[cat]||{}).reduce((t,a)=>t+a.length,0);
+        const open=S.cevCatOpen[cat];
+        return`<div style="border:1.5px solid ${cnt?'var(--navy)':'var(--border)'};border-radius:10px;margin-bottom:8px;overflow:hidden">
+          <div onclick="S.cevCatOpen['${esc(cat)}']=!S.cevCatOpen['${esc(cat)}'];render()" style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;cursor:pointer;background:${cnt?'#f0f2fa':'var(--card)'}">
+            <span style="font-weight:700;font-size:13px">${esc(cat)} ${cnt?`<span style="background:var(--navy);color:#fff;border-radius:20px;padding:1px 7px;font-size:11px;margin-left:4px">${cnt}</span>`:''}</span>
+            <span style="font-size:12px;color:var(--muted)">${open?'▲':'▼'}</span>
+          </div>
+          ${open?`<div style="padding:10px 14px;border-top:1px solid var(--border)">
+            ${Object.entries(types).map(([typ,items])=>`
+              <div style="margin-bottom:10px">
+                <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">${esc(typ)}</div>
+                <div style="display:flex;flex-wrap:wrap;gap:6px">
+                  ${items.map(item=>{const sel=cevItemSel(cat,typ,item);return`<span onclick="cevToggleItem('${esc(cat)}','${esc(typ)}','${esc(item)}')" style="cursor:pointer;border-radius:20px;padding:4px 11px;font-size:12px;border:1.5px solid ${sel?'var(--navy)':'var(--border)'};background:${sel?'var(--navy)':'transparent'};color:${sel?'#fff':'var(--txt)'}">${esc(item)}</span>`;}).join('')}
+                </div>
+              </div>`).join('')}
+          </div>`:''}
+        </div>`;
+      }).join('')}
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-out" onclick="goBack()">← Back</button>
+      <button class="btn btn-navy" onclick="cevSave()" ${!canSave?'disabled':''}>${isEdit?'💾 Save Changes':'✅ Create Event'}</button>
+    </div>
+  </div>`;
+}
+
+async function cevSave(){
+  const f=S.cevForm;
+  const isEdit=!!S.cevEditId;
+  const payload={eventType:f.type,mealSlot:f.mealSlot,eventDate:f.date,eventTime:f.time,pax:f.pax,clientName:f.clientName,clientMobile:f.clientMobile,location:f.location,menu:S.cevMenu,createdBy:S.user?.name||''};
+  S.loading=true; render();
+  try{
+    if(isEdit){
+      if(isBackendSet()){
+        const r=await apiData('updateCateringEvent',{...payload,eventId:S.cevEditId});
+        if(!r?.success){alert('Save failed: '+(r?.error||'error'));S.loading=false;render();return;}
+      }
+      const idx=(S.upcomingEvents||[]).findIndex(e=>e.eventId===S.cevEditId);
+      if(idx>=0) Object.assign(S.upcomingEvents[idx],{eventType:f.type,mealSlot:f.mealSlot,eventDate:f.date,eventTime:f.time,pax:f.pax,clientName:f.clientName,clientMobile:f.clientMobile,location:f.location,menu:S.cevMenu});
+    } else {
+      let evId,evCode;
+      if(isBackendSet()){
+        const r=await apiData('createCateringEvent',payload);
+        if(!r?.success){alert('Failed: '+(r?.error||'error'));S.loading=false;render();return;}
+        evId=r.eventId; evCode=r.eventCode;
+      } else {
+        evCode=String(1000+((S.upcomingEvents||[]).length));
+        evId='CEV-'+evCode+'-'+Date.now();
+      }
+      const newEv={eventId:evId,eventCode:evCode,eventType:f.type,mealSlot:f.mealSlot,eventDate:f.date,eventTime:f.time,pax:f.pax,clientName:f.clientName,clientMobile:f.clientMobile,location:f.location,menu:S.cevMenu,status:'event_created',createdBy:S.user?.name||''};
+      if(!S.upcomingEvents)S.upcomingEvents=[];
+      S.upcomingEvents.push(newEv);
+      const cached=lsG('fb_catering_events',[]);cached.push(newEv);lsS('fb_catering_events',cached);
+    }
+    S.loading=false;
+    alert(isEdit?'Event updated!':'Event created! Staff can now order ration.');
+    const role=S.user?.role;
+    S.cevEditId=null;
+    go(role==='admin'?'a-home':'m-home');
+  } catch(err){S.loading=false;alert('Error: '+err.message);render();}
+}
+
+// ── STAFF RATION ORDER FOR EVENT ────────────────────────────
+function renderCevRation(){
+  const ev=(S.upcomingEvents||[]).find(e=>e.eventId===S.cevSelEventId);
+  if(!ev) return`<div class="scr on"><div class="card"><p>Event not found.</p></div><button class="btn btn-out" onclick="goBack()">← Back</button></div>`;
+  const catKeys=Object.keys(ITEMS);
+  const activeKey=S.cevRationCatTab||catKeys[0];
+  const activeItems=Object.values(ITEMS[activeKey]||{})[0]||[];
+  const cart=S.cevRationCart;
+  const totalItems=Object.values(cart).reduce((t,c)=>t+Object.values(c).filter(v=>v.qty&&parseFloat(v.qty)>0).length,0);
+  return`<div class="scr on scr-wide">
+    <div class="card" style="background:linear-gradient(135deg,var(--purple2),#4c1d95);color:#fff;margin-bottom:12px">
+      <div style="font-size:12px;opacity:.8">[${esc(ev.eventCode)}] Ration Order</div>
+      <div style="font-size:16px;font-weight:800">${esc(ev.eventType)} · ${esc(ev.clientName)}</div>
+      <div style="font-size:12px;opacity:.85">📅 ${fmtDate(ev.eventDate)} · 🍽 ${esc(ev.mealSlot||'—')} · 👥 ${esc(ev.pax)} pax · 📍 ${esc(ev.location||'—')}</div>
+    </div>
+    <div class="card">
+      <div class="card-ttl">🧺 Select Ration Items <span style="font-size:12px;font-weight:400;color:var(--muted)">${totalItems} added</span></div>
+      <div style="overflow-x:auto;white-space:nowrap;margin-bottom:12px;padding-bottom:2px">
+        ${catKeys.map(k=>{
+          const nm=Object.keys(ITEMS[k]||{})[0]||k;
+          const cnt=Object.values(cart[k]||{}).filter(v=>v.qty&&parseFloat(v.qty)>0).length;
+          return`<button onclick="S.cevRationCatTab='${k}';render()" style="display:inline-block;margin-right:6px;padding:6px 12px;border-radius:20px;border:1.5px solid ${S.cevRationCatTab===k?'var(--navy)':'var(--border)'};background:${S.cevRationCatTab===k?'var(--navy)':'var(--card)'};color:${S.cevRationCatTab===k?'#fff':'var(--txt)'};font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap">
+            ${nm.split(' ')[0]} ${cnt?`<span style="background:${S.cevRationCatTab===k?'#fff':'var(--navy)'};color:${S.cevRationCatTab===k?'var(--navy)':'#fff'};border-radius:10px;padding:0 5px;font-size:10px">${cnt}</span>`:''}
+          </button>`;
+        }).join('')}
+      </div>
+      <div style="font-weight:700;font-size:12px;color:var(--navy);margin-bottom:8px">${Object.keys(ITEMS[activeKey]||{})[0]||activeKey}</div>
+      ${activeItems.map(([itemName,defUnit])=>{
+        const v=(cart[activeKey]&&cart[activeKey][itemName])||{qty:'',unit:defUnit};
+        const hasQty=v.qty&&parseFloat(v.qty)>0;
+        return`<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)">
+          <div style="flex:1;font-size:13px;font-weight:${hasQty?700:400};color:${hasQty?'var(--navy)':'var(--txt)'}">${esc(itemName)}</div>
+          <input type="number" min="0" step="0.1" placeholder="Qty" value="${esc(v.qty)}"
+            oninput="if(!S.cevRationCart['${activeKey}'])S.cevRationCart['${activeKey}']={};if(!S.cevRationCart['${activeKey}']['${esc(itemName)}'])S.cevRationCart['${activeKey}']['${esc(itemName)}']={qty:'',unit:'${esc(defUnit)}'};S.cevRationCart['${activeKey}']['${esc(itemName)}'].qty=this.value"
+            style="width:70px;border:1.5px solid ${hasQty?'var(--navy)':'var(--border)'};border-radius:8px;padding:5px 8px;font-size:13px;text-align:center">
+          <select onchange="if(!S.cevRationCart['${activeKey}'])S.cevRationCart['${activeKey}']={};if(!S.cevRationCart['${activeKey}']['${esc(itemName)}'])S.cevRationCart['${activeKey}']['${esc(itemName)}']={qty:'',unit:'${esc(defUnit)}'};S.cevRationCart['${activeKey}']['${esc(itemName)}'].unit=this.value" style="width:68px;border:1.5px solid var(--border);border-radius:8px;padding:5px 4px;font-size:11px">
+            ${UNITS.map(u=>`<option ${v.unit===u?'selected':''}>${u}</option>`).join('')}
+          </select>
+        </div>`;
+      }).join('')}
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-out" onclick="goBack()">← Back</button>
+      <button class="btn btn-navy" onclick="cevSubmitRation()" ${!totalItems?'disabled':''}>Submit Ration (${totalItems} items) →</button>
+    </div>
+  </div>`;
+}
+
+async function cevSubmitRation(){
+  const ev=(S.upcomingEvents||[]).find(e=>e.eventId===S.cevSelEventId);
+  if(!ev){alert('Event not found.');return;}
+  const rationItems={};
+  Object.entries(S.cevRationCart).forEach(([cat,items])=>{
+    Object.entries(items).forEach(([name,v])=>{
+      if(v.qty&&parseFloat(v.qty)>0){if(!rationItems[cat])rationItems[cat]={};rationItems[cat][name]={qty:v.qty,unit:v.unit};}
+    });
+  });
+  if(!Object.keys(rationItems).length){alert('Add at least one item.');return;}
+  S.loading=true;render();
+  try{
+    if(isBackendSet()){
+      const r=await apiData('submitEventRation',{eventId:ev.eventId,rationItems,submittedBy:S.user?.name||''});
+      if(!r?.success){alert('Submit failed: '+(r?.error||'error'));S.loading=false;render();return;}
+    }
+    const idx=(S.upcomingEvents||[]).findIndex(e=>e.eventId===ev.eventId);
+    if(idx>=0){Object.assign(S.upcomingEvents[idx],{status:'ration_submitted',rationItems,submittedBy:S.user?.name||''});}
+    S.loading=false;
+    alert('Ration submitted! Awaiting Operations Manager approval.');
+    go('s-home');
+  } catch(err){S.loading=false;alert('Error: '+err.message);render();}
+}
+
+// ── MANAGER APPROVE ────────────────────────────────────────
+function renderCevMgrApprove(){
+  const ev=(S.upcomingEvents||[]).find(e=>e.eventId===S.cevSelEventId);
+  if(!ev) return`<div class="scr on"><div class="card"><p>Event not found.</p></div></div>`;
+  const rationItems=ev.rationItems||{};
+  return`<div class="scr on scr-wide">
+    <div class="card" style="background:linear-gradient(135deg,#1e40af,var(--navy));color:#fff">
+      <div style="font-size:12px;opacity:.8">[${esc(ev.eventCode)}] Ration Approval</div>
+      <div style="font-size:16px;font-weight:800">${esc(ev.eventType)} · ${esc(ev.clientName)}</div>
+      <div style="font-size:12px;opacity:.85">📅 ${fmtDate(ev.eventDate)} · 👥 ${esc(ev.pax)} pax · 📍 ${esc(ev.location||'—')}</div>
+    </div>
+    ${Object.keys(ev.menu||{}).length?`<div class="card">
+      <div class="card-ttl">📋 Event Menu</div>
+      ${Object.entries(ev.menu).map(([cat,types])=>`
+        <div style="margin-bottom:8px">
+          <b style="font-size:13px;color:var(--navy)">${esc(cat)}</b><br>
+          ${Object.entries(types).map(([typ,items])=>items&&items.length?`<span style="font-size:11px;font-weight:600;color:var(--muted)">${esc(typ)}: </span><span style="font-size:12px">${items.join(', ')}</span><br>`:'').join('')}
+        </div>`).join('')}
+    </div>`:''}
+    <div class="card">
+      <div class="card-ttl">🧺 Ration Submitted by ${esc(ev.submittedBy||'Staff')}</div>
+      ${!Object.keys(rationItems).length?'<p style="color:var(--muted)">No items.</p>':
+        Object.entries(rationItems).map(([cat,items])=>`
+          <div style="font-weight:700;font-size:12px;color:var(--navy);margin:6px 0 3px">${esc(cat)}</div>
+          ${Object.entries(items).map(([nm,v])=>`<div style="display:flex;justify-content:space-between;font-size:13px;padding:5px 0;border-bottom:1px solid var(--border)"><span>${esc(nm)}</span><b style="color:var(--navy)">${esc(v.qty)} ${esc(v.unit)}</b></div>`).join('')}`).join('')}
+    </div>
+    <div class="card">
+      <div class="card-ttl">Your Decision</div>
+      <label class="fl">Note / Comment (required for rejection)</label>
+      <textarea id="mgr-note-inp" class="fi" rows="3" placeholder="Add note or rejection reason…" oninput="S.cevMgrNote=this.value">${esc(S.cevMgrNote)}</textarea>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-out" onclick="goBack()">← Back</button>
+      <button class="btn" style="background:#fee2e2;color:#b91c1c;border:none;padding:12px 20px;border-radius:10px;font-weight:700;cursor:pointer" onclick="cevMgrDecide('rejected')">✕ Reject</button>
+      <button class="btn btn-ok" onclick="cevMgrDecide('approved')">✓ Approve</button>
+    </div>
+  </div>`;
+}
+
+async function cevMgrDecide(decision){
+  const ev=(S.upcomingEvents||[]).find(e=>e.eventId===S.cevSelEventId);
+  if(!ev)return;
+  if(decision==='rejected'&&!S.cevMgrNote.trim()){alert('Add a note explaining why you are rejecting.');return;}
+  if(!confirm(decision==='approved'?'Approve and send to Admin?':'Reject and return to Staff?'))return;
+  S.loading=true;render();
+  try{
+    if(isBackendSet()){
+      const r=await apiData('decideEventRation',{eventId:ev.eventId,decision,note:S.cevMgrNote});
+      if(!r?.success){alert('Failed: '+(r?.error||'error'));S.loading=false;render();return;}
+    }
+    const newStatus=decision==='approved'?'manager_approved':'manager_rejected';
+    const idx=(S.upcomingEvents||[]).findIndex(e=>e.eventId===ev.eventId);
+    if(idx>=0)Object.assign(S.upcomingEvents[idx],{status:newStatus,managerNote:S.cevMgrNote,managerDecision:decision});
+    S.loading=false;
+    alert(decision==='approved'?'Approved! Sent to Admin.':'Rejected. Staff will be notified.');
+    go('m-home');
+  } catch(err){S.loading=false;alert('Error: '+err.message);render();}
+}
+
+// ── ADMIN FINAL APPROVAL ───────────────────────────────────
+function renderCevAdminApprove(){
+  const ev=(S.upcomingEvents||[]).find(e=>e.eventId===S.cevSelEventId);
+  if(!ev) return`<div class="scr on"><div class="card"><p>Event not found.</p></div></div>`;
+  const rationItems=ev.rationItems||{};
+  return`<div class="scr on scr-wide">
+    <div class="card" style="background:linear-gradient(135deg,#065f46,#047857);color:#fff">
+      <div style="font-size:12px;opacity:.8">[${esc(ev.eventCode)}] Final Approval</div>
+      <div style="font-size:16px;font-weight:800">${esc(ev.eventType)} · ${esc(ev.clientName)}</div>
+      <div style="font-size:12px;opacity:.85">📅 ${fmtDate(ev.eventDate)} · 👥 ${esc(ev.pax)} pax · 📍 ${esc(ev.location||'—')}</div>
+    </div>
+    <div class="card" style="border-left:4px solid var(--ok)">
+      <div class="card-ttl">✅ Operations Manager Approved</div>
+      <div style="font-size:13px;color:var(--muted)">Note: ${esc(ev.managerNote||'No note')}</div>
+    </div>
+    <div class="card">
+      <div class="card-ttl">🧺 Ration for Procurement</div>
+      ${!Object.keys(rationItems).length?'<p style="color:var(--muted)">No items.</p>':
+        Object.entries(rationItems).map(([cat,items])=>`
+          <div style="font-weight:700;font-size:12px;color:var(--navy);margin:6px 0 3px">${esc(cat)}</div>
+          ${Object.entries(items).map(([nm,v])=>`<div style="display:flex;justify-content:space-between;font-size:13px;padding:5px 0;border-bottom:1px solid var(--border)"><span>${esc(nm)}</span><b style="color:var(--navy)">${esc(v.qty)} ${esc(v.unit)}</b></div>`).join('')}`).join('')}
+    </div>
+    <div class="card">
+      <div class="card-ttl">Your Decision</div>
+      <label class="fl">Note / Comment (required for rejection)</label>
+      <textarea id="admin-note-inp" class="fi" rows="3" placeholder="Add note or rejection reason…" oninput="S.cevAdminNote=this.value">${esc(S.cevAdminNote)}</textarea>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-out" onclick="goBack()">← Back</button>
+      <button class="btn" style="background:#fee2e2;color:#b91c1c;border:none;padding:12px 20px;border-radius:10px;font-weight:700;cursor:pointer" onclick="cevAdminDecide('rejected')">✕ Reject</button>
+      <button class="btn btn-ok" onclick="cevAdminDecide('approved')">✅ Final Approve</button>
+    </div>
+  </div>`;
+}
+
+async function cevAdminDecide(decision){
+  const ev=(S.upcomingEvents||[]).find(e=>e.eventId===S.cevSelEventId);
+  if(!ev)return;
+  if(decision==='rejected'&&!S.cevAdminNote.trim()){alert('Add a rejection note.');return;}
+  if(!confirm(decision==='approved'?'Final approve for procurement?':'Reject and send back to Staff?'))return;
+  S.loading=true;render();
+  try{
+    if(isBackendSet()){
+      const r=await apiData('adminDecideEventRation',{eventId:ev.eventId,decision,note:S.cevAdminNote});
+      if(!r?.success){alert('Failed: '+(r?.error||'error'));S.loading=false;render();return;}
+    }
+    const newStatus=decision==='approved'?'admin_approved':'admin_rejected';
+    const idx=(S.upcomingEvents||[]).findIndex(e=>e.eventId===ev.eventId);
+    if(idx>=0)Object.assign(S.upcomingEvents[idx],{status:newStatus,adminNote:S.cevAdminNote,adminDecision:decision});
+    S.loading=false;
+    alert(decision==='approved'?'✅ Ration approved for procurement!':'Rejected. Staff will need to revise.');
+    go('a-home');
+  } catch(err){S.loading=false;alert('Error: '+err.message);render();}
 }
 
 /* ════════════════════════════════════════════
@@ -2200,11 +2528,14 @@ function doLogout(){
 ════════════════════════════════════════════ */
 async function loadUserData(){
   if(!S.user)return;
+  const uid=S.user.userId;
   if(isBackendSet()){
+    const rl=await api({action:'getLeaves',userId:uid});
+    if(rl?.leaves)S.myLeaves=rl.leaves;
+    const ra=await api({action:'getAttendance',userId:uid,date:today()});
+    if(ra?.record)S.todayAtt=ra.record;
+    if(S.user.role==='manager'||S.user.role==='admin') await loadManagerData();
     if(S.user.role==='admin') await loadAdminData();
-    else if(S.user.role==='manager') await loadManagerData();
-    else await loadStaffData();
-    return;
   }else{
     S.myLeaves=lsG('fb_leaves_'+uid,[]);
     S.todayAtt=lsG('fb_att_'+today(),null);
@@ -2222,12 +2553,12 @@ async function loadUserData(){
   }
 }
 
-window.addEventListener('DOMContentLoaded',()=>{
+window.addEventListener('DOMContentLoaded',async()=>{
   const saved=lsG('fb_session',null);
   if(saved){
     S.user=saved;
-    go(homeScreen());          // show home immediately with cached state
-    loadUserData().then(()=>render()); // refresh from backend in background
+    await loadUserData();
+    go(homeScreen());
   }else{
     go('login');
   }
