@@ -2530,10 +2530,14 @@ async function loadUserData(){
   if(!S.user)return;
   const uid=S.user.userId;
   if(isBackendSet()){
-    const rl=await api({action:'getLeaves',userId:uid});
+    // Run base calls in parallel to reduce cold-start wait
+    const [rl,ra]=await Promise.all([
+      api({action:'getLeaves',userId:uid}),
+      api({action:'getAttendance',userId:uid,date:today()})
+    ]);
     if(rl?.leaves)S.myLeaves=rl.leaves;
-    const ra=await api({action:'getAttendance',userId:uid,date:today()});
     if(ra?.record)S.todayAtt=ra.record;
+    render(); // refresh UI with fresh data
     if(S.user.role==='manager'||S.user.role==='admin') await loadManagerData();
     if(S.user.role==='admin') await loadAdminData();
   }else{
@@ -2557,8 +2561,8 @@ window.addEventListener('DOMContentLoaded',async()=>{
   const saved=lsG('fb_session',null);
   if(saved){
     S.user=saved;
-    await loadUserData();
-    go(homeScreen());
+    go(homeScreen()); // render immediately — don't wait for backend
+    loadUserData().catch(e=>console.warn('Background data load:',e)); // warm up in bg
   }else{
     go('login');
   }
