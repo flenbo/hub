@@ -1619,16 +1619,21 @@ function renderAdmProcurement(){
       <div class="alert" style="background:#d1fae5;color:#065f46;border:none;margin-bottom:10px">🎉 Catering event rations approved — procure these items before the event dates.</div>
       ${evApproved.map(ev=>{
         const items=ev.rationItems||{};
-        const itemList=Object.entries(items).filter(([,v])=>v&&v.qty>0);
+        // Handle all formats: {CAT:[{name,qty,unit}]}, {CAT:{name:{qty,unit}}}, {sup|cat|name:{qty,unit}}
         const bySup2={};
-        itemList.forEach(([k,v])=>{const[sup,,name]=k.split('|');if(!bySup2[sup])bySup2[sup]=[];bySup2[sup].push({name:name||k,qty:v.qty,unit:v.unit||'',sup});});
+        let totalItems=0;
+        Object.entries(items).forEach(([k,v])=>{
+          if(Array.isArray(v)){v.forEach(it=>{if(it&&it.qty>0){if(!bySup2[k])bySup2[k]=[];bySup2[k].push({name:it.name,qty:it.qty,unit:it.unit||''});totalItems++;}});}
+          else if(v&&typeof v==='object'&&v.qty>0){const[sup,,name]=k.split('|');if(!bySup2[sup])bySup2[sup]=[];bySup2[sup].push({name:name||k,qty:v.qty,unit:v.unit||''});totalItems++;}
+          else if(v&&typeof v==='object'){Object.entries(v).forEach(([name,it])=>{if(it&&it.qty>0){if(!bySup2[k])bySup2[k]=[];bySup2[k].push({name,qty:it.qty,unit:it.unit||''});totalItems++;}});}
+        });
         return`<div class="req-card" style="margin-bottom:10px">
           <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
             <div><span style="background:#d1fae5;color:#065f46;font-size:11px;font-weight:800;padding:2px 7px;border-radius:6px">[${esc(ev.eventCode)}] ✅ Approved</span> <strong>${esc(ev.eventType)}</strong></div>
             <span style="font-size:11px;color:var(--muted)">${fmtDate(ev.eventDate)}</span>
           </div>
           <div style="font-size:12px;color:var(--muted);margin-bottom:8px">👤 ${esc(ev.clientName||ev.eventClient)} · 👥 ${esc(ev.pax)} pax · 📍 ${esc(ev.location||ev.eventLocation)}</div>
-          ${itemList.length?`<div style="font-size:12px;font-weight:700;margin-bottom:6px;color:var(--navy)">Ration Items to Procure (${itemList.length}):</div>
+          ${totalItems?`<div style="font-size:12px;font-weight:700;margin-bottom:6px;color:var(--navy)">Ration Items to Procure (${totalItems}):</div>
           ${Object.entries(bySup2).map(([sup,its])=>`<div style="background:#f8f9ff;border-radius:7px;padding:8px 10px;margin-bottom:5px">
             <div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:4px">${SUP_META[sup]?.e||''}${SUP_META[sup]?.l?' '+SUP_META[sup].l:sup}</div>
             ${its.map(it=>`<div style="display:flex;justify-content:space-between;font-size:12px;padding:2px 0"><span>${esc(it.name)}</span><span style="font-weight:700">${esc(it.qty)} ${esc(it.unit)}</span></div>`).join('')}
