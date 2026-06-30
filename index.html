@@ -1265,11 +1265,13 @@ function renderAttendance(){
 ════════════════════════════════════════════ */
 async function loadManagerData(){
   if(isBackendSet()){
-    const ro=await api({action:'getOrders',status:'Pending'});
+    const [ro,rl,ra]=await Promise.all([
+      api({action:'getOrders',status:'Pending'}),
+      api({action:'getLeaves',status:'Pending'}),
+      api({action:'getAttendance',date:today()})
+    ]);
     if(ro?.orders) S.pendingOrders=ro.orders;
-    const rl=await api({action:'getLeaves',status:'Pending'});
     if(rl?.leaves) S.pendingLeaves=rl.leaves;
-    const ra=await api({action:'getAttendance',date:today()});
     if(ra?.records) S.todayAttAll=ra.records;
   } else {
     S.pendingOrders=getDemoOrders();
@@ -1475,13 +1477,15 @@ async function logAttendance(type){
 ════════════════════════════════════════════ */
 async function loadAdminData(){
   if(isBackendSet()){
-    const ro=await api({action:'getOrders',status:'Manager Approved'});
+    const [ro,rs,rl,rloc]=await Promise.all([
+      api({action:'getOrders',status:'Manager Approved'}),
+      api({action:'getStaff'}),
+      api({action:'getLeaves'}),
+      api({action:'getLocations'})
+    ]);
     if(ro?.orders) S.approvedOrders=ro.orders;
-    const rs=await api({action:'getStaff'});
     if(rs?.staff) S.allStaff=rs.staff;
-    const rl=await api({action:'getLeaves'});
     if(rl?.leaves) S.allLeaves=rl.leaves;
-    const rloc=await api({action:'getLocations'});
     if(rloc?.locations) S.allLocations=rloc.locations;
   } else {
     S.approvedOrders=getDemoApproved();
