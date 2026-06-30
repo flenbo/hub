@@ -4,6 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
 <title>Flenbo Hub — Operations Platform</title>
+<!-- PWA -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1A2642">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Flenbo Hub">
+<link rel="apple-touch-icon" href="icon-192.png">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 :root{
@@ -434,6 +442,38 @@ const LEAVE_TYPES = ['Annual Leave','Casual Leave','Sick Leave'];
 const lsG=(k,d)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):d;}catch{return d;}};
 const lsS=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));}catch{}};
 
+// ── DATA CACHE (instant render on return visits) ────────────
+const CACHE_VER='fb_cache_v2';
+function saveToCache(userId){
+  if(!userId)return;
+  try{
+    const c={
+      approvedOrders:S.approvedOrders,allStaff:S.allStaff,
+      allLocations:S.allLocations,allLeaves:S.allLeaves,
+      pendingOrders:S.pendingOrders,pendingLeaves:S.pendingLeaves,
+      upcomingEvents:S.upcomingEvents,myLeaves:S.myLeaves,
+      todayAtt:S.todayAtt,ts:Date.now()
+    };
+    lsS(CACHE_VER+'_'+userId,c);
+  }catch{}
+}
+function loadFromCache(userId){
+  if(!userId)return false;
+  const c=lsG(CACHE_VER+'_'+userId,null);
+  if(!c)return false;
+  // stale data is fine — will be overwritten by background fetch
+  if(Array.isArray(c.approvedOrders))S.approvedOrders=c.approvedOrders;
+  if(Array.isArray(c.allStaff))S.allStaff=c.allStaff;
+  if(Array.isArray(c.allLocations))S.allLocations=c.allLocations;
+  if(Array.isArray(c.allLeaves))S.allLeaves=c.allLeaves;
+  if(Array.isArray(c.pendingOrders))S.pendingOrders=c.pendingOrders;
+  if(Array.isArray(c.pendingLeaves))S.pendingLeaves=c.pendingLeaves;
+  if(Array.isArray(c.upcomingEvents))S.upcomingEvents=c.upcomingEvents;
+  if(Array.isArray(c.myLeaves))S.myLeaves=c.myLeaves;
+  if(c.todayAtt)S.todayAtt=c.todayAtt;
+  return true;
+}
+
 function getItemHist(){return lsG('fb_item_hist',{});}
 function saveItemHist(items){
   const h=getItemHist(),today=new Date().toISOString().split('T')[0];
@@ -765,7 +805,8 @@ async function loadStaffData(){
     S.todayAtt=lsG('fb_att_'+today(),null);
     S.myLeaves=lsG('fb_leaves_'+user.userId,[]);
   }
-  loadCateringEvents();
+  await loadCateringEvents();
+  saveToCache(S.user?.userId);
   render();
 }
 
@@ -1278,7 +1319,8 @@ async function loadManagerData(){
     S.pendingLeaves=getDemoLeaves();
     S.todayAttAll=getDemoAtt();
   }
-  loadCateringEvents();
+  await loadCateringEvents();
+  saveToCache(S.user?.userId);
 }
 
 function renderMgrHome(){
@@ -1493,7 +1535,8 @@ async function loadAdminData(){
     S.allLeaves=getDemoLeaves();
     S.allLocations=lsG('fb_custom_locations',null)||DEMO_LOCATIONS.slice();
   }
-  loadCateringEvents();
+  await loadCateringEvents();
+  saveToCache(S.user?.userId);
 }
 
 function renderAdminHome(){
@@ -1546,15 +1589,41 @@ function renderAdmEvApproveTab(){
 
 
 function renderAdmProcurement(){
-  if(!S.approvedOrders.length)return`<div class="empty"><div class="empty-icon">🛒</div><div>No approved orders pending procurement</div><div style="font-size:12px;margin-top:6px">Orders appear here after Operations Manager approval</div></div>`;
+  const evApproved=(S.upcomingEvents||[]).filter(e=>e.status==='admin_approved');
+  if(!S.approvedOrders.length&&!evApproved.length)return`<div class="empty"><div class="empty-icon">🛒</div><div>No orders pending procurement</div><div style="font-size:12px;margin-top:6px">Regular orders appear here after Manager approval. Catering event rations appear here after Admin approval.</div></div>`;
   const bySup={};
   S.approvedOrders.forEach(r=>{
     const sup=r['Supplier']||r.sup||'OTHER';
     if(!bySup[sup])bySup[sup]=[];
     bySup[sup].push({orderId:r['Order ID']||r.orderId,loc:r['Location']||r.location,name:r['Item']||r.name,qty:r['Quantity']||r.qty,unit:r['Unit']||r.unit,delivery:r['Delivery Date']||r.deliveryDate,type:r['Order Type']||r.orderType,eventName:r['Event Name']||r.eventName});
   });
+  const evSection=evApproved.length?`
+    <div style="margin-top:${S.approvedOrders.length?'20px':'0'}">
+      <div class="alert" style="background:#d1fae5;color:#065f46;border:none;margin-bottom:10px">🎉 Catering event rations approved — procure these items before the event dates.</div>
+      ${evApproved.map(ev=>{
+        const items=ev.rationItems||{};
+        const itemList=Object.entries(items).filter(([,v])=>v&&v.qty>0);
+        const bySup2={};
+        itemList.forEach(([k,v])=>{const[sup,,name]=k.split('|');if(!bySup2[sup])bySup2[sup]=[];bySup2[sup].push({name:name||k,qty:v.qty,unit:v.unit||'',sup});});
+        return`<div class="req-card" style="margin-bottom:10px">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
+            <div><span style="background:#d1fae5;color:#065f46;font-size:11px;font-weight:800;padding:2px 7px;border-radius:6px">[${esc(ev.eventCode)}] ✅ Approved</span> <strong>${esc(ev.eventType)}</strong></div>
+            <span style="font-size:11px;color:var(--muted)">${fmtDate(ev.eventDate)}</span>
+          </div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:8px">👤 ${esc(ev.clientName||ev.eventClient)} · 👥 ${esc(ev.pax)} pax · 📍 ${esc(ev.location||ev.eventLocation)}</div>
+          ${itemList.length?`<div style="font-size:12px;font-weight:700;margin-bottom:6px;color:var(--navy)">Ration Items to Procure (${itemList.length}):</div>
+          ${Object.entries(bySup2).map(([sup,its])=>`<div style="background:#f8f9ff;border-radius:7px;padding:8px 10px;margin-bottom:5px">
+            <div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:4px">${SUP_META[sup]?.e||''}${SUP_META[sup]?.l?' '+SUP_META[sup].l:sup}</div>
+            ${its.map(it=>`<div style="display:flex;justify-content:space-between;font-size:12px;padding:2px 0"><span>${esc(it.name)}</span><span style="font-weight:700">${esc(it.qty)} ${esc(it.unit)}</span></div>`).join('')}
+          </div>`).join('')}`:`<div style="font-size:12px;color:var(--muted)">No ration items recorded for this event.</div>`}
+          ${ev.adminNote?`<div style="font-size:11px;color:#065f46;background:#d1fae5;border-radius:6px;padding:4px 8px;margin-top:6px">Note: ${esc(ev.adminNote)}</div>`:''}
+        </div>`;
+      }).join('')}
+    </div>`:''
+  ;
   return`<div>
-    <div class="alert alert-navy">✅ Operations Manager approved these orders. Mark as Ordered once placed with suppliers.</div>
+    ${S.approvedOrders.length?`
+    <div class="alert alert-navy" style="margin-bottom:10px">✅ Manager-approved regular orders — Mark as Ordered once placed with suppliers.</div>
     ${SUP_ORDER.filter(s=>bySup[s]).map(s=>`
       <div class="po-sup-block">
         <div class="po-sup-hdr">${SUP_META[s]?.e} ${SUP_META[s]?.l||s}<span style="font-size:11px;opacity:.75">${bySup[s].length} items</span></div>
@@ -1570,6 +1639,8 @@ function renderAdmProcurement(){
       <button class="btn btn-ok" onclick="markOrdered()">✓ Mark Selected as Ordered</button>
       <button class="btn btn-navy" onclick="exportPO()">⬇ Export PO</button>
     </div>
+    `:''}
+    ${evSection}
   </div>`;
 }
 
@@ -1986,8 +2057,13 @@ function getLocalCateringEvents(){
 async function loadCateringEvents(){
   if(isBackendSet()){
     const r=await api({action:'getCateringEvents'});
-    if(r?.events&&r.events.length) S.upcomingEvents=r.events;
-    else S.upcomingEvents=getLocalCateringEvents();
+    if(r?.events){
+      // backend returns all events; filter to upcoming on client
+      const t=today();
+      S.upcomingEvents=r.events.filter(e=>!e.eventDate||e.eventDate>=t).sort((a,b)=>(a.eventDate||'').localeCompare(b.eventDate||''));
+    } else {
+      S.upcomingEvents=getLocalCateringEvents();
+    }
   } else {
     S.upcomingEvents=getLocalCateringEvents();
   }
@@ -2531,7 +2607,8 @@ async function cevAdminDecide(decision){
     const idx=(S.upcomingEvents||[]).findIndex(e=>e.eventId===ev.eventId);
     if(idx>=0)Object.assign(S.upcomingEvents[idx],{status:newStatus,adminNote:S.cevAdminNote,adminDecision:decision});
     S.loading=false;
-    alert(decision==='approved'?'✅ Ration approved for procurement!':'Rejected. Staff will need to revise.');
+    alert(decision==='approved'?'✅ Ration approved! Catering items now visible in Procurement tab.':'Rejected. Staff will need to revise.');
+    if(decision==='approved') S.aTab='procurement';
     go('a-home');
   } catch(err){S.loading=false;alert('Error: '+err.message);render();}
 }
@@ -2571,12 +2648,20 @@ async function loadUserData(){
   }
 }
 
+// ── SERVICE WORKER REGISTRATION ───────────────────────────
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('sw.js').catch(e=>console.log('SW:',e));
+  });
+}
+
 window.addEventListener('DOMContentLoaded',async()=>{
   const saved=lsG('fb_session',null);
   if(saved){
     S.user=saved;
-    go(homeScreen()); // render immediately — don't wait for backend
-    loadUserData().catch(e=>console.warn('Background data load:',e)); // warm up in bg
+    loadFromCache(saved.userId); // ← instantly fills stats/events/staff from previous session
+    go(homeScreen()); // render <100ms with cached data
+    loadUserData().catch(e=>console.warn('Background data load:',e)); // refresh from backend in bg
   }else{
     go('login');
   }
