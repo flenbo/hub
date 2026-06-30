@@ -397,34 +397,51 @@ const MAX_CASUAL_PER_MONTH = 2;
    ITEMS DATA
 ════════════════════════════════════════════ */
 const UNITS = ['KG','Grams','Litres','ML','Pcs','Packets','Bottles','Dozen','Bunch','Rolls','Trays','Boxes'];
+// ── 9 SUPPLIER CATEGORIES (matches backend RATION_CATS) ─────
 const ITEMS = {
-  HYPERPURE:{
-    '🥦 Vegetables & Produce':[['Aaloo (Potato)','KG'],['Pyaaz (Onion)','KG'],['Tamatar (Tomato)','KG'],['Adrak (Ginger)','KG'],['Lehsun (Garlic)','KG'],['Phool Gobhi (Cauliflower)','KG'],['Methi Leaves','KG'],['Palak (Spinach)','KG'],['Lauki (Bottle Gourd)','KG'],['Hari Mirch (Green Chilly)','KG'],['Capsicum Green','KG'],['Red Capsicum','KG'],['Yellow Capsicum','KG'],['Gajar (Carrot)','KG'],['Patta Gobhi (Cabbage)','KG'],['Beans (French Beans)','KG'],['Nimbu (Lemon)','KG'],['Hara Dhaniya (Coriander)','Bunch'],['Basil Fresh','Bunch'],['Pudina (Mint)','Bunch'],['Mushroom','KG'],['Frozen Corn','KG'],['Frozen Peas','KG']],
-    '🍗 Meat & Seafood':[['Eggs','Dozen'],['Chicken Thigh','KG'],['Chicken Tandoori Cut','KG'],['Chicken Wings','KG'],['Chicken Seekh Kabab Frozen','KG'],['Basa Fish','KG'],['Prawns','KG']],
-    '🌾 Grains & Flours':[['Dawat Biryani Rice','KG'],['Staff Rice','KG'],['Aashirvaad Aata','KG'],['Aashirvaad Maida','KG'],['Rajdhani Besan','KG'],['Cornflour','KG'],['Bread Crumbs Panko','KG'],['Pasta','KG'],['Noodles','KG']],
-    '🫘 Pulses & Legumes':[['Arhar Dal','KG'],['Chana Dal','KG'],['Dhuli Moong Dal','KG'],['Kali Urad','KG'],['Rajma','KG'],['Mix Dal','KG']],
-    '🌶 Spices & Masalas':[['Tata Salt','KG'],['Kala Namak','Grams'],['Saboot Jeera','Grams'],['Kali Mirch Saboot','Grams'],['White Pepper Powder','Grams'],['Dhaniya Powder','Grams'],['Lal Mirch Powder','Grams'],['Deggi Mirch','Grams'],['Haldi Powder','Grams'],['Garam Masala','Grams'],['Kitchen King Masala','Grams'],['Chicken Masala','Grams'],['Chaat Masala','Grams'],['Chole Masala','Grams'],['Rajma Masala','Grams'],['Ajina Moto (MSG)','Grams'],['Hing (Asafoetida)','Grams'],['Lal Mirch Saboot','Grams'],['Kasoori Methi','Grams'],['Jaifal (Nutmeg)','Grams'],['Choti Elaichi','Grams'],['Badi Elaichi','Grams'],['Ajwain','Grams'],['Laung (Cloves)','Grams'],['Tej Patta (Bay Leaves)','Grams'],['Dalchini (Cinnamon)','Grams']],
-    '🫙 Oils & Fats':[['Fortune Sunflower Oil','Litres'],['Mustard Oil','Litres'],['Ghee','KG'],['Amul Butter','KG'],['Amul Cream','KG']],
-    '🍶 Sauces & Condiments':[['Tomato Sauce (Veeba)','Bottles'],['Green Chilly Sauce','Bottles'],['Schezwan Sauce (Veeba)','Bottles'],['Light Soya Sauce','Bottles'],['Dark Soya Sauce','Bottles'],['Vinegar (Tops)','Bottles'],['Oyster Sauce','Bottles'],['Tomato Puree','KG'],['Imlli (Tamarind)','KG'],['Gud / Jaggery','KG'],['Honey','KG'],['Olives','KG'],['Amul Cheese','KG']],
-    '🥜 Nuts & Dry Fruits':[['Cashew (Kaju)','KG'],['Magaj (Melon Seeds)','KG']],
-    '☕ Beverages & Sugar':[['Tea','KG'],['Coffee','KG'],['Sugar','KG'],['Sugar Sachets','Packets'],['Frappe Powder','KG']],
-    '❄️ Frozen & Ready':[['French Fries Frozen','KG'],['Spring Roll Sheet','Packets'],['Spring Rolls Frozen','KG'],['Cheese Balls Frozen','KG'],['Pizza Base','Pcs'],['Gulab Jamun 40gm Frozen','KG'],['Brownie Frozen','Pcs']],
-    '🍪 Bakery & Confectionery':[['Oreo Biscuits','Packets'],['Nutella','KG'],['Cocoa Powder','KG'],['Cookies','Packets']],
-    '🗑️ Miscellaneous':[['Garbage Bags','Packets']],
-  },
-  DAIRY:{'🥛 Dairy Products':[['Dahi / Curd','KG'],['Malai Paneer','KG']]},
-  ZEPTO:{'🧹 Cleaning & Household':[['Milk','Litres'],['Wiper / Mop','Pcs'],['Pocha (Floor Cloth)','Pcs'],['Scotch Brite','Pcs'],['Sponge','Pcs'],['Phenyl','Litres'],['Dish Wash Liquid','Bottles'],['Dettol','Bottles'],['Detergent','KG'],['Vim Bar','Pcs'],['Jhadu (Broom)','Pcs']]},
-  BIKANERVALA:{'🍮 Sweets & Desserts':[['Rasmalai','KG'],['Gajar Halwa','KG'],['Moong Dal Halwa','KG'],['Jalebi','KG'],['Rasgulla','KG'],['Sponge Rasgulla','KG'],['Other Desserts & Sweets','KG']]},
+  HYPERPURE:{'🥬 Dry Goods & Grocery':[['AASHIRVAAD AATA','KG'],['AASHIRVAAD MAIDA','KG'],['AJINA MOTO- GOLDEN CROWN','KG'],['AJWAIN','KG'],['ALMOND','KG'],['AMUL BUTTER 500 GMS','Pcs'],['AMUL CHEESE BLOCK 1 KG','KG'],['AMUL CHEESE DICED BLEND KG','KG'],['AMUL CREAM 1 LTR','Litres'],['ARHAR DAAL- GROWTH','KG'],['BADI ELAICHI','KG'],['BESAN- RAJDHANI','KG'],['BREAD BROWN- BON','Pcs'],['BREAD CRUMS- PANCO','KG'],['BREAD WHITE- BON','Pcs'],['CASHEW','KG'],['CHAAT MASALA- EASTMADE','KG'],['CHANA DAAL- GROWTH','KG'],['CHICKEN MASALA- MDH','KG'],['CHOLE MASALA- MDH','KG'],['CHOTI ELAICHI','KG'],["COCO POWDER- HERSHEY'S",'KG'],['CORNFLOUR- JEECON','KG'],['DALCHINI','KG'],['DAWAT BIRYANI RICE- LONGEST GRAINS','KG'],['DEGGI MIRCH- MDH','KG'],['DHANIYA POWDER- CATCH/MDH','KG'],['DHULI MOONG DAAL','KG'],['EGGS','Dozen'],['FRAPPE POWDER- FRAPPIK','KG'],['GARAM MASALA','KG'],['GHEE- AMUL','KG'],['GREEN CHILLY SAUCE- TOPS/CHINGZ','Litres'],['GUD/JAGGERY','KG'],['HALDI POWDER- CATCH/MDH','KG'],['HING- MDH','KG'],['HONEY- NATURES NECTAR','KG'],['IMLLI SUKHI','KG'],['JAIFAL','KG'],['KALA NAMAK- CATCH/MDH','KG'],['KALI MIRCH SABOOT','KG'],['KALI URAD','KG'],['KASOORI METHI- MDH','KG'],['KESAR- BABY/MDH','KG'],['KITCHEN KING MASALA- MDH','KG'],['LAL MIRCH POWDER- CATCH/MDH','KG'],['LAL MIRCH SABOOT WITHOUT STEM','KG'],['LAUNG','KG'],['LIGHT SOYA SAUCE- LEE KUM KEE','Litres'],['MAGAJ','KG'],['MIX DAAL','KG'],['MUSTARD OIL- FORTUNE KACCHI GHANI','Litres'],['OLIVES','KG'],['OYSTER SAUCE VEG- LEE KUM KEE','Litres'],['PAPAD','KG'],['PASTA PENNE- REGGIA','Pcs'],['PILI SARSO','KG'],['POPPY SEEDS','KG'],['RAJMA MASALA- MDH/CATCH','KG'],['RAJMA- TRIPTI','KG'],['SABOOT JEERA- EASTMADE','KG'],['SHEZWAN SAUCE- VEEBA','Litres'],['SOYA SAUCE DARK- LEE KUM KEE','Litres'],['SUGAR','KG'],['SUNFLOWER OIL- FORTUNE','Litres'],['TATA SALT','KG'],['TEA- TATA AGNI CARDAMOM','KG'],['TEJ PATTA','KG'],['TOMATO KETCHUP- KISAN','Litres'],['TOMATO PUREE- GOLDEN CROWN','Litres'],['TOMATO SAUCE- VEEBA','Litres'],['VINEGAR- TOPS 1 LTR','Litres'],['WHITE PEPPER','KG']]},
+  BEVERAGES:{'🥤 Beverages':[['BISLERI 250 ML','Pcs'],['BLUE CURACAO SYRUP- 1 LTR','Litres'],['COFFEE BEANS 1 KG','KG'],['COKE- 2 LTRS','Pcs'],['COKE- 180 ML CAN','Pcs'],['COKE- 300 ML CAN','Pcs'],['FRAPPE POWDER','KG'],['LEMON SYRUP- HABIT','Litres'],['ICE CUBES','KG'],['MINT SYRUP- MONIN','Litres'],['NESCAFE COFFEE POWDER','KG'],['REAL CANBERRY JUICE- 1 LTR','Litres'],['REAL MIX FRUIT JUICE- 1 LTR','Litres'],['REAL ORANGE JUICE- 1 LTR','Litres'],['REAL PINEAPPLE JUICE- 1 LTR','Litres'],['SPRITE- 2 LTRS','Pcs'],['SPRITE- 300 ML CAN','Pcs'],['THUMS UP- 2 LTRS','Pcs'],['THUMS UP- 300 ML CAN','Pcs']]},
+  FROZEN:{'❄️ Frozen Items':[['BASA FISH','KG'],['BROWNIE','KG'],['CHEESE BALLS','KG'],['CHICKEN MOMO','KG'],['CHICKEN SEEKH KABAB','KG'],['CHICKEN TANDOORI','KG'],['CHICKEN THIGH','KG'],['CHICKEN WINGS','KG'],['FRENCH FRIES','KG'],['FROZEN CORN','KG'],['FROZEN PEAS','KG'],['GULAB JAMUN 40GMS','KG'],['MUTTON','KG'],['POTATO WEDGES','KG'],['PRAWNS','KG'],['SOYA CHAAP','KG'],['SPRING ROLL SHEET','KG'],['SPRING ROLLS','KG'],['VEG MOMO','KG']]},
+  VEGETABLES:{'🥦 Fresh Vegetables':[['AALOO','KG'],['BAIGAN','KG'],['BASIL','KG'],['BEANS','KG'],['BEETROOT','KG'],['BHINDI','KG'],['BROCOLLI','KG'],['CABBAGE','KG'],['CAPSICUM','KG'],['CARROT','KG'],['CAULIFLOWER','KG'],['GARLIC','KG'],['GINGER','KG'],['GREEN CHILLY','KG'],['HARA DHANIYA','KG'],['LAUKI','KG'],['LEMON','KG'],['METHI','KG'],['MINT','KG'],['MUSHROOM','KG'],['PALAK','KG'],['PYAAZ','KG'],['RED CPSICUM','KG'],['TAMATAR','KG'],['YELLOW CAPSICUM','KG']]},
+  DAIRY:{'🥛 Dairy Products':[['DAHI','KG'],['KHOYA','KG'],['MILK','Litres'],['PANEER','KG']]},
+  CLEANING:{'🧹 Cleaning Supplies':[['DETERGENT','KG'],['DETTOL','Bottles'],['DISH WASH LIQUID','Bottles'],['GARBAGE BAGS','Pcs'],['JHADU','Pcs'],['MICRO FIBER','Pcs'],['PHENYLE','Litres'],['POCHA','Pcs'],['RED CADDY','Pcs'],['SCOTCH BRITE','Pcs'],['SPONGE','Pcs'],['SPRAY BOTTLES','Pcs'],['STEEL SCRUB','Pcs'],['VIM BAR','Pcs'],['WIPER','Pcs']]},
+  DISPOSABLES:{'📦 Disposables':[['3 CP CORNSTARCH CONTAINER','Pcs'],['300 ML PAPER CONTAINER WITH CAP','Pcs'],['500 ML PAPER CONTAINER WITH CAP','Pcs'],['6 INCH PAPER PLATES','Pcs'],['750 ML PAPER BOWL CONTAINER WITH CAP','Pcs'],['750 ML PAPER CONTAINER WITH CAP','Pcs'],['ALUMUNIUM FOIL','Rolls'],['BAGASS BOWLS','Pcs'],['BROWN PAPER BAG','Pcs'],['CLING WRAP','Rolls'],['DOUBLE PLY TISSUE','Rolls'],['FRUIT FORK','Pcs'],['HAIR NET','Pcs'],['PAPER CARRY BAGS','Pcs'],['PAPER STRAW','Pcs'],['PRINTER PAPER ROLL','Rolls'],['SINGLE PLY TISSUE','Rolls'],['TOOTHPICK','Pcs'],['WHITE GLOVES','Pcs'],['WOODEN FORK','Pcs'],['WOODEN SPOONS','Pcs'],['WOODEN SPORK','Pcs'],['WOODEN STIRRER','Pcs']]},
+  BIKANERVALA:{'🍮 Sweets & Desserts':[['GAJAR HALVA','KG'],['JALEBI','KG'],['KAJU KATLI','KG'],['MOONG DAL HALVA','KG'],['PHIRNI','KG'],['RASGULLA','KG'],['RASMALAI','KG'],['SPONGE RASGULLA','KG']]},
+  'STAFF RATION':{'🍱 Staff Ration':[['AALOO','KG'],['BAIGAN','KG'],['BEANS','KG'],['BESAN','KG'],['BHINDI','KG'],['CABBAGE','KG'],['CARROT','KG'],['CAULIFLOWER','KG'],['CHAAT MASALA','KG'],['DAAL- ARHAR','KG'],['DAAL- DHULI MOONG','KG'],['DAAL- MIX','KG'],['GREEN CHILLY','KG'],['KALA CHANA','KG'],['LAUKI','KG'],['MUSTARD OIL','Litres'],['PALAK','KG'],['PYAAZ','KG'],['RAJMA','KG'],['REFINED OIL','Litres'],['STAFF AATA','KG'],['STAFF RICE','KG'],['SUGAR','KG'],['TAMATAR','KG'],['TATA SALT','KG'],['TEA- TATA AGNI CARDAMOM','KG']]},
 };
-const SUP_ORDER = ['HYPERPURE','DAIRY','ZEPTO','BIKANERVALA'];
-const SUP_META = {HYPERPURE:{e:'🥬',l:'Hyperpure'},DAIRY:{e:'🥛',l:'Dairy'},ZEPTO:{e:'🧹',l:'Zepto'},BIKANERVALA:{e:'🍮',l:'Bikanervala'}};
+const SUP_ORDER = ['HYPERPURE','BEVERAGES','FROZEN','VEGETABLES','DAIRY','CLEANING','DISPOSABLES','BIKANERVALA','STAFF RATION'];
+const SUP_META = {
+  HYPERPURE:{e:'🥬',l:'Hyperpure'},
+  BEVERAGES:{e:'🥤',l:'Beverages'},
+  FROZEN:{e:'❄️',l:'Frozen'},
+  VEGETABLES:{e:'🥦',l:'Vegetables'},
+  DAIRY:{e:'🥛',l:'Dairy'},
+  CLEANING:{e:'🧹',l:'Cleaning'},
+  DISPOSABLES:{e:'📦',l:'Disposables'},
+  BIKANERVALA:{e:'🍮',l:'Bikanervala'},
+  'STAFF RATION':{e:'🍱',l:'Staff Ration'},
+};
 
 const ALL_FLAT = [];
 for(const[sup,cats] of Object.entries(ITEMS))
   for(const[cat,items] of Object.entries(cats))
     items.forEach(([name,unit])=>ALL_FLAT.push({sup,cat,name,unit}));
+
+// Backend items override (fetched on startup — keeps in sync with Google Sheets)
+let _backendItems = null;
+async function loadBackendItems(){
+  if(!isBackendSet())return;
+  const r=await api({action:'getBaseItems'});
+  if(!r)return;
+  // Build flat list from backend (overrides local ITEMS)
+  _backendItems=[];
+  for(const[sup,items] of Object.entries(r)){
+    if(Array.isArray(items)) items.forEach(it=>_backendItems.push({sup,cat:SUP_META[sup]?.l||sup,name:it.name||it.Name,unit:it.unit||it.Unit||'KG'}));
+  }
+}
 function getAllItems(){
   const custom=lsG('fb_custom_items',[]);
+  if(_backendItems&&_backendItems.length) return[..._backendItems,...custom];
   return [...ALL_FLAT,...custom];
 }
 
@@ -2656,6 +2673,8 @@ if('serviceWorker' in navigator){
 }
 
 window.addEventListener('DOMContentLoaded',async()=>{
+  // Load backend items in background (don't block render)
+  loadBackendItems().catch(()=>{});
   const saved=lsG('fb_session',null);
   if(saved){
     S.user=saved;
