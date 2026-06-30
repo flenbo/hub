@@ -812,15 +812,28 @@ function renderSHome(){
 
 async function loadStaffData(){
   const {user}=S;
-  // Load attendance
   if(isBackendSet()){
     const r=await api({action:'getAttendance',userId:user.userId,date:today()});
     if(r?.record) S.todayAtt=r.record;
     const rl=await api({action:'getLeaves',userId:user.userId});
     if(rl?.leaves) S.myLeaves=rl.leaves;
+    // Fetch live leave balance + profile from Staff sheet
+    const rs=await api({action:'getStaff'});
+    if(rs?.staff){
+      const me=rs.staff.find(s=>(s['User ID']||s.userId)===user.userId);
+      if(me){
+        S.user.annualLeave=+(me['Annual Leave']??me.annualLeave??S.user.annualLeave??0);
+        S.user.casualLeave=+(me['Casual Leave']??me.casualLeave??S.user.casualLeave??0);
+        S.user.profile=me['Profile']||me.profile||S.user.profile||'';
+        lsS('fb_session',S.user);
+      }
+    }
   } else {
     S.todayAtt=lsG('fb_att_'+today(),null);
     S.myLeaves=lsG('fb_leaves_'+user.userId,[]);
+    // Load from DEMO_USERS for offline/demo mode
+    const demo=DEMO_USERS.find(u=>u.userId===user.userId);
+    if(demo){S.user.annualLeave=demo.annualLeave||0;S.user.casualLeave=demo.casualLeave||0;S.user.profile=demo.profile||'';}
   }
   await loadCateringEvents();
   saveToCache(S.user?.userId);
@@ -1724,9 +1737,10 @@ function renderAdmLeaves(){
   return`<div>
     <h3 style="font-size:14px;font-weight:700;margin-bottom:12px">All Leave Applications</h3>
     ${leaves.map(l=>{
-      const su=DEMO_USERS.find(u=>u.userId===(l.userId||l['User ID']))||{};
-      const al=su.annualLeave!=null?su.annualLeave:(l.annualLeaveBalance||0);
-      const cl=su.casualLeave!=null?su.casualLeave:(l.casualLeaveBalance||0);
+      const _sl=S.allStaff.length?S.allStaff:DEMO_USERS;
+      const su=_sl.find(u=>(u.userId||u['User ID'])===(l.userId||l['User ID']))||{};
+      const al=+(su.annualLeave??su['Annual Leave']??l.annualLeaveBalance??0);
+      const cl=+(su.casualLeave??su['Casual Leave']??l.casualLeaveBalance??0);
       const st=l.status||l['Status']||'Pending';
       const lType=l.leaveType||l['Leave Type']||'';
       return`<div class="leave-card">
@@ -1752,8 +1766,10 @@ function renderAdmMonthlyReport(){
     const fd=l.fromDate||l['From Date']||'';
     return fd.startsWith(selMonth);
   });
-  const staffRows=DEMO_USERS.filter(u=>u.role==='staff').map(u=>{
-    const uLeaves=monthLeaves.filter(l=>(l.userId||l['User ID'])===u.userId);
+  const liveStaff=S.allStaff.length?S.allStaff:DEMO_USERS;
+  const staffRows=liveStaff.filter(u=>(u.role||u['Role'])!=='admin').map(u=>{
+    const uid=u.userId||u['User ID'];
+    const uLeaves=monthLeaves.filter(l=>(l.userId||l['User ID'])===uid);
     let annualDays=0,casualDays=0;
     uLeaves.forEach(l=>{
       const fd=new Date(l.fromDate||l['From Date']);
@@ -1762,9 +1778,9 @@ function renderAdmMonthlyReport(){
       if((l.leaveType||l['Leave Type']||'').toLowerCase().includes('annual'))annualDays+=days;
       else casualDays+=days;
     });
-    return{...u,annualDays,casualDays};
+    return{...u,name:u.name||u['Name'],location:u.location||u['Location'],profile:u.profile||u['Profile']||'',annualDays,casualDays};
   });
-  const csvRows=staffRows.map(r=>[r.name,r.location,r.profile||'',selMonth,r.annualDays,r.casualDays,r.annualDays+r.casualDays,r.casualDays>0?'Deduct '+r.casualDays+' day(s)':'No Deduction'].join(','));
+  const csvRows=staffRows.map(r=>[r.name,r.location,r.profile,selMonth,r.annualDays,r.casualDays,r.annualDays+r.casualDays,r.casualDays>0?'Deduct '+r.casualDays+' day(s)':'No Deduction'].join(','));
   const csv='Name,Location,Designation,Month,Annual Leave Days,Casual Leave Days,Total Leave Days,Salary Action\n'+csvRows.join('\n');
   return`<div>
     <h3 style="font-size:14px;font-weight:700;margin-bottom:10px">📊 Monthly Salary & Attendance Report</h3>
@@ -1803,8 +1819,10 @@ function renderAdmYTD(){
     const fd=l.fromDate||l['From Date']||'';
     return fd.startsWith(String(yr))&&(l.status||l['Status']||'')==='Approved';
   });
-  const staffRows=DEMO_USERS.filter(u=>u.role==='staff').map(u=>{
-    const uLeaves=yearLeaves.filter(l=>(l.userId||l['User ID'])===u.userId);
+  const liveStaff2=S.allStaff.length?S.allStaff:DEMO_USERS;
+  const staffRows=liveStaff2.filter(u=>(u.role||u['Role'])!=='admin').map(u=>{
+    const uid=u.userId||u['User ID'];
+    const uLeaves=yearLeaves.filter(l=>(l.userId||l['User ID'])===uid);
     let annualTotal=0,casualTotal=0;
     uLeaves.forEach(l=>{
       const fd=new Date(l.fromDate||l['From Date']);
@@ -1813,10 +1831,12 @@ function renderAdmYTD(){
       if((l.leaveType||l['Leave Type']||'').toLowerCase().includes('annual'))annualTotal+=days;
       else casualTotal+=days;
     });
-    return{...u,annualTotal,casualTotal};
+    const al=+(u.annualLeave??u['Annual Leave']??0);
+    const cl=+(u.casualLeave??u['Casual Leave']??0);
+    return{...u,name:u.name||u['Name'],location:u.location||u['Location'],profile:u.profile||u['Profile']||'',annualLeave:al,casualLeave:cl,annualTotal,casualTotal};
   });
   const csv='Name,Location,Designation,Year,Annual Taken,Casual Taken,Total Taken,Annual Balance,Casual Balance\n'+
-    staffRows.map(r=>[r.name,r.location,r.profile||'',yr,r.annualTotal,r.casualTotal,r.annualTotal+r.casualTotal,r.annualLeave||0,r.casualLeave||0].join(',')).join('\n');
+    staffRows.map(r=>[r.name,r.location,r.profile,yr,r.annualTotal,r.casualTotal,r.annualTotal+r.casualTotal,r.annualLeave,r.casualLeave].join(',')).join('\n');
   return`<div>
     <h3 style="font-size:14px;font-weight:700;margin-bottom:10px">📋 Year-to-Date Leave Summary — ${yr}</h3>
     <div style="margin-bottom:12px">
@@ -1905,7 +1925,8 @@ function removeCustomItem(idx){
    ADMIN — ASSIGN LEAVE TO STAFF
 ════════════════════════════════════════════ */
 function renderAdmAssignLeave(){
-  const staff=[...DEMO_USERS.filter(u=>u.userId!==S.user.userId)];
+  const liveStaff3=S.allStaff.length?S.allStaff:DEMO_USERS;
+  const staff=liveStaff3.filter(u=>(u.userId||u['User ID'])!==S.user.userId);
   const al=(S.admLeaveFrom&&S.admLeaveTo)?Math.max(0,Math.round((new Date(S.admLeaveTo)-new Date(S.admLeaveFrom))/(86400000))+1):0;
   return`<div>
     <div class="card">
@@ -1914,7 +1935,7 @@ function renderAdmAssignLeave(){
       <label class="fl">Select Staff Member *</label>
       <select class="fi" onchange="S.admLeaveStaff=this.value;render()">
         <option value="">— Select staff —</option>
-        ${staff.map(u=>`<option value="${u.userId}" ${S.admLeaveStaff===u.userId?'selected':''}>${esc(u.name)} · ${esc(u.profile||u.location)}</option>`).join('')}
+        ${staff.map(u=>`<option value="${u.userId||u['User ID']}" ${S.admLeaveStaff===(u.userId||u['User ID'])?'selected':''}>${esc(u.name||u['Name'])} · ${esc(u.profile||u['Profile']||u.location||u['Location'])}</option>`).join('')}
       </select>
       <label class="fl">Leave Type *</label>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px">
@@ -1943,12 +1964,13 @@ function renderAdmAssignLeave(){
 
 async function submitAdminLeave(){
   if(!S.admLeaveStaff||!S.admLeaveType||!S.admLeaveFrom||!S.admLeaveTo||!S.admLeaveReason)return;
-  const target=DEMO_USERS.find(u=>u.userId===S.admLeaveStaff);
+  const _ls4=S.allStaff.length?S.allStaff:DEMO_USERS;
+  const target=_ls4.find(u=>(u.userId||u['User ID'])===S.admLeaveStaff);
   const leave={
     leaveId:'LV-ADM-'+Date.now(),
     userId:S.admLeaveStaff,
-    staffName:target?.name||S.admLeaveStaff,
-    location:target?.location||'',
+    staffName:target?(target.name||target['Name']):S.admLeaveStaff,
+    location:target?(target.location||target['Location']||''):'',
     leaveType:S.admLeaveType,
     fromDate:S.admLeaveFrom,
     toDate:S.admLeaveTo,
@@ -2082,7 +2104,9 @@ async function loadCateringEvents(){
     if(r?.events){
       // backend returns all events; filter to upcoming on client
       const t=today();
-      S.upcomingEvents=r.events.filter(e=>!e.eventDate||e.eventDate>=t).sort((a,b)=>(a.eventDate||'').localeCompare(b.eventDate||''));
+      // Show events with no date, future events, and events from last 30 days (for Details access)
+      const t30=new Date();t30.setDate(t30.getDate()-30);const t30s=t30.toISOString().slice(0,10);
+      S.upcomingEvents=r.events.filter(e=>!e.eventDate||e.eventDate>=t30s).sort((a,b)=>(a.eventDate||'').localeCompare(b.eventDate||''));
     } else {
       S.upcomingEvents=getLocalCateringEvents();
     }
