@@ -36,6 +36,7 @@ const SH_GRN       = 'GRN';
 const SH_WASTAGE   = 'Wastage';
 const SH_ITEMS     = 'Custom Items';
 const SH_LOG       = 'Error Log';
+const SH_CAT_EVT   = 'Catering Events';
 
 // ── RATION CATEGORY SHEETS ────────────────────────────────
 const SH_HP        = 'HYPERPURE';
@@ -57,6 +58,7 @@ const HDR_ATTEND    = ['Record ID','User ID','Staff Name','Location','Date','In 
 const HDR_GRN       = ['GRN ID','Order ID','Location','Received By','Received At','Remarks','Item','Ordered Qty','Received Qty','Unit','Discrepancy','Discrepancy %'];
 const HDR_WASTAGE   = ['Wastage ID','Location','Logged By','Logged At','Remarks','Item','Quantity','Unit','Reason','Supplier'];
 const HDR_ITEMS     = ['Item ID','Supplier','Category','Name','Unit','Added On','Added By'];
+const HDR_CAT_EVT   = ['Event ID','Event Code','Type','Meal Slot','Date','Time','PAX','Client Name','Client Mobile','Location','Menu JSON','Status','Created By','Created At','Ration Items JSON','Submitted By','Submitted At','Manager Note','Manager Decision','Manager Decided At','Admin Note','Admin Decision','Admin Decided At'];
 
 // ── SPREADSHEET HELPER ───────────────────────────────────
 // Works for both standalone and container-bound scripts.
@@ -98,9 +100,16 @@ function doGet(e) {
       case 'getCustomItems':  return handleGetCustomItems();
       case 'addCustomItem':   return handleAddCustomItem(data);
       case 'deleteCustomItem':return handleDeleteCustomItem(data);
-      case 'getBaseItems':    return handleGetBaseItems();
-      case 'addBaseItem':     return handleAddBaseItem(data);
-      case 'ping':            return ok({status:'online',time:now()});
+      case 'getBaseItems':           return handleGetBaseItems();
+      case 'addBaseItem':            return handleAddBaseItem(data);
+      case 'getCateringEvents':      return handleGetCateringEvents(p);
+      case 'createCateringEvent':    return handleCreateCateringEvent(data);
+      case 'updateCateringEvent':    return handleUpdateCateringEvent(data);
+      case 'deleteCateringEvent':    return handleDeleteCateringEvent(data);
+      case 'submitEventRation':      return handleSubmitEventRation(data);
+      case 'decideEventRation':      return handleDecideEventRation(data);
+      case 'adminDecideEventRation': return handleAdminDecideEventRation(data);
+      case 'ping':                   return ok({status:'online',time:now()});
       default:                return ok({status:'Flenbo Hub API v3.0'});
     }
   } catch(err) {
@@ -125,12 +134,15 @@ function handleLogin(p) {
   );
   if (!user) return ok({success:false, error:'Invalid username or password'});
   return ok({success:true, user:{
-    userId:   user['User ID'],
-    name:     user['Name'],
-    username: user['Username'],
-    role:     user['Role'],
-    location: user['Location'],
-    phone:    user['Phone']||'',
+    userId:      user['User ID'],
+    name:        user['Name'],
+    username:    user['Username'],
+    role:        user['Role'],
+    location:    user['Location'],
+    phone:       user['Phone']||'',
+    profile:     user['Profile']||'',
+    annualLeave: +(user['Annual Leave']||0),
+    casualLeave: +(user['Casual Leave']||0),
   }});
 }
 
@@ -314,7 +326,7 @@ function handleGetStaff() {
   const sheet = ss.getSheetByName(SH_STAFF);
   if (!sheet || sheet.getLastRow() < 2) return ok({success:true, staff:[]});
   const staff = getRows(sheet).map(function(r) {
-    return {userId:r['User ID'],name:r['Name'],username:r['Username'],password:r['Password'],role:r['Role'],location:r['Location'],phone:r['Phone']||'',status:r['Status']||'Active'};
+    return {userId:r['User ID'],name:r['Name'],username:r['Username'],password:r['Password'],role:r['Role'],location:r['Location'],phone:r['Phone']||'',profile:r['Profile']||'',annualLeave:+(r['Annual Leave']||0),casualLeave:+(r['Casual Leave']||0),status:r['Status']||'Active'};
   });
   return ok({success:true, staff});
 }
@@ -343,6 +355,7 @@ function handleUpdateStaff(d) {
   rows.forEach(function(row,i) {
     if (String(row[idCol]) === String(d.userId)) {
       if (d.name)     sheet.getRange(i+2, HDR_STAFF.indexOf('Name')+1).setValue(d.name);
+      if (d.profile!==undefined) sheet.getRange(i+2, HDR_STAFF.indexOf('Profile')+1).setValue(d.profile||'');
       if (d.password) sheet.getRange(i+2, HDR_STAFF.indexOf('Password')+1).setValue(d.password);
       if (d.role)     sheet.getRange(i+2, HDR_STAFF.indexOf('Role')+1).setValue(d.role);
       if (d.location) sheet.getRange(i+2, HDR_STAFF.indexOf('Location')+1).setValue(d.location);
@@ -539,6 +552,7 @@ function sendGRNAlert(d, grnId, shorts) {
 // ── UTILITIES ─────────────────────────────────────────────
 function ok(obj){ return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON); }
 function now(){ return Utilities.formatDate(new Date(),'Asia/Kolkata','dd-MMM-yyyy HH:mm'); }
+function genId(prefix){ return (prefix||'ORD').toUpperCase().replace(/\s+/g,'-').substring(0,8) + '-' + Date.now(); }
 function getRows(sheet) {
   const data=sheet.getDataRange().getValues();
   const hdr=data[0];
@@ -607,73 +621,204 @@ function resetCasualLeaveAnnually() {
   }
 }
 
-function setupTriggers() {
-  ScriptApp.getProjectTriggers().forEach(function(t){ ScriptApp.deleteTrigger(t); });
-  ScriptApp.newTrigger('monthlyLeaveCredit').timeBased().onMonthDay(28).atHour(23).create();
-  ScriptApp.newTrigger('resetCasualLeaveAnnually').timeBased().onMonthDay(31).atHour(22).create();
+// ── Daily check: runs every night, credits leave on last day of month ──
+function runDailyLeaveCheck() {
+  var today = new Date();
+  var tomorrow = new Date(today);
+  tomorrow.setDate(today.getDate() + 1);
+  // If tomorrow is the 1st, today is the last day of the month
+  if (tomorrow.getDate() === 1) {
+    monthlyLeaveCredit();
+  }
+  // Reset casual leave on March 31
+  if (today.getMonth() === 2 && today.getDate() === 31) {
+    resetCasualLeaveAnnually();
+  }
 }
 
-// ── ONE-TIME SETUP ─────────────────────────────────────────
-// Step 1: run setupSheets()  — creates all sheet tabs
-// Step 2: run setupStaff()   — seeds staff and locations
-function setupSheets() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  if (!ss) {
-    ss = SpreadsheetApp.create('Flenbo Hub — Operations Platform');
-    PropertiesService.getScriptProperties().setProperty('SS_ID', ss.getId());
-    Logger.log('Created new spreadsheet: ' + ss.getUrl());
-  } else {
-    ss.rename('Flenbo Hub — Operations Platform');
+// Run this once from the GAS editor to set up triggers.
+// Also run monthlyLeaveCredit() manually once to apply the current month's credit.
+function setupTriggers() {
+  ScriptApp.getProjectTriggers().forEach(function(t){ ScriptApp.deleteTrigger(t); });
+  // Daily at 11:30 PM IST — checks if it's last day of month
+  ScriptApp.newTrigger('runDailyLeaveCheck').timeBased().everyDays(1).atHour(23).nearMinute(30).create();
+  Logger.log('✅ Daily leave trigger created. Run monthlyLeaveCredit() now to apply current month credit.');
+}
+
+// ── CATERING EVENTS ───────────────────────────────────────
+
+function getCatEvtSheet() {
+  var ss = getSS();
+  return getOrCreate(ss, SH_CAT_EVT, HDR_CAT_EVT, '#6d28d9');
+}
+
+function genEventCode(sheet) {
+  var lastRow = sheet.getLastRow();
+  return String(1000 + Math.max(0, lastRow - 1));
+}
+
+function parseCatEvtRow(row) {
+  return {
+    eventId:          row['Event ID']        || '',
+    eventCode:        row['Event Code']      || '',
+    eventType:        row['Type']            || '',
+    mealSlot:         row['Meal Slot']       || '',
+    eventDate:        row['Date']            || '',
+    eventTime:        row['Time']            || '',
+    pax:              row['PAX']             || '',
+    clientName:       row['Client Name']     || '',
+     clientMobile:     row['Client Mobile']   || '',
+    location:         row['Location']        || '',
+    menu:             safeParseJSON(row['Menu JSON'], {}),
+    status:           row['Status']          || 'event_created',
+    createdBy:        row['Created By']      || '',
+    createdAt:        row['Created At']      || '',
+    rationItems:      safeParseJSON(row['Ration Items JSON'], {}),
+    submittedBy:      row['Submitted By']    || '',
+    submittedAt:      row['Submitted At']    || '',
+    managerNote:      row['Manager Note']    || '',
+    managerDecision:  row['Manager Decision']|| '',
+    adminNote:        row['Admin Note']      || '',
+    adminDecision:    row['Admin Decision']  || '',
+  };
+}
+
+function safeParseJSON(str, def) {
+  try { return str ? JSON.parse(str) : def; } catch(e) { return def; }
+}
+
+function handleGetCateringEvents(p) {
+  var sheet = getCatEvtSheet();
+  if (sheet.getLastRow() < 2) return ok({success:true, events:[]});
+  var rows = getRows(sheet);
+  var events = rows.map(parseCatEvtRow);
+  return ok({success:true, events:events});
+}
+
+function handleCreateCateringEvent(d) {
+  var sheet = getCatEvtSheet();
+  var code  = genEventCode(sheet);
+  var evId  = 'CEV-' + code + '-' + Date.now();
+  sheet.appendRow([
+    evId, code,
+    d.eventType||'', d.mealSlot||'', d.eventDate||'', d.eventTime||'',
+    d.pax||'', d.clientName||'', d.clientMobile||'', d.location||'',
+    JSON.stringify(d.menu||{}), 'event_created',
+    d.createdBy||'', now(), '', '', '', '', '', '', '', '', ''
+  ]);
+  return ok({success:true, eventId:evId, eventCode:code});
+}
+
+function handleUpdateCateringEvent(d) {
+  var sheet = getCatEvtSheet();
+  if (sheet.getLastRow() < 2) return ok({success:false, error:'No events'});
+  var rows  = sheet.getRange(2,1,sheet.getLastRow()-1,HDR_CAT_EVT.length).getValues();
+  var idCol = HDR_CAT_EVT.indexOf('Event ID');
+  for (var i=0;i<rows.length;i++) {
+    if (String(rows[i][idCol])===String(d.eventId)) {
+      var r = i+2;
+      sheet.getRange(r, HDR_CAT_EVT.indexOf('Type')+1).setValue(d.eventType||'');
+      sheet.getRange(r, HDR_CAT_EVT.indexOf('Meal Slot')+1).setValue(d.mealSlot||'');
+      sheet.getRange(r, HDR_CAT_EVT.indexOf('Date')+1).setValue(d.eventDate||'');
+      sheet.getRange(r, HDR_CAT_EVT.indexOf('Time')+1).setValue(d.eventTime||'');
+      sheet.getRange(r, HDR_CAT_EVT.indexOf('PAX')+1).setValue(d.pax||'');
+      sheet.getRange(r, HDR_CAT_EVT.indexOf('Client Name')+1).setValue(d.clientName||'');
+      sheet.getRange(r, HDR_CAT_EVT.indexOf('Client Mobile')+1).setValue(d.clientMobile||'');
+      sheet.getRange(r, HDR_CAT_EVT.indexOf('Location')+1).setValue(d.location||'');
+      sheet.getRange(r, HDR_CAT_EVT.indexOf('Menu JSON')+1).setValue(JSON.stringify(d.menu||{}));
+      return ok({success:true});
+    }
   }
+  return ok({success:false, error:'Event not found'});
+}
+
+function handleDeleteCateringEvent(d) {
+  var sheet = getCatEvtSheet();
+  if (sheet.getLastRow() < 2) return ok({success:true});
+  var rows  = sheet.getRange(2,1,sheet.getLastRow()-1,1).getValues();
+  for (var i=rows.length-1;i>=0;i--) {
+    if (String(rows[i][0])===String(d.eventId)) {
+      sheet.deleteRow(i+2);
+      return ok({success:true});
+    }
+  }
+  return ok({success:false, error:'Event not found'});
+}
+
+function handleSubmitEventRation(d) {
+  var sheet = getCatEvtSheet();
+  if (sheet.getLastRow() < 2) return ok({success:false, error:'No events'});
+  var rows  = sheet.getRange(2,1,sheet.getLastRow()-1,HDR_CAT_EVT.length).getValues();
+  var idCol = HDR_CAT_EVT.indexOf('Event ID');
+  for (var i=0;i<rows.length;i++) {
+    if (String(rows[i][idCol])===String(d.eventId)) {
+      var r = i+2;
+      sheet.getRange(r, HDR_CAT_EVT.indexOf('Ration Items JSON')+1).setValue(JSON.stringify(d.rationItems||{}));
+      sheet.getRange(r, HDR_CAT_EVT.indexOf('Status')+1).setValue('ration_submitted');
+      sheet.getRange(r, HDR_CAT_EVT.indexOf('Submitted By')+1).setValue(d.submittedBy||'');
+      sheet.getRange(r, HDR_CAT_EVT.indexOf('Submitted At')+1).setValue(now());
+      return ok({success:true});
+    }
+  }
+  return ok({success:false, error:'Event not found'});
+}
+
+function handleDecideEventRation(d) {
+  var sheet = getCatEvtSheet();
+  if (sheet.getLastRow() < 2) return ok({success:false, error:'No events'});
+  var rows  = sheet.getRange(2,1,sheet.getLastRow()-1,HDR_CAT_EVT.length).getValues();
+  var idCol = HDR_CAT_EVT.indexOf('Event ID');
+  var newStatus = d.decision==='approved' ? 'manager_approved' : 'manager_rejected';
+  for (var i=0;i<rows.length;i++) {
+    if (String(rows[i][idCol])===String(d.eventId)) {
+      var r = i+2;
+      sheet.getRange(r, HDR_CAT_EVT.indexOf('Status')+1).setValue(newStatus);
+      sheet.getRange(r, HDR_CAT_EVT.indexOf('Manager Note')+1).setValue(d.note||'');
+      sheet.getRange(r, HDR_CAT_EVT.indexOf('Manager Decision')+1).setValue(d.decision||'');
+      sheet.getRange(r, HDR_CAT_EVT.indexOf('Manager Decided At')+1).setValue(now());
+      return ok({success:true});
+    }
+  }
+  return ok({success:false, error:'Event not found'});
+}
+
+function handleAdminDecideEventRation(d) {
+  var sheet = getCatEvtSheet();
+  if (sheet.getLastRow() < 2) return ok({success:false, error:'No events'});
+  var rows  = sheet.getRange(2,1,sheet.getLastRow()-1,HDR_CAT_EVT.length).getValues();
+  var idCol = HDR_CAT_EVT.indexOf('Event ID');
+  var newStatus = d.decision==='approved' ? 'admin_approved' : 'admin_rejected';
+  for (var i=0;i<rows.length;i++) {
+    if (String(rows[i][idCol])===String(d.eventId)) {
+      var r = i+2;
+      sheet.getRange(r, HDR_CAT_EVT.indexOf('Status')+1).setValue(newStatus);
+      sheet.getRange(r, HDR_CAT_EVT.indexOf('Admin Note')+1).setValue(d.note||'');
+      sheet.getRange(r, HDR_CAT_EVT.indexOf('Admin Decision')+1).setValue(d.decision||'');
+      sheet.getRange(r, HDR_CAT_EVT.indexOf('Admin Decided At')+1).setValue(now());
+      return ok({success:true});
+    }
+  }
+  return ok({success:false, error:'Event not found'});
+}
+
+// ── SETUP ──────────────────────────────────────────────────
+
+function setupSheets() {
+  var ss = getSS();
   getOrCreate(ss, SH_STAFF,     HDR_STAFF,     '#1A2642');
   getOrCreate(ss, SH_LOCATIONS, HDR_LOCATIONS, '#243254');
   getOrCreate(ss, SH_ORDERS,    HDR_ORDERS,    '#1A2642');
   getOrCreate(ss, SH_LEAVES,    HDR_LEAVES,    '#7b1fa2');
-  getOrCreate(ss, SH_ATTEND,    HDR_ATTEND,    '#166534');
+  getOrCreate(ss, SH_ATTEND,    HDR_ATTEND,    '#1a4731');
   getOrCreate(ss, SH_GRN,       HDR_GRN,       '#0d47a1');
   getOrCreate(ss, SH_WASTAGE,   HDR_WASTAGE,   '#c62828');
   getOrCreate(ss, SH_ITEMS,     HDR_ITEMS,     '#5B21B6');
-  // Create ration category sheets
-  RATION_CATS.forEach(function(cat) { getOrCreate(ss, cat, HDR_RATION, '#0f4c2a'); });
-  SpreadsheetApp.flush();
-  SpreadsheetApp.getUi().alert('Step 1 done! All sheets created.\n\nNow select setupStaff and click Run.');
+  RATION_CATS.forEach(function(cat){ getOrCreate(ss, cat, HDR_RATION, '#1A2642'); });
+  getOrCreate(ss, SH_CAT_EVT,   HDR_CAT_EVT,   '#6d28d9');
+  getOrCreate(ss, SH_LOG,       ['Timestamp','Context','Message'], '#b71c1c');
+  Logger.log('Setup complete.');
 }
 
-function setupStaff() {
-  var ss = getSS();
-  var staffSheet = ss.getSheetByName(SH_STAFF);
-  if (staffSheet && staffSheet.getLastRow() < 2) {
-    var staffData = [
-      ['U001','Ravindra Singh Pundeer','Sous Chef',          'ravindrapundeer','982587','staff',  'Flenbo Nawada',  '','',15,   0,0,'Active'],
-      ['U002','Amrendra Kumar',        'Utility',            'amrendrakumar',  '587436','staff',  'Flenbo Nawada',  '','',7.5,  0,0,'Active'],
-      ['U003','Yogesh Rawat',          'Commi 1 - Tandoor', 'yogeshrawat',    '482695','staff',  'Emaar DigiHomes','','',11.25,0,0,'Active'],
-      ['U004','Harish Singh Bisht',    'SR CDP - Indian',   'harishbisht',    '251423','staff',  'Emaar DigiHomes','','',0,    0,0,'Active'],
-      ['U005','Umed Singh',            'Captain',            'umedsingh',      '893475','staff',  'Emaar DigiHomes','','',15,   0,0,'Active'],
-      ['U006','Ramesh',                'Steward',            'ramesh',         '684256','staff',  'Emaar DigiHomes','','',1.25, 0,0,'Active'],
-      ['U007','Roshan',                'Utility',            'roshan',         '374562','staff',  'Emaar DigiHomes','','',5,    0,0,'Active'],
-      ['U008','Nandan Ram',            'Commi 1 - Indian',  'nandanram',      '758962','staff',  'Emaar DigiHomes','','',0,    0,0,'Active'],
-      ['U009','Bharat Chopra',         'Operations Manager', 'bharatchopra',   '485397','manager','Corporate',      '','',0,    0,0,'Active'],
-      ['U010','Nivedita Sahay',        'Director Operations','niveditasahay',  '452478','admin',  'Corporate',      '','',10,   0,0,'Active'],
-      ['U011','Ashish Sahay',          'Director Comms',     'ashishsahay',    '597425','admin',  'Corporate',      '','',10,   0,0,'Active']
-    ];
-    staffSheet.getRange(2, 1, staffData.length, staffData[0].length).setValues(staffData);
-  }
-  var locSheet = ss.getSheetByName(SH_LOCATIONS);
-  if (locSheet && locSheet.getLastRow() < 2) {
-    var locData = [
-      ['LOC001','Flenbo Nawada',   'Central Kitchen',   'Nawada, New Delhi',  '','Active'],
-      ['LOC002','Emaar DigiHomes', 'Society Restaurant','Sector 62, Gurgaon', '','Active'],
-      ['LOC003','Saan Verdante',   'Society Restaurant','Sector 95, Gurgaon', '','Active'],
-      ['LOC004','Godrej Icon',     'Society Restaurant','Sector 88A, Gurgaon','','Active'],
-      ['LOC005','Corporate',       'Head Office',       'Gurgaon',            '','Active']
-    ];
-    locSheet.getRange(2, 1, locData.length, locData[0].length).setValues(locData);
-  }
-  SpreadsheetApp.flush();
-  SpreadsheetApp.getUi().alert('Setup Complete!\n11 staff + 5 locations seeded.\n\nNow: Deploy > New deployment > Web App\nCopy the URL and paste into Flenbo_Hub.html');
-}
-
-// Alias — keeps any old references working
 function setupSpreadsheet() { setupSheets(); }
 
 // ── SEED BASE ITEMS ────────────────────────────────────────
