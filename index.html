@@ -2569,6 +2569,8 @@ async function loadCateringEvents(){
       // Show events with no date, future events, and events from last 30 days (for Details access)
       const t30=new Date();t30.setDate(t30.getDate()-30);const t30s=t30.toISOString().slice(0,10);
       S.upcomingEvents=r.events.filter(e=>!e.eventDate||e.eventDate>=t30s).sort((a,b)=>(a.eventDate||'').localeCompare(b.eventDate||''));
+      // Sync localStorage so every device has fresh fallback (fixes cross-device delete sync bug)
+      lsS('fb_catering_events', S.upcomingEvents);
     } else {
       S.upcomingEvents=getLocalCateringEvents();
     }
