@@ -2878,12 +2878,16 @@ async function loadCateringEvents(){
   if(isBackendSet()){
     const r=await api({action:'getCateringEvents'});
     if(r?.events){
-      // backend returns all events; filter to upcoming on client
-      const t=today();
-      // Show events with no date, future events, and events from last 30 days (for Details access)
       const t30=new Date();t30.setDate(t30.getDate()-30);const t30s=t30.toISOString().slice(0,10);
-      S.upcomingEvents=r.events.filter(e=>!e.eventDate||e.eventDate>=t30s).sort((a,b)=>(a.eventDate||'').localeCompare(b.eventDate||''));
-      // Sync localStorage so every device has fresh fallback (fixes cross-device delete sync bug)
+      // Build map of local customMenuItems so backend overwrite doesn't erase them
+      const localCustom={};
+      (S.upcomingEvents||[]).forEach(e=>{if(e.customMenuItems?.length)localCustom[e.eventId]=e.customMenuItems;});
+      // Respect locally-deleted events even if backend hasn't caught up yet
+      const localDeleted=new Set(lsG('fb_deleted_events',[]));
+      S.upcomingEvents=r.events
+        .filter(e=>(!e.eventDate||e.eventDate>=t30s)&&!localDeleted.has(e.eventId))
+        .sort((a,b)=>(a.eventDate||'').localeCompare(b.eventDate||''))
+        .map(e=>localCustom[e.eventId]?{...e,customMenuItems:localCustom[e.eventId]}:e);
       lsS('fb_catering_events', S.upcomingEvents);
     } else {
       S.upcomingEvents=getLocalCateringEvents();
@@ -3146,6 +3150,9 @@ async function cevDelete(eventId){
     const r=await apiData('deleteCateringEvent',{eventId});
     if(!r?.success){alert('Delete failed: '+(r?.error||'error'));return;}
   }
+  // Persist deleted ID so auto-refresh can't bring it back from the backend
+  const del=lsG('fb_deleted_events',[]);
+  if(!del.includes(eventId)){del.push(eventId);lsS('fb_deleted_events',del);}
   S.upcomingEvents=(S.upcomingEvents||[]).filter(e=>e.eventId!==eventId);
   const cached=lsG('fb_catering_events',[]).filter(e=>e.eventId!==eventId);
   lsS('fb_catering_events',cached);
@@ -3185,7 +3192,7 @@ function renderCevCreate(){
       <label class="fl">Event Date *</label>
       <input id="cev-date" class="fi" type="date" value="${esc(f.date)}" min="${today()}" onchange="S.cevForm.date=this.value">
       <label class="fl">Event Time</label>
-      <input id="cev-time" class="fi" type="time" value="${esc(f.time)}" onchange="S.cevForm.time=this.value">
+      <input id="cev-time" class="fi" type="time" value="${esc(f.time)}" oninput="S.cevForm.time=this.value" onchange="S.cevForm.time=this.value">
       <label class="fl">PAX *</label>
       <input id="cev-pax" class="fi" type="number" min="1" placeholder="Number of guests" value="${esc(f.pax)}" oninput="S.cevForm.pax=this.value">
       <label class="fl">Client Name *</label>
@@ -3538,8 +3545,10 @@ document.addEventListener('DOMContentLoaded',async()=>{
     go('login');
   }
   // Auto-refresh every 60 seconds while logged in
+  // Skip refresh when user is actively filling in a form to avoid disrupting input
+  const FORM_SCREENS=['cev-create','s-leave-apply','s-ration','s-ration-new','s-ration-review','m-ration-new'];
   setInterval(()=>{
-    if(S.user&&document.visibilityState==='visible'){
+    if(S.user&&document.visibilityState==='visible'&&!FORM_SCREENS.includes(S.screen)){
       loadUserData().catch(()=>{});
     }
   },60000);
