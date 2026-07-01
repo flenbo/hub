@@ -535,7 +535,7 @@ let S = {
   reviewRejects:{},    // orderId->itemKey->bool
   reviewNote:'',
   // admin
-  aTab:'procurement',
+  aTab:null,
   allStaff:[],allLocations:DEMO_LOCATIONS.slice(),
   approvedOrders:[],allLeaves:[],
   showStaffModal:false,showLocModal:false,
@@ -555,6 +555,7 @@ let S = {
   cevAdminNote:'',
   // approval detail state
   mRationDetailId:null, mRationDetailType:null,
+  admJustApproved:null,
   aRationDetailId:null, aRationDetailType:null,
   // ui
   loading:false,error:'',loginError:'',
@@ -1377,7 +1378,7 @@ function renderMgrHome(){
   const actionTiles=[
     {e:'🗓️',l:'Apply Leaves',fn:"go('s-leave')"},
     {e:'🎉',l:'Create Catering Event',fn:"openCevCreate(null)"},
-    {e:'📋',l:'Add Ration Item',fn:"go('s-ration-type')"},
+    {e:'📋',l:'Add New Ration Item',fn:"go('s-ration-type')"},
     {e:'✅',l:'My Attendance',fn:"go('s-attend')"},
     {e:'📅',l:'My Leave History',fn:"go('s-leave-hist')"},
     {e:'🔄',l:'Refresh',fn:"loadManagerData().then(render)"},
@@ -1789,7 +1790,102 @@ function renderAdmRationApprovals(){
   </div>`;
 }
 
+function admOrderShareWA(){
+  const a=S.admJustApproved;
+  if(!a)return;
+  const lines=['*FLENBO FOODWORKS — RATION ORDER APPROVED*',''];
+  if(a.type==='event'){
+    lines.push(`Event: [${a.eventCode}] ${a.eventType} — ${a.clientName}`);
+    lines.push(`Meal Slot: ${a.mealSlot||'—'} | PAX: ${a.pax||'—'}`);
+  } else {
+    lines.push(`Order ID: ${a.orderId}`);
+    lines.push(`Requestor: ${a.requestor}`);
+  }
+  lines.push(`Location: ${a.location||'—'}`);
+  lines.push(`Date: ${a.deliveryDate?fmtDate(a.deliveryDate):'—'}`);
+  if(a.deliveryTime) lines.push(`Time: ${a.deliveryTime}`);
+  if(a.note) lines.push(`Note: ${a.note}`);
+  lines.push('');
+  lines.push('*ITEMS TO PROCURE:*');
+  (a.items||[]).forEach((it,i)=>lines.push(`${i+1}. ${it.name} — ${it.qty} ${it.unit||''}`));
+  lines.push('');
+  lines.push('_Approved by Flenbo Admin_');
+  const msg=encodeURIComponent(lines.join('\n'));
+  window.open('https://wa.me/?text='+msg,'_blank');
+}
+
+function admOrderPrint(){
+  const a=S.admJustApproved;
+  if(!a)return;
+  const itemRows=(a.items||[]).map((it,i)=>`<tr><td>${i+1}</td><td>${it.name}</td><td><b>${it.qty} ${it.unit||''}</b></td></tr>`).join('');
+  const w=window.open('','_blank','width=800,height=600');
+  w.document.write(`<!DOCTYPE html><html><head><title>Flenbo Ration Order</title>
+<style>
+  body{font-family:Arial,sans-serif;max-width:700px;margin:30px auto;color:#111;font-size:14px}
+  h1{color:#0a2240;font-size:20px;margin-bottom:4px}
+  .logo{font-size:13px;color:#888;margin-bottom:20px}
+  table{width:100%;border-collapse:collapse;margin:16px 0}
+  th{background:#0a2240;color:#fff;padding:8px 10px;text-align:left;font-size:13px}
+  td{padding:7px 10px;border-bottom:1px solid #e0e0e0;font-size:13px}
+  tr:nth-child(even) td{background:#f8f8f8}
+  .meta{display:grid;grid-template-columns:1fr 1fr;gap:6px 20px;background:#f4f6f9;border-radius:8px;padding:14px;margin:12px 0}
+  .meta-row{font-size:13px}.meta-label{font-weight:700;color:#555;font-size:11px;text-transform:uppercase}
+  .footer{margin-top:30px;font-size:11px;color:#999;border-top:1px solid #eee;padding-top:12px}
+  @media print{body{margin:10px}button{display:none}}
+</style></head><body>
+<h1>🧾 FLENBO FOODWORKS — RATION ORDER</h1>
+<div class="logo">Flenbo FoodWorks Private Limited · Gurgaon</div>
+<div class="meta">
+  ${a.type==='event'?`<div><div class="meta-label">Event</div><div class="meta-row">[${a.eventCode}] ${a.eventType} — ${a.clientName}</div></div>
+  <div><div class="meta-label">Meal Slot</div><div class="meta-row">${a.mealSlot||'—'} · ${a.pax||'—'} PAX</div></div>`
+  :`<div><div class="meta-label">Order ID</div><div class="meta-row">${a.orderId}</div></div>
+  <div><div class="meta-label">Requestor</div><div class="meta-row">${a.requestor}</div></div>`}
+  <div><div class="meta-label">Location</div><div class="meta-row">${a.location||'—'}</div></div>
+  <div><div class="meta-label">Date</div><div class="meta-row">${a.deliveryDate||'—'}</div></div>
+  ${a.deliveryTime?`<div><div class="meta-label">Delivery Time</div><div class="meta-row">${a.deliveryTime}</div></div>`:''}
+  ${a.note?`<div style="grid-column:1/-1"><div class="meta-label">Note</div><div class="meta-row">${a.note}</div></div>`:''}
+</div>
+<table><thead><tr><th>#</th><th>Item</th><th>Quantity</th></tr></thead><tbody>${itemRows}</tbody></table>
+<div class="footer">Approved by: Flenbo Admin · Generated: ${new Date().toLocaleString('en-IN')}<br>Please deliver as per schedule. Contact: operations@flenbo.com</div>
+<br><button onclick="window.print()" style="background:#0a2240;color:#fff;border:none;padding:10px 24px;border-radius:6px;font-size:14px;cursor:pointer">🖨️ Print</button>
+</body></html>`);
+  w.document.close();
+}
+
 function renderAdmRationDetail(){
+  // Show share/print screen if admin just approved an order
+  if(S.admJustApproved){
+    const a=S.admJustApproved;
+    const itemRows=(a.items||[]).map((it,i)=>`
+      <div style="display:flex;justify-content:space-between;font-size:13px;padding:6px 0;border-bottom:1px solid #f0f0f0">
+        <span>${i+1}. ${esc(it.name)}</span>
+        <span style="font-weight:700">${esc(String(it.qty))} ${esc(it.unit||'')}</span>
+      </div>`).join('');
+    return`<div class="scr on scr-wide">
+      <div style="text-align:center;padding:16px 0 8px">
+        <div style="font-size:36px">✅</div>
+        <div style="font-size:18px;font-weight:900;color:#059669;margin:6px 0">Order Approved!</div>
+        <div style="font-size:13px;color:var(--muted)">Ration order has been placed with supplier</div>
+      </div>
+      <div class="card" style="margin-bottom:12px">
+        <div class="card-ttl">${a.type==='event'?`[${esc(a.eventCode)}] ${esc(a.eventType)} — ${esc(a.clientName)}`:`Order ${esc(a.orderId)}`}</div>
+        <div style="font-size:12px;color:var(--muted);margin:4px 0 10px">
+          ${a.requestor?`👤 ${esc(a.requestor)} · `:''}📍 ${esc(a.location||'—')} · 📅 ${a.deliveryDate?fmtDate(a.deliveryDate):'—'}
+          ${a.deliveryTime?` · ⏰ ${esc(a.deliveryTime)}`:''}
+          ${a.pax?` · 👥 ${esc(String(a.pax))} PAX`:''}
+        </div>
+        <div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:8px;text-transform:uppercase;letter-spacing:.3px">Items to Procure</div>
+        ${itemRows}
+        ${a.note?`<div style="margin-top:10px;font-size:12px;background:#d1fae5;color:#065f46;border-radius:6px;padding:8px 12px">📝 ${esc(a.note)}</div>`:''}
+      </div>
+      <div class="btn-row" style="margin-bottom:10px">
+        <button class="btn btn-ok" onclick="admOrderShareWA()" style="background:#25d366;border-color:#25d366">📱 Share on WhatsApp</button>
+        <button class="btn btn-navy" onclick="admOrderPrint()">🖨️ Print Order</button>
+      </div>
+      <button class="btn btn-out btn-sm" style="width:100%" onclick="S.admJustApproved=null;go('a-ration-approvals')">← Back to Approvals</button>
+    </div>`;
+  }
+
   const isEvent=S.aRationDetailType==='event';
   if(isEvent){
     const ev=(S.upcomingEvents||[]).find(e=>e.eventId===S.aRationDetailId);
@@ -1837,20 +1933,55 @@ function renderAdmRationDetail(){
 async function admEvDecision(eventId,newStatus){
   S.loading=true;render();
   const note=S.reviewNote||'';
+  const evBefore=(S.upcomingEvents||[]).find(e=>e.eventId===eventId);
   await apiData('updateCateringEventStatus',{eventId,status:newStatus,adminNote:note});
   const idx=(S.upcomingEvents||[]).findIndex(e=>e.eventId===eventId);
   if(idx>=0){S.upcomingEvents[idx].status=newStatus;if(note)S.upcomingEvents[idx].adminNote=note;}
   S.reviewNote='';S.loading=false;
-  go('a-ration-approvals');
+  if(newStatus==='admin_approved'&&evBefore){
+    const rationItems=evBefore.rationItems||{};
+    const allItems=Object.values(rationItems).flat().filter(i=>i.qty>0);
+    S.admJustApproved={
+      type:'event',eventId,
+      eventCode:evBefore.eventCode||'',
+      eventType:evBefore.eventType||'',
+      clientName:evBefore.clientName||'',
+      location:evBefore.location||'',
+      deliveryDate:evBefore.eventDate||'',
+      mealSlot:evBefore.mealSlot||'',
+      pax:evBefore.pax||'',
+      note:note||evBefore.managerNote||'',
+      items:allItems.map(i=>({name:i.name,qty:i.qty,unit:i.unit||'KG'}))
+    };
+    go('a-ration-detail');
+  } else {
+    go('a-ration-approvals');
+  }
 }
 
 async function admOrderDecision(orderId,status){
   S.loading=true;render();
   const note=S.reviewNote||'';
+  // Capture order data before removing from list (for WhatsApp/print)
+  const orderRows=S.approvedOrders.filter(r=>(r['Order ID']||r.orderId)===orderId);
   await apiData('updateOrderStatus',{orderId,status,adminNote:note});
   S.approvedOrders=S.approvedOrders.filter(r=>(r['Order ID']||r.orderId)!==orderId);
   S.reviewNote='';S.loading=false;
-  go('a-ration-approvals');
+  if(status==='Admin Approved'&&orderRows.length){
+    const o=orderRows[0];
+    S.admJustApproved={
+      type:'order',orderId,
+      requestor:o['Staff Name']||o.staffName||'',
+      location:o['Location']||o.location||'',
+      deliveryDate:o['Delivery Date']||o.deliveryDate||'',
+      deliveryTime:o['Delivery Time']||o.deliveryTime||'',
+      note:note||o['Manager Note']||o.managerNote||'',
+      items:orderRows.map(r=>({name:r['Item']||r.name,qty:r['Quantity']||r.qty,unit:r['Unit']||r.unit}))
+    };
+    go('a-ration-detail');
+  } else {
+    go('a-ration-approvals');
+  }
 }
 
 function renderAdmLeaveApprovals(){
@@ -2022,9 +2153,8 @@ function renderAdminHome(){
     {e:'📊',l:'Leave Balance',fn:"S.aTab='ytd';S.screen='a-home';render()"},
     {e:'📈',l:'Monthly Reports',fn:"S.aTab='monthly';S.screen='a-home';render()"},
     {e:'👥',l:'Add Staff',fn:"S.aTab='staff';S.screen='a-home';render()"},
-    {e:'📦',l:'Add Ration Item',fn:"S.aTab='items';S.screen='a-home';render()"},
+    {e:'📦',l:'Add New Ration Item',fn:"S.aTab='items';S.screen='a-home';render()"},
     {e:'🎉',l:'Create Catering Event',fn:"openCevCreate(null)"},
-    {e:'🛒',l:'Procurement',fn:"S.aTab='procurement';S.screen='a-home';render()"},
     {e:'📍',l:'Locations',fn:"S.aTab='locations';S.screen='a-home';render()"},
     {e:'🔄',l:'Refresh',fn:"loadAdminData().then(()=>{loadCateringEvents();render();})"},
   ];
@@ -2040,7 +2170,7 @@ function renderAdminHome(){
     <div style="margin-bottom:10px;max-width:700px">
       <button class="btn btn-out btn-sm" style="width:auto" onclick="S.aTab=null;render()">← Home</button>
     </div>
-    ${S.aTab==='procurement'?renderAdmProcurement():S.aTab==='evapprove'?renderAdmEvApproveTab():S.aTab==='staff'?renderAdmStaff():S.aTab==='locations'?renderAdmLocations():S.aTab==='monthly'?renderAdmMonthlyReport():S.aTab==='ytd'?renderAdmYTD():S.aTab==='items'?renderAdmItems():S.aTab==='assignleave'?renderAdmAssignLeave():renderAdmLeaves()}
+    ${S.aTab==='evapprove'?renderAdmEvApproveTab():S.aTab==='staff'?renderAdmStaff():S.aTab==='locations'?renderAdmLocations():S.aTab==='monthly'?renderAdmMonthlyReport():S.aTab==='ytd'?renderAdmYTD():S.aTab==='items'?renderAdmItems():S.aTab==='assignleave'?renderAdmAssignLeave():renderAdmLeaves()}
     `:`
     <!-- Clickable stat cards -->
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px;max-width:700px">
@@ -2340,8 +2470,6 @@ function renderAdmItems(){
         ${SUP_ORDER.map(s=>`<option value="${s}">${supMeta[s]?.l||s}</option>`).join('')}
         <option value="CUSTOM">Custom / Other</option>
       </select>
-      <label class="fl">Item Category *</label>
-      <input class="fi" id="ni-cat" placeholder="e.g. 🥦 Vegetables & Produce">
       <label class="fl">Item Name *</label>
       <input class="fi" id="ni-name" placeholder="e.g. Broccoli">
       <label class="fl">Unit *</label>
@@ -2364,13 +2492,13 @@ function renderAdmItems(){
 
 function addCustomItem(){
   const sup=document.getElementById('ni-sup')?.value||'CUSTOM';
-  const cat=document.getElementById('ni-cat')?.value?.trim();
   const name=document.getElementById('ni-name')?.value?.trim();
   const unit=document.getElementById('ni-unit')?.value||'KG';
-  if(!name||!cat){alert('Please enter item name and category.');return;}
+  if(!name){alert('Please enter item name.');return;}
   const custom=lsG('fb_custom_items',[]);
   if(custom.find(i=>i.name.toLowerCase()===name.toLowerCase())){alert('Item already exists.');return;}
-  custom.push({sup,cat,name,unit,custom:true});
+  const supLabel=(SUP_META[sup]?.l||sup);
+  custom.push({sup,cat:supLabel,name,unit,custom:true});
   lsS('fb_custom_items',custom);
   render();
 }
@@ -3175,7 +3303,13 @@ if('serviceWorker' in navigator){
   });
 }
 
-window.addEventListener('DOMContentLoaded',async()=>{
+window.addEventListener('visibilitychange',()=>{
+  // Refresh data when user returns to the app tab/window
+  if(document.visibilityState==='visible'&&S.user){
+    loadUserData().catch(()=>{});
+  }
+});
+document.addEventListener('DOMContentLoaded',async()=>{
   // Load backend items in background (don't block render)
   loadBackendItems().catch(()=>{});
   const saved=lsG('fb_session',null);
@@ -3187,6 +3321,12 @@ window.addEventListener('DOMContentLoaded',async()=>{
   }else{
     go('login');
   }
+  // Auto-refresh every 60 seconds while logged in
+  setInterval(()=>{
+    if(S.user&&document.visibilityState==='visible'){
+      loadUserData().catch(()=>{});
+    }
+  },60000);
 });
 </script>
 </body>

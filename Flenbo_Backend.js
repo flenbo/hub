@@ -109,6 +109,8 @@ function doGet(e) {
       case 'submitEventRation':      return handleSubmitEventRation(data);
       case 'decideEventRation':      return handleDecideEventRation(data);
       case 'adminDecideEventRation': return handleAdminDecideEventRation(data);
+      case 'clearLeaves':            return handleClearLeaves(data);
+      case 'clearCateringEvents':    return handleClearCateringEvents(data);
       case 'ping':                   return ok({status:'online',time:now()});
       default:                return ok({status:'Flenbo Hub API v3.0'});
     }
@@ -821,6 +823,27 @@ function setupSheets() {
 
 function setupSpreadsheet() { setupSheets(); }
 
+
+// ── CLEAR DATA (Admin only) ────────────────────────────────
+function handleClearLeaves(d){
+  var ss=getSS();
+  var sh=ss.getSheetByName('Leave');
+  if(!sh) return ok({cleared:0});
+  var last=sh.getLastRow();
+  if(last<=1) return ok({cleared:0});
+  sh.deleteRows(2,last-1);
+  return ok({cleared:last-1});
+}
+
+function handleClearCateringEvents(d){
+  var ss=getSS();
+  var sh=ss.getSheetByName('CatEvt');
+  if(!sh) return ok({cleared:0});
+  var last=sh.getLastRow();
+  if(last<=1) return ok({cleared:0});
+  sh.deleteRows(2,last-1);
+  return ok({cleared:last-1});
+}
 // ── SEED BASE ITEMS ────────────────────────────────────────
 // Run once from GAS editor to populate category sheets from Excel data.
 // Safe to re-run: skips sheets that already have data.
