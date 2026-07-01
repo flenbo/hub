@@ -827,7 +827,7 @@ function setupSpreadsheet() { setupSheets(); }
 // ── CLEAR DATA (Admin only) ────────────────────────────────
 function handleClearLeaves(d){
   var ss=getSS();
-  var sh=ss.getSheetByName('Leave');
+  var sh=ss.getSheetByName(SH_LEAVES);
   if(!sh) return ok({cleared:0});
   var last=sh.getLastRow();
   if(last<=1) return ok({cleared:0});
@@ -837,7 +837,7 @@ function handleClearLeaves(d){
 
 function handleClearCateringEvents(d){
   var ss=getSS();
-  var sh=ss.getSheetByName('CatEvt');
+  var sh=ss.getSheetByName(SH_CAT_EVT);
   if(!sh) return ok({cleared:0});
   var last=sh.getLastRow();
   if(last<=1) return ok({cleared:0});
