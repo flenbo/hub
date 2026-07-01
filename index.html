@@ -1623,7 +1623,7 @@ function renderMgrRationApprovals(){
           ${isPending?(isEv
             ?`<button class="btn btn-sm" style="background:#0a2240;color:#fff;border:none;cursor:pointer;border-radius:8px;padding:6px 12px;font-size:11px;font-weight:700" onclick="S.mRationDetailId='${esc(o.eventId)}';S.mRationDetailType='event';go('m-ration-detail')">Review</button>`
             :`<button class="btn btn-sm" style="background:#0a2240;color:#fff;border:none;cursor:pointer;border-radius:8px;padding:6px 12px;font-size:11px;font-weight:700" onclick="S.mRationDetailId='${esc(o.id)}';S.mRationDetailType='regular';go('m-ration-detail')">Review</button>`
-          ):`<span style="font-size:11px;color:var(--muted)">—</span>`}
+          ):`<button class="btn btn-sm" style="background:${stBgR(st)};color:${stColorR(st)};border:2px solid ${stColorR(st)};cursor:pointer;border-radius:8px;padding:6px 12px;font-size:11px;font-weight:700" onclick="S.mRationDetailId='${esc(isEv?o.eventId:o.id)}';S.mRationDetailType='${esc(isEv?'event':'regular')}';go('m-ration-detail')">View Details</button>`}
         </div>
       </div>`;
     }).join('')}
@@ -1818,7 +1818,7 @@ function renderAdmRationApprovals(){
         ${o.managerNote?`<div style="font-size:11px;color:#065f46;background:#d1fae5;border-radius:6px;padding:3px 8px;margin-top:4px">Mgr Note: ${esc(o.managerNote)}</div>`:''}
       </div>
       <div style="flex-shrink:0">
-        ${isMgrApproved?`<button class="btn btn-sm" style="background:#0a2240;color:#fff;border:none;cursor:pointer;border-radius:8px;padding:6px 12px;font-size:11px;font-weight:700" onclick="S.aRationDetailId='${esc(o.isEvent?o.eventId:o.id)}';S.aRationDetailType='${esc(o.isEvent?'event':'regular')}';go('a-ration-detail')">Review</button>`:`<span style="font-size:11px;color:var(--muted)">—</span>`}
+        ${isMgrApproved?`<button class="btn btn-sm" style="background:#0a2240;color:#fff;border:none;cursor:pointer;border-radius:8px;padding:6px 12px;font-size:11px;font-weight:700" onclick="S.aRationDetailId='${esc(o.isEvent?o.eventId:o.id)}';S.aRationDetailType='${esc(o.isEvent?'event':'regular')}';go('a-ration-detail')">Review</button>`:`<button class="btn btn-sm" style="background:${stBA2(stO)};color:${stCA2(stO)};border:2px solid ${stCA2(stO)};cursor:pointer;border-radius:8px;padding:6px 12px;font-size:11px;font-weight:700" onclick="S.aRationDetailId='${esc(o.isEvent?o.eventId:o.id)}';S.aRationDetailType='${esc(o.isEvent?'event':'regular')}';go('a-ration-detail')">View Details</button>`}
       </div>
     </div>`}).join('')}
     </div>
@@ -2174,7 +2174,7 @@ async function loadAdminData(){
     if(rs?.staff) S.allStaff=rs.staff;
     if(rl?.leaves) S.allLeaves=rl.leaves;
     if(rloc?.locations) S.allLocations=rloc.locations;
-    if(ra?.records) S.admTodayAtt=ra.records;
+    if(ra) S.admTodayAtt=ra.records||[];
   } else {
     S.approvedOrders=getDemoApproved();
     S.allRationOrders=[...getDemoApproved(),...S.approvedOrders];
