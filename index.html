@@ -3255,8 +3255,7 @@ async function cevAdminDecide(decision){
     const idx=(S.upcomingEvents||[]).findIndex(e=>e.eventId===ev.eventId);
     if(idx>=0)Object.assign(S.upcomingEvents[idx],{status:newStatus,adminNote:S.cevAdminNote,adminDecision:decision});
     S.loading=false;
-    alert(decision==='approved'?'✅ Ration approved! Catering items now visible in Procurement tab.':'Rejected. Staff will need to revise.');
-    if(decision==='approved') S.aTab='procurement';
+    alert(decision==='approved'?'✅ Ration approved! Order placed with supplier.':'Rejected. Staff will need to revise.');
     go('a-home');
   } catch(err){S.loading=false;alert('Error: '+err.message);render();}
 }
