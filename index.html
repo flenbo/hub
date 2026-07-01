@@ -546,6 +546,7 @@ let S = {
   // catering event management (admin/manager create; staff order ration)
   cevForm:{type:'',mealSlot:'',date:'',time:'',pax:'',clientName:'',clientMobile:'',location:'',foodPrefs:[]},
   cevMenu:{},           // selected menu items {cat:{Veg:[],Non-Veg:[]}}
+  cevCustomItems:[],    // event-specific custom dishes [{name,category}]
   cevCatOpen:{},        // accordion open state for menu picker
   cevEditId:null,       // eventId being edited (null = new)
   cevSelEventId:null,   // event selected for ration ordering
@@ -825,31 +826,33 @@ function renderSHome(){
 
 async function loadStaffData(){
   const {user}=S;
-  if(isBackendSet()){
-    const r=await api({action:'getAttendance',userId:user.userId,date:today()});
-    if(r?.record) S.todayAtt=r.record;
-    const rl=await api({action:'getLeaves',userId:user.userId});
-    if(rl?.leaves) S.myLeaves=rl.leaves;
-    // Fetch live leave balance + profile from Staff sheet
-    const rs=await api({action:'getStaff'});
-    if(rs?.staff){
-      const me=rs.staff.find(s=>(s['User ID']||s.userId)===user.userId);
-      if(me){
-        S.user.annualLeave=+(me['Annual Leave']??me.annualLeave??S.user.annualLeave??0);
-        S.user.casualLeave=+(me['Casual Leave']??me.casualLeave??S.user.casualLeave??0);
-        S.user.profile=me['Profile']||me.profile||S.user.profile||'';
-        lsS('fb_session',S.user);
+  try{
+    if(isBackendSet()){
+      const [r,rl,rs]=await Promise.all([
+        api({action:'getAttendance',userId:user.userId,date:today()}),
+        api({action:'getLeaves',userId:user.userId}),
+        api({action:'getStaff'})
+      ]);
+      if(r?.record) S.todayAtt=r.record;
+      if(rl?.leaves) S.myLeaves=rl.leaves;
+      if(rs?.staff){
+        const me=rs.staff.find(s=>(s['User ID']||s.userId)===user.userId);
+        if(me){
+          S.user.annualLeave=+(me['Annual Leave']??me.annualLeave??S.user.annualLeave??0);
+          S.user.casualLeave=+(me['Casual Leave']??me.casualLeave??S.user.casualLeave??0);
+          S.user.profile=me['Profile']||me.profile||S.user.profile||'';
+          lsS('fb_session',S.user);
+        }
       }
+    } else {
+      S.todayAtt=lsG('fb_att_'+today(),null);
+      S.myLeaves=lsG('fb_leaves_'+user.userId,[]);
+      const demo=DEMO_USERS.find(u=>u.userId===user.userId);
+      if(demo){S.user.annualLeave=demo.annualLeave||0;S.user.casualLeave=demo.casualLeave||0;S.user.profile=demo.profile||'';}
     }
-  } else {
-    S.todayAtt=lsG('fb_att_'+today(),null);
-    S.myLeaves=lsG('fb_leaves_'+user.userId,[]);
-    // Load from DEMO_USERS for offline/demo mode
-    const demo=DEMO_USERS.find(u=>u.userId===user.userId);
-    if(demo){S.user.annualLeave=demo.annualLeave||0;S.user.casualLeave=demo.casualLeave||0;S.user.profile=demo.profile||'';}
-  }
-  await loadCateringEvents();
-  saveToCache(S.user?.userId);
+    await loadCateringEvents();
+    saveToCache(S.user?.userId);
+  } catch(e){console.warn('loadStaffData error',e);}
   render();
 }
 
@@ -1048,14 +1051,36 @@ function renderRationItems(){
   const freq=getFreqItems();
   const tabs=['FREQUENT',...SUP_ORDER];
   const cnt=cartCount();
-  const search=S.search.toLowerCase();
+  const search=S.search.toLowerCase().trim();
+  // When searching, show results across ALL items regardless of active tab
+  const searchBody=()=>{
+    const all=getAllItems();
+    const hits=all.filter(i=>i.name.toLowerCase().includes(search));
+    if(!hits.length)return`<div class="no-res">No items match "<strong>${esc(S.search)}</strong>"</div>`;
+    return`<div style="display:flex;flex-direction:column;gap:6px">${hits.map(i=>{
+      const k=`${i.sup}|${i.cat}|${i.name}`;const v=S.cart[k]||{qty:0,unit:i.unit};
+      return`<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:#fff;border:1.5px solid ${v.qty>0?'var(--navy)':'var(--border)'};border-radius:10px">
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:${v.qty>0?700:400}">${esc(i.name)}</div>
+          <div style="font-size:10px;color:var(--muted)">${SUP_META[i.sup]?.e||''} ${SUP_META[i.sup]?.l||i.sup}</div>
+        </div>
+        <button class="qb" onclick="adjCart('${esc(k)}','${esc(i.unit)}',-1)">−</button>
+        <input class="qn" type="number" min="0" value="${v.qty||0}" oninput="setCart('${esc(k)}','${esc(i.unit)}',this.value)" style="width:48px">
+        <select class="qu" onchange="setCartUnit('${esc(k)}',this.value)">${UNITS.map(u=>`<option ${(v.unit||i.unit)===u?'selected':''}>${u}</option>`).join('')}</select>
+        <button class="qb" onclick="adjCart('${esc(k)}','${esc(i.unit)}',1)">+</button>
+      </div>`;
+    }).join('')}</div>`;
+  };
   return`<div class="scr on">
-    <div class="tabs">${tabs.map(t=>{
-      const n=t==='FREQUENT'?freq.length:(Object.entries(S.cart).filter(([k,v])=>k.startsWith(t+'|')&&v.qty>0).length);
-      return`<button class="tb ${S.tab===t?'on':''}" onclick="S.tab='${t}';render()">${t==='FREQUENT'?'⭐ Frequent':((SUP_META[t]?.e||'')+' '+(SUP_META[t]?.l||t))}${n?`<span class="tb-cnt">${n}</span>`:''}</button>`;
+    <div class="srch"><span class="si">🔍</span><input id="srch-inp" class="fi" placeholder="Search across all items…" value="${esc(S.search)}" oninput="S.search=this.value;render()"></div>
+    ${search?searchBody():`<div class="tabs" style="overflow-x:auto">${tabs.map(t=>{
+      const n=t==='FREQUENT'?freq.filter(f=>(S.cart[`${f.sup}|${f.cat}|${f.name}`]?.qty||0)>0).length:(Object.entries(S.cart).filter(([k,v])=>k.startsWith(t+'|')&&v.qty>0).length);
+      return`<button class="tb ${S.tab===t?'on':''}" onclick="S.tab='${t}';render()" style="display:flex;flex-direction:column;align-items:center;gap:2px;min-width:60px;padding:7px 4px;font-size:9px">
+        <span style="font-size:18px;line-height:1">${t==='FREQUENT'?'⭐':(SUP_META[t]?.e||'📦')}</span>
+        <span>${t==='FREQUENT'?'Frequent':(SUP_META[t]?.l||t)}${n?`<span class="tb-cnt">${n}</span>`:''}</span>
+      </button>`;
     }).join('')}</div>
-    <div class="srch"><span class="si">🔍</span><input id="srch-inp" class="fi" placeholder="Search items…" value="${esc(S.search)}" oninput="S.search=this.value;render()"></div>
-    ${S.tab==='FREQUENT'?renderFreqTab(freq,search):renderSupTab(S.tab,search)}
+    ${S.tab==='FREQUENT'?renderFreqTab(freq,''):renderSupTab(S.tab,'')}`}
   </div>
   <button class="fab ${cnt?'':'hide'}" onclick="go('s-ration-review')">Review Order <span class="fab-cnt">${cnt}</span></button>`;
 }
@@ -1365,6 +1390,7 @@ async function loadManagerData(){
   }
   await loadCateringEvents();
   saveToCache(S.user?.userId);
+  render();
 }
 
 function renderMgrHome(){
@@ -2193,6 +2219,7 @@ async function loadAdminData(){
   }
   await loadCateringEvents();
   saveToCache(S.user?.userId);
+  render();
 }
 
 function renderAdminHome(){
@@ -2200,7 +2227,7 @@ function renderAdminHome(){
   const pendingLeaves=S.allLeaves.filter(l=>l.status==='Pending'||l['Status']==='Pending').length;
   const upcomingEvCount=(S.upcomingEvents||[]).filter(e=>{const d=new Date(e.eventDate);d.setHours(0,0,0,0);const t=new Date();t.setHours(0,0,0,0);return d>=t;}).length;
   const totalStaff=(S.allStaff||[]).filter(u=>(u.role||u['Role'])!=='admin').length;
-  const markedAttCount=(S.admTodayAtt||[]).length;
+  const markedAttCount=new Set((S.admTodayAtt||[]).map(r=>r['User ID']||r.userId).filter(Boolean)).size;
   const statCards=[
     {n:pendingRation,l:'PENDING RATION APPROVALS',c:'#e53935',fn:"go('a-ration-approvals')"},
     {n:pendingLeaves,l:'PENDING LEAVE APPROVALS',c:'#f59e0b',fn:"go('a-leave-approvals')"},
@@ -2984,7 +3011,8 @@ function renderEventDetailModal(){
           </div>
           ${isRejected?`<div style="background:#fee2e2;border-radius:8px;padding:10px;margin-bottom:12px;font-size:12px;color:#991b1b"><b>⚠️ ${st==='manager_rejected'?'Mgr':'Admin'} rejected:</b> ${esc(st==='manager_rejected'?ev.managerNote:ev.adminNote)}</div>`:''}
           <div class="ev-detail-row"><span class="ev-detail-label">Date</span><span class="ev-detail-val">${fmtDate(ev.eventDate)}</span></div>
-          <div class="ev-detail-row"><span class="ev-detail-label">Slot</span><span class="ev-detail-val">${esc(ev.mealSlot||ev.eventTime||'—')}</span></div>
+          <div class="ev-detail-row"><span class="ev-detail-label">Slot</span><span class="ev-detail-val">${esc(ev.mealSlot||'—')}</span></div>
+          ${ev.eventTime?`<div class="ev-detail-row"><span class="ev-detail-label">Time</span><span class="ev-detail-val" style="font-weight:700;color:var(--navy)">⏰ ${esc(ev.eventTime)}</span></div>`:''}
           <div class="ev-detail-row"><span class="ev-detail-label">PAX</span><span class="ev-detail-val" style="font-size:16px;font-weight:800;color:var(--purple2)">${esc(ev.pax)}</span></div>
           <div class="ev-detail-row"><span class="ev-detail-label">Location</span><span class="ev-detail-val">${esc(ev.location||ev.eventLocation||'—')}</span></div>
           ${isPriv?`
@@ -3002,6 +3030,17 @@ function renderEventDetailModal(){
                   <div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:3px">${esc(typ)}</div>
                   <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:5px">${items.map(it=>`<span style="background:#ede9fe;color:#5b21b6;border-radius:20px;padding:2px 8px;font-size:11px">${esc(it)}</span>`).join('')}</div>`:'').join('')}
               </div>`).join('')}
+          </div>`:''}
+          ${(ev.customMenuItems&&ev.customMenuItems.length)?`
+          <div style="margin-top:14px">
+            <div class="card-ttl" style="margin-bottom:8px">✨ Custom Menu Items</div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px">
+              ${ev.customMenuItems.map(item=>`
+                <div style="display:flex;align-items:center;gap:5px;background:#f0fdf4;border:1px solid #86efac;border-radius:20px;padding:4px 10px">
+                  <span style="font-size:12px;font-weight:700;color:#166534">${esc(item.name)}</span>
+                  ${item.category&&item.category!=='Custom'?`<span style="font-size:10px;color:#16a34a;background:#dcfce7;border-radius:10px;padding:1px 6px">${esc(item.category)}</span>`:''}
+                </div>`).join('')}
+            </div>
           </div>`:''}
           ${ev.rationItems&&Object.keys(ev.rationItems).length?`
           <div style="margin-top:12px">
@@ -3063,10 +3102,12 @@ function openCevCreate(eventId){
     S.cevEditId=eventId;
     S.cevForm={type:ev.eventType||'',mealSlot:ev.mealSlot||'',date:ev.eventDate||'',time:ev.eventTime||'',pax:ev.pax||'',clientName:ev.clientName||ev.eventClient||'',clientMobile:ev.clientMobile||ev.eventPhone||'',location:ev.location||ev.eventLocation||'',foodPrefs:ev.foodPrefs?[...ev.foodPrefs]:[]};
     S.cevMenu=JSON.parse(JSON.stringify(ev.menu||{}));
+    S.cevCustomItems=JSON.parse(JSON.stringify(ev.customMenuItems||[]));
   } else {
     S.cevEditId=null;
     S.cevForm={type:'',mealSlot:'',date:'',time:'',pax:'',clientName:'',clientMobile:'',location:'',foodPrefs:[]};
     S.cevMenu={};
+    S.cevCustomItems=[];
   }
   S.cevCatOpen={};
   go('cev-create');
@@ -3190,6 +3231,23 @@ function renderCevCreate(){
       }).join('')}
     </div>
 
+    <!-- Custom Menu Items -->
+    <div class="card">
+      <div class="card-ttl">✨ Custom Menu Items <span style="font-size:12px;font-weight:400;color:var(--muted)">(event-specific, not added to master menu)</span></div>
+      <p style="font-size:12px;color:var(--muted);margin:0 0 10px">Add dishes specific to this event that are not in the standard menu.</p>
+      ${(S.cevCustomItems||[]).map((item,idx)=>`
+        <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)">
+          <div style="flex:1;font-size:13px;font-weight:600">${esc(item.name)}</div>
+          <div style="font-size:11px;color:var(--muted);background:#f0f2fa;border-radius:20px;padding:2px 8px">${esc(item.category||'Custom')}</div>
+          <button onclick="S.cevCustomItems.splice(${idx},1);render()" style="background:#fee2e2;color:#b91c1c;border:none;border-radius:6px;padding:3px 8px;font-size:11px;cursor:pointer;font-weight:700">✕</button>
+        </div>`).join('')}
+      <div style="display:flex;gap:6px;margin-top:10px">
+        <input id="cev-custom-name" class="fi" style="flex:1;margin-bottom:0" placeholder="Dish name (e.g. Butter Chicken)">
+        <input id="cev-custom-cat" class="fi" style="width:110px;margin-bottom:0" placeholder="Category">
+        <button onclick="(function(){const n=document.getElementById('cev-custom-name').value.trim();const c=document.getElementById('cev-custom-cat').value.trim()||'Custom';if(!n){alert('Enter dish name');return;}if(!S.cevCustomItems)S.cevCustomItems=[];S.cevCustomItems.push({name:n,category:c});document.getElementById('cev-custom-name').value='';document.getElementById('cev-custom-cat').value='';render();})()" style="background:var(--navy);color:#fff;border:none;border-radius:8px;padding:8px 12px;font-size:12px;cursor:pointer;font-weight:700;white-space:nowrap">+ Add</button>
+      </div>
+    </div>
+
     <div class="btn-row">
       <button class="btn btn-out" onclick="goBack()">← Back</button>
       <button class="btn btn-navy" onclick="cevSave()" ${!canSave?'disabled':''}>${isEdit?'💾 Save Changes':'✅ Create Event'}</button>
@@ -3200,7 +3258,7 @@ function renderCevCreate(){
 async function cevSave(){
   const f=S.cevForm;
   const isEdit=!!S.cevEditId;
-  const payload={eventType:f.type,mealSlot:f.mealSlot,eventDate:f.date,eventTime:f.time,pax:f.pax,clientName:f.clientName,clientMobile:f.clientMobile,location:f.location,menu:S.cevMenu,foodPrefs:f.foodPrefs||[],createdBy:S.user?.name||''};
+  const payload={eventType:f.type,mealSlot:f.mealSlot,eventDate:f.date,eventTime:f.time,pax:f.pax,clientName:f.clientName,clientMobile:f.clientMobile,location:f.location,menu:S.cevMenu,foodPrefs:f.foodPrefs||[],customMenuItems:S.cevCustomItems||[],createdBy:S.user?.name||''};
   S.loading=true; render();
   try{
     if(isEdit){
@@ -3209,7 +3267,7 @@ async function cevSave(){
         if(!r?.success){alert('Save failed: '+(r?.error||'error'));S.loading=false;render();return;}
       }
       const idx=(S.upcomingEvents||[]).findIndex(e=>e.eventId===S.cevEditId);
-      if(idx>=0) Object.assign(S.upcomingEvents[idx],{eventType:f.type,mealSlot:f.mealSlot,eventDate:f.date,eventTime:f.time,pax:f.pax,clientName:f.clientName,clientMobile:f.clientMobile,location:f.location,menu:S.cevMenu});
+      if(idx>=0) Object.assign(S.upcomingEvents[idx],{eventType:f.type,mealSlot:f.mealSlot,eventDate:f.date,eventTime:f.time,pax:f.pax,clientName:f.clientName,clientMobile:f.clientMobile,location:f.location,menu:S.cevMenu,customMenuItems:S.cevCustomItems||[]});
     } else {
       let evId,evCode;
       if(isBackendSet()){
@@ -3220,7 +3278,7 @@ async function cevSave(){
         evCode=String(1000+((S.upcomingEvents||[]).length));
         evId='CEV-'+evCode+'-'+Date.now();
       }
-      const newEv={eventId:evId,eventCode:evCode,eventType:f.type,mealSlot:f.mealSlot,eventDate:f.date,eventTime:f.time,pax:f.pax,clientName:f.clientName,clientMobile:f.clientMobile,location:f.location,menu:S.cevMenu,status:'event_created',createdBy:S.user?.name||''};
+      const newEv={eventId:evId,eventCode:evCode,eventType:f.type,mealSlot:f.mealSlot,eventDate:f.date,eventTime:f.time,pax:f.pax,clientName:f.clientName,clientMobile:f.clientMobile,location:f.location,menu:S.cevMenu,customMenuItems:S.cevCustomItems||[],status:'event_created',createdBy:S.user?.name||''};
       if(!S.upcomingEvents)S.upcomingEvents=[];
       S.upcomingEvents.push(newEv);
       const cached=lsG('fb_catering_events',[]);cached.push(newEv);lsS('fb_catering_events',cached);
