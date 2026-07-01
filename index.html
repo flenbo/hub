@@ -567,7 +567,16 @@ function nextDay(){const d=new Date();d.setDate(d.getDate()+1);return d.getFullY
 function dayAfterTomorrow(){const d=new Date();d.setDate(d.getDate()+2);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
 function today(){return new Date().toISOString().split('T')[0];}
 function fmtDate(s){if(!s)return'—';try{const d=new Date(s+'T00:00:00');return d.toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'});}catch{return s;}}
-function fmtTime(s){if(!s)return'—';try{return new Date(s).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});}catch{return s;}}
+function fmtTime(s){
+  if(!s)return'—';
+  const str=String(s).trim();
+  // Already HH:MM or HH:MM:SS
+  if(/^\d{1,2}:\d{2}/.test(str)) return str.slice(0,5);
+  // GAS serializes sheet time as "1899-12-30T18:00:00.000Z" — extract UTC HH:MM directly
+  const m=str.match(/T(\d{2}):(\d{2})/);
+  if(m) return`${m[1]}:${m[2]}`;
+  return str;
+}
 function genId(loc){const l=(loc||'').includes('Nawada')?'NAW':(loc||'').includes('Emaar')?'EMR':'HUB';const d=new Date().toISOString().slice(0,10).replace(/-/g,'');return`FB-${l}-${d}-${Math.floor(Math.random()*900)+100}`;}
 function cartCount(){return Object.values(S.cart).filter(v=>v.qty>0).length;}
 function cartItems(){const a=[];for(const[k,v]of Object.entries(S.cart)){if(v.qty>0){const[sup,cat,name]=k.split('|');a.push({sup,cat,name,qty:v.qty,unit:v.unit});}}return a;}
@@ -2879,15 +2888,19 @@ async function loadCateringEvents(){
     const r=await api({action:'getCateringEvents'});
     if(r?.events){
       const t30=new Date();t30.setDate(t30.getDate()-30);const t30s=t30.toISOString().slice(0,10);
-      // Build map of local customMenuItems so backend overwrite doesn't erase them
-      const localCustom={};
-      (S.upcomingEvents||[]).forEach(e=>{if(e.customMenuItems?.length)localCustom[e.eventId]=e.customMenuItems;});
+      // Read custom items from localStorage (survives backend overwrites reliably)
+      const localCustom=lsG('fb_cev_custom',{});
       // Respect locally-deleted events even if backend hasn't caught up yet
       const localDeleted=new Set(lsG('fb_deleted_events',[]));
       S.upcomingEvents=r.events
         .filter(e=>(!e.eventDate||e.eventDate>=t30s)&&!localDeleted.has(e.eventId))
         .sort((a,b)=>(a.eventDate||'').localeCompare(b.eventDate||''))
-        .map(e=>localCustom[e.eventId]?{...e,customMenuItems:localCustom[e.eventId]}:e);
+        .map(e=>{
+          // Normalize GAS time serialization ("1899-12-30T18:00:00.000Z" → "18:00")
+          if(e.eventTime){const m=String(e.eventTime).match(/T(\d{2}):(\d{2})/);if(m)e={...e,eventTime:`${m[1]}:${m[2]}`};}
+          // Restore custom items from localStorage
+          return localCustom[e.eventId]?{...e,customMenuItems:localCustom[e.eventId]}:e;
+        });
       lsS('fb_catering_events', S.upcomingEvents);
     } else {
       S.upcomingEvents=getLocalCateringEvents();
@@ -3016,7 +3029,7 @@ function renderEventDetailModal(){
           ${isRejected?`<div style="background:#fee2e2;border-radius:8px;padding:10px;margin-bottom:12px;font-size:12px;color:#991b1b"><b>⚠️ ${st==='manager_rejected'?'Mgr':'Admin'} rejected:</b> ${esc(st==='manager_rejected'?ev.managerNote:ev.adminNote)}</div>`:''}
           <div class="ev-detail-row"><span class="ev-detail-label">Date</span><span class="ev-detail-val">${fmtDate(ev.eventDate)}</span></div>
           <div class="ev-detail-row"><span class="ev-detail-label">Slot</span><span class="ev-detail-val">${esc(ev.mealSlot||'—')}</span></div>
-          ${ev.eventTime?`<div class="ev-detail-row"><span class="ev-detail-label">Time</span><span class="ev-detail-val" style="font-weight:700;color:var(--navy)">⏰ ${esc(ev.eventTime)}</span></div>`:''}
+          ${ev.eventTime?`<div class="ev-detail-row"><span class="ev-detail-label">Time</span><span class="ev-detail-val" style="font-weight:700;color:var(--navy)">⏰ ${esc(fmtTime(ev.eventTime))}</span></div>`:''}
           <div class="ev-detail-row"><span class="ev-detail-label">PAX</span><span class="ev-detail-val" style="font-size:16px;font-weight:800;color:var(--purple2)">${esc(ev.pax)}</span></div>
           <div class="ev-detail-row"><span class="ev-detail-label">Location</span><span class="ev-detail-val">${esc(ev.location||ev.eventLocation||'—')}</span></div>
           ${isPriv?`
@@ -3275,6 +3288,8 @@ async function cevSave(){
       }
       const idx=(S.upcomingEvents||[]).findIndex(e=>e.eventId===S.cevEditId);
       if(idx>=0) Object.assign(S.upcomingEvents[idx],{eventType:f.type,mealSlot:f.mealSlot,eventDate:f.date,eventTime:f.time,pax:f.pax,clientName:f.clientName,clientMobile:f.clientMobile,location:f.location,menu:S.cevMenu,customMenuItems:S.cevCustomItems||[]});
+      // Persist custom items to localStorage so they survive backend overwrites
+      if((S.cevCustomItems||[]).length){const cm=lsG('fb_cev_custom',{});cm[S.cevEditId]=S.cevCustomItems;lsS('fb_cev_custom',cm);}
     } else {
       let evId,evCode;
       if(isBackendSet()){
@@ -3289,6 +3304,8 @@ async function cevSave(){
       if(!S.upcomingEvents)S.upcomingEvents=[];
       S.upcomingEvents.push(newEv);
       const cached=lsG('fb_catering_events',[]);cached.push(newEv);lsS('fb_catering_events',cached);
+      // Persist custom items to localStorage so they survive backend overwrites
+      if((S.cevCustomItems||[]).length){const cm=lsG('fb_cev_custom',{});cm[evId]=S.cevCustomItems;lsS('fb_cev_custom',cm);}
     }
     S.loading=false;
     alert(isEdit?'Event updated!':'Event created! Staff can now order ration.');
