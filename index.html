@@ -537,7 +537,7 @@ let S = {
   // admin
   aTab:null,
   allStaff:[],allLocations:DEMO_LOCATIONS.slice(),
-  approvedOrders:[],allLeaves:[],
+  approvedOrders:[],allLeaves:[],allRationOrders:[],admTodayAtt:[],allMgrLeaves:[],reportFrom:'',reportTo:'',
   showStaffModal:false,showLocModal:false,
   editStaff:null,
   // events
@@ -1351,12 +1351,12 @@ function renderAttendance(){
 async function loadManagerData(){
   if(isBackendSet()){
     const [ro,rl,ra]=await Promise.all([
-      api({action:'getOrders',status:'Pending'}),
-      api({action:'getLeaves',status:'Pending'}),
+      api({action:'getOrders'}),
+      api({action:'getLeaves'}),
       api({action:'getAttendance',date:today()})
     ]);
-    if(ro?.orders) S.pendingOrders=ro.orders;
-    if(rl?.leaves) S.pendingLeaves=rl.leaves;
+    if(ro?.orders){S.allRationOrders=ro.orders;S.pendingOrders=ro.orders.filter(r=>(r['Status']||r.status||'')==='Pending');}
+    if(rl?.leaves){S.allMgrLeaves=rl.leaves;S.pendingLeaves=rl.leaves.filter(l=>(l.status||l['Status']||'')==='Pending');}
     if(ra?.records) S.todayAttAll=ra.records;
   } else {
     S.pendingOrders=getDemoOrders();
@@ -1368,7 +1368,8 @@ async function loadManagerData(){
 }
 
 function renderMgrHome(){
-  const totalPendingRation=S.pendingOrders.length+((S.upcomingEvents||[]).filter(e=>e.status==='ration_submitted').length);
+  const uniquePendingOrderCount=new Set((S.pendingOrders||[]).map(r=>r['Order ID']||r.orderId)).size;
+  const totalPendingRation=uniquePendingOrderCount+((S.upcomingEvents||[]).filter(e=>e.status==='ration_submitted').length);
   const upcomingEvCount=(S.upcomingEvents||[]).filter(e=>{const d=new Date(e.eventDate);d.setHours(0,0,0,0);const t=new Date();t.setHours(0,0,0,0);return d>=t;}).length;
   const statCards=[
     {n:totalPendingRation,l:'PENDING RATION APPROVALS',c:'#e53935',screen:'m-ration-approvals'},
@@ -1392,7 +1393,7 @@ function renderMgrHome(){
     <!-- Clickable stat cards -->
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px;max-width:600px">
       ${statCards.map(c=>`
-      <div onclick="go('${c.screen}')" style="background:#fff;border:2px solid ${c.c};border-radius:12px;padding:12px 8px;text-align:center;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.07);transition:transform .1s" onmousedown="this.style.transform='scale(.97)'" onmouseup="this.style.transform=''">
+      <div onclick="${c.aTab?`S.aTab='${c.aTab}';S.screen='a-home';render()`:`go('${c.screen}')`}" style="background:#fff;border:2px solid ${c.c};border-radius:12px;padding:12px 8px;text-align:center;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.07);transition:transform .1s" onmousedown="this.style.transform='scale(.97)'" onmouseup="this.style.transform=''">
         <div style="font-size:26px;font-weight:900;color:${c.c};line-height:1">${c.n}</div>
         <div style="font-size:9px;font-weight:700;color:#555;margin-top:4px;line-height:1.3;text-transform:uppercase;letter-spacing:.3px">${c.l}</div>
       </div>`).join('')}
@@ -1580,37 +1581,49 @@ async function logAttendance(type){
 ════════════════════════════════════════════ */
 
 function renderMgrRationApprovals(){
-  // Combine regular pending orders + event ration orders awaiting mgr approval
+  // Show ALL orders with color codes (yellow=pending, green=approved, red=rejected)
+  const src=S.allRationOrders&&S.allRationOrders.length?S.allRationOrders:S.pendingOrders;
   const grouped={};
-  S.pendingOrders.forEach(r=>{
+  src.forEach(r=>{
     const id=r['Order ID']||r.orderId;
-    if(!grouped[id])grouped[id]={id,date:r['Created Date']||r.createdDate||r['Delivery Date']||r.deliveryDate,staff:r['Staff Name']||r.staffName,loc:r['Location']||r.location,type:r['Order Type']||r.orderType||'Restaurant',pax:r['PAX']||r.pax,eventName:r['Event Name']||r.eventName,eventTime:r['Event Time']||r.eventTime,status:'pending',items:[]};
+    const st=r['Status']||r.status||'Pending';
+    if(!grouped[id])grouped[id]={id,date:r['Created Date']||r.createdDate||r['Delivery Date']||r.deliveryDate,staff:r['Staff Name']||r.staffName,loc:r['Location']||r.location,type:r['Order Type']||r.orderType||'Restaurant',pax:r['PAX']||r.pax,eventName:r['Event Name']||r.eventName,eventTime:r['Event Time']||r.eventTime,status:st,items:[]};
     grouped[id].items.push({name:r['Item']||r.name,qty:r['Quantity']||r.qty,unit:r['Unit']||r.unit,supplier:r['Supplier']||r.sup});
   });
-  const evOrders=(S.upcomingEvents||[]).filter(e=>e.status==='ration_submitted');
-  const allOrders=[...Object.values(grouped),...evOrders.map(e=>({id:e.eventId,date:e.eventDate,staff:e.submittedBy||'—',loc:e.location||e.eventLocation,type:'Catering',pax:e.pax,eventName:e.eventType+' — '+e.clientName,eventTime:e.eventTime||e.mealSlot,status:'ev-pending',isEvent:true,eventId:e.eventId,items:[]}))];
-  if(!allOrders.length)return`<div class="scr on"><div class="empty"><div class="empty-icon">📋</div><div>No pending ration approvals</div></div><button class="btn btn-out btn-sm" style="margin-top:12px" onclick="go('m-home')">← Back</button></div>`;
+  const evOrders=(S.upcomingEvents||[]).filter(e=>['ration_submitted','manager_approved','manager_rejected','admin_approved','admin_rejected'].includes(e.status));
+  const allOrders=[...Object.values(grouped).sort((a,b)=>new Date(b.date)-new Date(a.date)),...evOrders.map(e=>({id:e.eventId,date:e.eventDate,staff:e.submittedBy||'—',loc:e.location||e.eventLocation,type:'Catering',pax:e.pax,eventName:e.eventType+' — '+e.clientName,eventTime:e.eventTime||e.mealSlot,status:e.status==='ration_submitted'?'Pending':e.status==='manager_approved'||e.status==='admin_approved'?'Approved':'Rejected',isEvent:true,eventId:e.eventId,items:[]}))];
+  const stColorR=st=>st==='Pending'?'#f59e0b':st==='Manager Approved'||st==='Admin Approved'||st==='Approved'?'#16a34a':'#dc2626';
+  const stBgR=st=>st==='Pending'?'#fef9c3':st==='Manager Approved'||st==='Admin Approved'||st==='Approved'?'#dcfce7':'#fee2e2';
+  const stLabelR=st=>st==='Pending'?'⏳ Pending':st==='Manager Approved'?'✅ Mgr Approved':st==='Admin Approved'||st==='Approved'?'✅ Approved':'❌ Rejected';
+  if(!allOrders.length)return`<div class="scr on"><div class="empty"><div class="empty-icon">📋</div><div>No ration orders found</div></div><button class="btn btn-out btn-sm" style="margin-top:12px" onclick="go('m-home')">← Back</button></div>`;
   return`<div class="scr on scr-wide">
     <div class="card-ttl" style="margin-bottom:12px;font-size:16px">📋 Pending Ration Approvals</div>
+    <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+      <span style="background:#fef9c3;color:#92400e;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700">⏳ Pending</span>
+      <span style="background:#dcfce7;color:#16a34a;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700">✅ Approved</span>
+      <span style="background:#fee2e2;color:#dc2626;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700">❌ Rejected</span>
+    </div>
     <div style="display:flex;flex-direction:column;gap:10px;max-width:700px">
     ${allOrders.map((o,i)=>{
       const isEv=o.isEvent;
-      return`<div style="background:#fff;border:1.5px solid var(--border);border-radius:12px;padding:14px 16px;display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
+      const st=o.status||'Pending';
+      const isPending=st==='Pending';
+      return`<div style="background:#fff;border:2px solid ${stColorR(st)};border-radius:12px;padding:14px 16px;display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
         <div style="flex:1;min-width:0">
-          <div style="font-size:11px;color:var(--muted);margin-bottom:3px">#${i+1} · ${fmtDate(o.date)}</div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:3px">#${i+1} · ${fmtDate(o.date)} <span style="background:${stBgR(st)};color:${stColorR(st)};border-radius:10px;padding:1px 8px;font-size:10px;font-weight:700;margin-left:4px">${stLabelR(st)}</span></div>
           <div style="font-weight:700;font-size:14px;margin-bottom:2px">${esc(o.staff)}</div>
           <div style="font-size:12px;color:var(--muted)">
-            <span style="background:${o.type==='Catering'?'#ede9fe':o.type==='Staff Ration'?'#d1fae5':o.type==='Cloud Kitchen'?'#fef3c7':'#f0f2fa'};color:${o.type==='Catering'?'#5b21b6':o.type==='Staff Ration'?'#065f46':o.type==='Cloud Kitchen'?'#92400e':'var(--navy)'};border-radius:20px;padding:2px 8px;font-size:11px;font-weight:700">${esc(o.type)}</span>
+            <span style="background:${o.type==='Catering'?'#ede9fe':o.type==='Staff Ration'?'#d1fae5':'#f0f2fa'};color:${o.type==='Catering'?'#5b21b6':o.type==='Staff Ration'?'#065f46':'var(--navy)'};border-radius:20px;padding:2px 8px;font-size:11px;font-weight:700">${esc(o.type)}</span>
             ${o.type==='Catering'?` · 👥 ${esc(o.pax)} PAX`:''}
           </div>
           ${o.eventName?`<div style="font-size:12px;color:var(--muted);margin-top:3px">🎉 ${esc(o.eventName)}${o.eventTime?' · ⏰ '+esc(o.eventTime):''}</div>`:''}
           ${o.loc?`<div style="font-size:12px;color:var(--muted);margin-top:2px">📍 ${esc(o.loc)}</div>`:''}
         </div>
         <div style="flex-shrink:0">
-          ${isEv
-            ?`<button class="btn btn-sm" style="background:#dc2626;color:#fff;border:none;cursor:pointer;border-radius:8px;padding:6px 12px;font-size:11px;font-weight:700" onclick="S.mRationDetailId='${esc(o.eventId)}';S.mRationDetailType='event';go('m-ration-detail')">View Order</button>`
-            :`<button class="btn btn-sm" style="background:#dc2626;color:#fff;border:none;cursor:pointer;border-radius:8px;padding:6px 12px;font-size:11px;font-weight:700" onclick="S.mRationDetailId='${esc(o.id)}';S.mRationDetailType='regular';go('m-ration-detail')">View Order</button>`
-          }
+          ${isPending?(isEv
+            ?`<button class="btn btn-sm" style="background:#0a2240;color:#fff;border:none;cursor:pointer;border-radius:8px;padding:6px 12px;font-size:11px;font-weight:700" onclick="S.mRationDetailId='${esc(o.eventId)}';S.mRationDetailType='event';go('m-ration-detail')">Review</button>`
+            :`<button class="btn btn-sm" style="background:#0a2240;color:#fff;border:none;cursor:pointer;border-radius:8px;padding:6px 12px;font-size:11px;font-weight:700" onclick="S.mRationDetailId='${esc(o.id)}';S.mRationDetailType='regular';go('m-ration-detail')">Review</button>`
+          ):`<span style="font-size:11px;color:var(--muted)">—</span>`}
         </div>
       </div>`;
     }).join('')}
@@ -1641,7 +1654,8 @@ function renderMgrRationDetail(){
   }
   // Regular order detail
   const id=S.mRationDetailId;
-  const orderRows=S.pendingOrders.filter(r=>(r['Order ID']||r.orderId)===id);
+  const _ordSrc=S.allRationOrders&&S.allRationOrders.length?S.allRationOrders:S.pendingOrders;
+  const orderRows=_ordSrc.filter(r=>(r['Order ID']||r.orderId)===id);
   if(!orderRows.length)return`<div class="scr on"><p>Order not found.</p><button class="btn btn-out" onclick="go('m-ration-approvals')">← Back</button></div>`;
   const o=orderRows[0];
   return`<div class="scr on scr-wide">
@@ -1694,11 +1708,19 @@ async function mgrEvDecision(eventId,newStatus){
 }
 
 function renderMgrLeaveApprovals(){
+  const allMgrLv=S.allMgrLeaves&&S.allMgrLeaves.length?S.allMgrLeaves:S.pendingLeaves;
+  const stCL=st=>st==='Pending'?'#f59e0b':st==='Approved'?'#16a34a':'#dc2626';
+  const stBL=st=>st==='Pending'?'#fef9c3':st==='Approved'?'#dcfce7':'#fee2e2';
   return`<div class="scr on scr-wide">
     <div class="card-ttl" style="margin-bottom:12px;font-size:16px">🗓️ Leave Approval Requests</div>
-    ${!S.pendingLeaves.length?`<div class="empty"><div class="empty-icon">🗓️</div><div>No pending leave requests</div></div>`:''}
+    ${!allMgrLv.length?`<div class="empty"><div class="empty-icon">🗓️</div><div>No leave requests found</div></div>`:''}
+    <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+      <span style="background:#fef9c3;color:#92400e;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700">⏳ Pending</span>
+      <span style="background:#dcfce7;color:#16a34a;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700">✅ Approved</span>
+      <span style="background:#fee2e2;color:#dc2626;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700">❌ Rejected</span>
+    </div>
     <div style="display:flex;flex-direction:column;gap:10px;max-width:700px">
-    ${S.pendingLeaves.map(l=>{
+    ${allMgrLv.map(l=>{
       const staffData=(S.allStaff||[]).find(u=>u.userId===l.userId||u.userId===l['User ID'])||{};
       const al=+(staffData.annualLeave||l.annualLeaveBalance||staffData['Annual Leave']||0);
       const cl=+(staffData.casualLeave||l.casualLeaveBalance||staffData['Casual Leave']||0);
@@ -1707,20 +1729,20 @@ function renderMgrLeaveApprovals(){
       const days=fromD&&toD?Math.max(0,Math.round((new Date(toD)-new Date(fromD))/86400000)+1):0;
       const lType=l.leaveType||l['Leave Type']||'';
       const isAnnual=lType.toLowerCase().includes('annual');
-      return`<div style="background:#fff;border:1.5px solid var(--border);border-radius:12px;padding:14px 16px">
+      const lSt=l.status||l['Status']||'Pending';
+      return`<div style="background:#fff;border:2px solid ${stCL(lSt)};border-radius:12px;padding:14px 16px">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
           <div>
             <div style="font-weight:700;font-size:14px">${esc(l.staffName||l['Staff Name']||'—')}</div>
             <div style="font-size:12px;color:var(--muted);margin-top:2px">📍 ${esc(l.location||l['Location']||'—')}</div>
           </div>
-          <span class="badge b-warn">${esc(l.status||'Pending')}</span>
+          <span style="background:${stBL(lSt)};color:${stCL(lSt)};border-radius:20px;padding:2px 9px;font-size:11px;font-weight:700">${esc(lSt)}</span>
         </div>
         <div style="font-size:13px;margin-bottom:6px">
           <span style="background:${isAnnual?'#ede9fe':'#fee2e2'};color:${isAnnual?'#5b21b6':'#dc2626'};border-radius:20px;padding:2px 9px;font-size:12px;font-weight:700">${esc(lType)}</span>
           &nbsp; 📅 ${fmtDate(fromD)} → ${fmtDate(toD)} ${days>0?`<strong>(${days} day${days>1?'s':''})</strong>`:''}
         </div>
         ${l.reason||l['Reason']?`<div style="font-size:12px;color:var(--muted);margin-bottom:8px">${esc(l.reason||l['Reason'])}</div>`:''}
-        <!-- Leave balance grid -->
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:10px">
           <div style="background:#f0f2fa;border-radius:8px;padding:8px 10px;text-align:center">
             <div style="font-size:18px;font-weight:900;color:var(--navy)">${al.toFixed(1)}</div>
@@ -1732,11 +1754,11 @@ function renderMgrLeaveApprovals(){
           </div>
         </div>
         ${isAnnual&&days>al?`<div class="alert alert-warn" style="font-size:12px;margin-bottom:8px">⚠️ Requested ${days} day(s) but only ${al} annual leave days available.</div>`:''}
-        <input class="fi" placeholder="Optional note to staff…" id="mla-${esc(l.leaveId)}" style="margin-bottom:8px">
+        ${lSt==='Pending'?`<input class="fi" placeholder="Optional note to staff…" id="mla-${esc(l.leaveId)}" style="margin-bottom:8px">
         <div class="btn-row">
           <button class="btn btn-red btn-sm" onclick="decideLeavePage('${esc(l.leaveId)}','Rejected')">✗ Reject</button>
           <button class="btn btn-ok btn-sm" onclick="decideLeavePage('${esc(l.leaveId)}','Approved')">✓ Approve</button>
-        </div>
+        </div>`:''}
       </div>`;
     }).join('')}
     </div>
@@ -1756,22 +1778,36 @@ async function decideLeavePage(leaveId,status){
 ════════════════════════════════════════════ */
 
 function renderAdmRationApprovals(){
-  // Admin sees Manager-Approved orders
-  const grouped={};
-  S.approvedOrders.forEach(r=>{
+  // Admin sees ALL orders with color codes
+  const srcA=S.allRationOrders&&S.allRationOrders.length?S.allRationOrders:S.approvedOrders;
+  const groupedA={};
+  srcA.forEach(r=>{
     const id=r['Order ID']||r.orderId;
-    if(!grouped[id])grouped[id]={id,date:r['Created Date']||r.createdDate||r['Delivery Date']||r.deliveryDate,staff:r['Staff Name']||r.staffName,loc:r['Location']||r.location,type:r['Order Type']||r.orderType||'Restaurant',pax:r['PAX']||r.pax,eventName:r['Event Name']||r.eventName,eventTime:r['Event Time']||r.eventTime,managerNote:r['Manager Note']||r.managerNote,status:'mgr-approved',items:[]};
-    grouped[id].items.push({name:r['Item']||r.name,qty:r['Quantity']||r.qty,unit:r['Unit']||r.unit,supplier:r['Supplier']||r.sup});
+    const st=r['Status']||r.status||'Pending';
+    if(!groupedA[id])groupedA[id]={id,date:r['Created Date']||r.createdDate||r['Delivery Date']||r.deliveryDate,staff:r['Staff Name']||r.staffName,loc:r['Location']||r.location,type:r['Order Type']||r.orderType||'Restaurant',pax:r['PAX']||r.pax,eventName:r['Event Name']||r.eventName,eventTime:r['Event Time']||r.eventTime,managerNote:r['Manager Note']||r.managerNote,status:st,items:[]};
+    groupedA[id].items.push({name:r['Item']||r.name,qty:r['Quantity']||r.qty,unit:r['Unit']||r.unit,supplier:r['Supplier']||r.sup});
   });
-  const evOrders=(S.upcomingEvents||[]).filter(e=>e.status==='manager_approved');
-  const allOrders=[...Object.values(grouped),...evOrders.map(e=>({id:e.eventId,date:e.eventDate,staff:e.submittedBy||e.createdBy||'—',loc:e.location||e.eventLocation,type:'Catering',pax:e.pax,eventName:e.eventType+' — '+e.clientName,eventTime:e.eventTime||e.mealSlot,managerNote:e.managerNote,status:'ev-mgr-approved',isEvent:true,eventId:e.eventId,items:[]}))];
-  if(!allOrders.length)return`<div class="scr on"><div class="empty"><div class="empty-icon">📋</div><div>No ration orders pending admin approval</div></div><button class="btn btn-out btn-sm" style="margin-top:12px" onclick="go('a-home')">← Back</button></div>`;
+  const evOrdersA=(S.upcomingEvents||[]).filter(e=>['ration_submitted','manager_approved','manager_rejected','admin_approved','admin_rejected'].includes(e.status));
+  const allOrdersA=[...Object.values(groupedA).sort((a,b)=>new Date(b.date)-new Date(a.date)),...evOrdersA.map(e=>({id:e.eventId,date:e.eventDate,staff:e.submittedBy||e.createdBy||'—',loc:e.location||e.eventLocation,type:'Catering',pax:e.pax,eventName:e.eventType+' — '+e.clientName,eventTime:e.eventTime||e.mealSlot,managerNote:e.managerNote,status:e.status==='admin_approved'?'Admin Approved':e.status==='manager_approved'?'Manager Approved':e.status==='ration_submitted'?'Pending':'Rejected',isEvent:true,eventId:e.eventId,items:[]}))];
+  const stCA2=st=>st==='Pending'?'#f59e0b':st==='Manager Approved'?'#0284c7':st==='Admin Approved'||st==='Approved'?'#16a34a':'#dc2626';
+  const stBA2=st=>st==='Pending'?'#fef9c3':st==='Manager Approved'?'#e0f2fe':st==='Admin Approved'||st==='Approved'?'#dcfce7':'#fee2e2';
+  const stLA2=st=>st==='Pending'?'⏳ Pending':st==='Manager Approved'?'✅ Mgr Approved':st==='Admin Approved'||st==='Approved'?'✅ Admin Approved':'❌ Rejected';
+  if(!allOrdersA.length)return`<div class="scr on"><div class="empty"><div class="empty-icon">📋</div><div>No ration orders found</div></div><button class="btn btn-out btn-sm" style="margin-top:12px" onclick="go('a-home')">← Back</button></div>`;
   return`<div class="scr on scr-wide">
     <div class="card-ttl" style="margin-bottom:12px;font-size:16px">📋 Pending Ration Approvals</div>
+    <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+      <span style="background:#fef9c3;color:#92400e;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700">⏳ Pending</span>
+      <span style="background:#e0f2fe;color:#0284c7;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700">✅ Mgr Approved</span>
+      <span style="background:#dcfce7;color:#16a34a;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700">✅ Admin Approved</span>
+      <span style="background:#fee2e2;color:#dc2626;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700">❌ Rejected</span>
+    </div>
     <div style="display:flex;flex-direction:column;gap:10px;max-width:700px">
-    ${allOrders.map((o,i)=>`<div style="background:#fff;border:1.5px solid var(--border);border-radius:12px;padding:14px 16px;display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
+    ${allOrdersA.map((o,i)=>{
+      const stO=o.status||'Pending';
+      const isMgrApproved=stO==='Manager Approved'||stO==='ev-mgr-approved';
+      return`<div style="background:#fff;border:2px solid ${stCA2(stO)};border-radius:12px;padding:14px 16px;display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
       <div style="flex:1;min-width:0">
-        <div style="font-size:11px;color:var(--muted);margin-bottom:3px">#${i+1} · ${fmtDate(o.date)} <span style="background:#d1fae5;color:#065f46;border-radius:10px;padding:1px 6px;font-size:10px;font-weight:700;margin-left:4px">✅ Mgr OK</span></div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:3px">#${i+1} · ${fmtDate(o.date)} <span style="background:${stBA2(stO)};color:${stCA2(stO)};border-radius:10px;padding:1px 8px;font-size:10px;font-weight:700;margin-left:4px">${stLA2(stO)}</span></div>
         <div style="font-weight:700;font-size:14px;margin-bottom:2px">${esc(o.staff)}</div>
         <div style="font-size:12px;color:var(--muted)">
           <span style="background:${o.type==='Catering'?'#ede9fe':'#f0f2fa'};color:${o.type==='Catering'?'#5b21b6':'var(--navy)'};border-radius:20px;padding:2px 8px;font-size:11px;font-weight:700">${esc(o.type)}</span>
@@ -1782,9 +1818,9 @@ function renderAdmRationApprovals(){
         ${o.managerNote?`<div style="font-size:11px;color:#065f46;background:#d1fae5;border-radius:6px;padding:3px 8px;margin-top:4px">Mgr Note: ${esc(o.managerNote)}</div>`:''}
       </div>
       <div style="flex-shrink:0">
-        <button class="btn btn-sm" style="background:#dc2626;color:#fff;border:none;cursor:pointer;border-radius:8px;padding:6px 12px;font-size:11px;font-weight:700" onclick="S.aRationDetailId='${esc(o.isEvent?o.eventId:o.id)}';S.aRationDetailType='${esc(o.isEvent?'event':'regular')}';go('a-ration-detail')">View Order</button>
+        ${isMgrApproved?`<button class="btn btn-sm" style="background:#0a2240;color:#fff;border:none;cursor:pointer;border-radius:8px;padding:6px 12px;font-size:11px;font-weight:700" onclick="S.aRationDetailId='${esc(o.isEvent?o.eventId:o.id)}';S.aRationDetailType='${esc(o.isEvent?'event':'regular')}';go('a-ration-detail')">Review</button>`:`<span style="font-size:11px;color:var(--muted)">—</span>`}
       </div>
-    </div>`).join('')}
+    </div>`}).join('')}
     </div>
     <button class="btn btn-out btn-sm" style="margin-top:16px" onclick="go('a-home')">← Back to Home</button>
   </div>`;
@@ -1985,12 +2021,19 @@ async function admOrderDecision(orderId,status){
 }
 
 function renderAdmLeaveApprovals(){
-  const pendingLeaves=(S.allLeaves||[]).filter(l=>l.status==='Pending'||l['Status']==='Pending');
+  const allLvA=S.allLeaves||[];
+  const stCA=st=>st==='Pending'?'#f59e0b':st==='Approved'?'#16a34a':'#dc2626';
+  const stBA=st=>st==='Pending'?'#fef9c3':st==='Approved'?'#dcfce7':'#fee2e2';
   return`<div class="scr on scr-wide">
-    <div class="card-ttl" style="margin-bottom:12px;font-size:16px">🗓️ Pending Leave Approvals</div>
-    ${!pendingLeaves.length?`<div class="empty"><div class="empty-icon">🗓️</div><div>No pending leave requests</div></div>`:''}
+    <div class="card-ttl" style="margin-bottom:12px;font-size:16px">🗓️ Leave Approvals — Full History</div>
+    ${!allLvA.length?`<div class="empty"><div class="empty-icon">🗓️</div><div>No leave requests found</div></div>`:''}
+    <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+      <span style="background:#fef9c3;color:#92400e;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700">⏳ Pending</span>
+      <span style="background:#dcfce7;color:#16a34a;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700">✅ Approved</span>
+      <span style="background:#fee2e2;color:#dc2626;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700">❌ Rejected</span>
+    </div>
     <div style="display:flex;flex-direction:column;gap:10px;max-width:700px">
-    ${pendingLeaves.map(l=>{
+    ${allLvA.map(l=>{
       const staffData=(S.allStaff||[]).find(u=>u.userId===l.userId||u.userId===l['User ID'])||{};
       const al=+(staffData.annualLeave||l.annualLeaveBalance||staffData['Annual Leave']||0);
       const cl=+(staffData.casualLeave||l.casualLeaveBalance||staffData['Casual Leave']||0);
@@ -1999,13 +2042,14 @@ function renderAdmLeaveApprovals(){
       const days=fromD&&toD?Math.max(0,Math.round((new Date(toD)-new Date(fromD))/86400000)+1):0;
       const lType=l.leaveType||l['Leave Type']||'';
       const isAnnual=lType.toLowerCase().includes('annual');
-      return`<div style="background:#fff;border:1.5px solid var(--border);border-radius:12px;padding:14px 16px">
+      const lStA=l.status||l['Status']||'Pending';
+      return`<div style="background:#fff;border:2px solid ${stCA(lStA)};border-radius:12px;padding:14px 16px">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
           <div>
             <div style="font-weight:700;font-size:14px">${esc(l.staffName||l['Staff Name']||'—')}</div>
             <div style="font-size:12px;color:var(--muted);margin-top:2px">📍 ${esc(l.location||l['Location']||'—')}</div>
           </div>
-          <span class="badge b-warn">${esc(l.status||'Pending')}</span>
+          <span style="background:${stBA(lStA)};color:${stCA(lStA)};border-radius:20px;padding:2px 9px;font-size:11px;font-weight:700">${esc(lStA)}</span>
         </div>
         <div style="font-size:13px;margin-bottom:6px">
           <span style="background:${isAnnual?'#ede9fe':'#fee2e2'};color:${isAnnual?'#5b21b6':'#dc2626'};border-radius:20px;padding:2px 9px;font-size:12px;font-weight:700">${esc(lType)}</span>
@@ -2023,11 +2067,11 @@ function renderAdmLeaveApprovals(){
           </div>
         </div>
         ${isAnnual&&days>al?`<div class="alert alert-warn" style="font-size:12px;margin-bottom:8px">⚠️ Requested ${days} day(s) but only ${al} annual leave days available.</div>`:''}
-        <input class="fi" placeholder="Optional note to staff…" id="ala-${esc(l.leaveId||l['Leave ID'])}" style="margin-bottom:8px">
+        ${lStA==='Pending'?`<input class="fi" placeholder="Optional note to staff…" id="ala-${esc(l.leaveId||l['Leave ID'])}" style="margin-bottom:8px">
         <div class="btn-row">
           <button class="btn btn-red btn-sm" onclick="admDecideLeave('${esc(l.leaveId||l['Leave ID'])}','Rejected')">✗ Reject</button>
           <button class="btn btn-ok btn-sm" onclick="admDecideLeave('${esc(l.leaveId||l['Leave ID'])}','Approved')">✓ Approve</button>
-        </div>
+        </div>`:''}
       </div>`;
     }).join('')}
     </div>
@@ -2119,39 +2163,47 @@ function renderEventsPage(){
 ════════════════════════════════════════════ */
 async function loadAdminData(){
   if(isBackendSet()){
-    const [ro,rs,rl,rloc]=await Promise.all([
-      api({action:'getOrders',status:'Manager Approved'}),
+    const [ro,rs,rl,rloc,ra]=await Promise.all([
+      api({action:'getOrders'}),
       api({action:'getStaff'}),
       api({action:'getLeaves'}),
-      api({action:'getLocations'})
+      api({action:'getLocations'}),
+      api({action:'getAttendance',date:today()})
     ]);
-    if(ro?.orders) S.approvedOrders=ro.orders;
+    if(ro?.orders){S.allRationOrders=ro.orders;S.approvedOrders=ro.orders.filter(r=>(r['Status']||r.status||'')==='Manager Approved');}
     if(rs?.staff) S.allStaff=rs.staff;
     if(rl?.leaves) S.allLeaves=rl.leaves;
     if(rloc?.locations) S.allLocations=rloc.locations;
+    if(ra?.records) S.admTodayAtt=ra.records;
   } else {
     S.approvedOrders=getDemoApproved();
+    S.allRationOrders=[...getDemoApproved(),...S.approvedOrders];
     S.allStaff=lsG('fb_custom_staff',null)||getDemoStaff();
     S.allLeaves=getDemoLeaves();
     S.allLocations=lsG('fb_custom_locations',null)||DEMO_LOCATIONS.slice();
+    S.admTodayAtt=getDemoAtt();
   }
   await loadCateringEvents();
   saveToCache(S.user?.userId);
 }
 
 function renderAdminHome(){
-  const pendingRation=S.approvedOrders.length; // orders from manager awaiting admin action
+  const pendingRation=new Set((S.approvedOrders||[]).map(r=>r['Order ID']||r.orderId)).size;
   const pendingLeaves=S.allLeaves.filter(l=>l.status==='Pending'||l['Status']==='Pending').length;
   const upcomingEvCount=(S.upcomingEvents||[]).filter(e=>{const d=new Date(e.eventDate);d.setHours(0,0,0,0);const t=new Date();t.setHours(0,0,0,0);return d>=t;}).length;
+  const totalStaff=(S.allStaff||[]).filter(u=>(u.role||u['Role'])!=='admin').length;
+  const markedAttCount=(S.admTodayAtt||[]).length;
   const statCards=[
     {n:pendingRation,l:'PENDING RATION APPROVALS',c:'#e53935',screen:'a-ration-approvals'},
     {n:pendingLeaves,l:'PENDING LEAVE APPROVALS',c:'#f59e0b',screen:'a-leave-approvals'},
     {n:upcomingEvCount,l:'UPCOMING EVENTS',c:'#7c3aed',screen:'events-page'},
+    {n:`${markedAttCount}/${totalStaff}`,l:'DAILY ATTENDANCE',c:'#0284c7',aTab:'attendance'},
   ];
   const actionTiles=[
     {e:'✏️',l:'Assign Leaves',fn:"S.aTab='assignleave';S.screen='a-home';render()"},
     {e:'📊',l:'Leave Balance',fn:"S.aTab='ytd';S.screen='a-home';render()"},
     {e:'📈',l:'Monthly Reports',fn:"S.aTab='monthly';S.screen='a-home';render()"},
+    {e:'🗓️',l:'Daily Attendance',fn:"S.aTab='attendance';S.screen='a-home';render()"},
     {e:'👥',l:'Add Staff',fn:"S.aTab='staff';S.screen='a-home';render()"},
     {e:'📦',l:'Add New Ration Item',fn:"S.aTab='items';S.screen='a-home';render()"},
     {e:'🎉',l:'Create Catering Event',fn:"openCevCreate(null)"},
@@ -2170,7 +2222,7 @@ function renderAdminHome(){
     <div style="margin-bottom:10px;max-width:700px">
       <button class="btn btn-out btn-sm" style="width:auto" onclick="S.aTab=null;render()">← Home</button>
     </div>
-    ${S.aTab==='evapprove'?renderAdmEvApproveTab():S.aTab==='staff'?renderAdmStaff():S.aTab==='locations'?renderAdmLocations():S.aTab==='monthly'?renderAdmMonthlyReport():S.aTab==='ytd'?renderAdmYTD():S.aTab==='items'?renderAdmItems():S.aTab==='assignleave'?renderAdmAssignLeave():renderAdmLeaves()}
+    ${S.aTab==='evapprove'?renderAdmEvApproveTab():S.aTab==='staff'?renderAdmStaff():S.aTab==='locations'?renderAdmLocations():S.aTab==='monthly'?renderAdmMonthlyReport():S.aTab==='ytd'?renderAdmYTD():S.aTab==='items'?renderAdmItems():S.aTab==='assignleave'?renderAdmAssignLeave():S.aTab==='attendance'?renderAdmAttendance():renderAdmLeaves()}
     `:`
     <!-- Clickable stat cards -->
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px;max-width:700px">
@@ -2323,6 +2375,53 @@ function renderAdmLocations(){
   </div>`;
 }
 
+function renderAdmAttendance(){
+  const allStaffNonAdmin=(S.allStaff||[]).filter(u=>(u.role||u['Role'])!=='admin');
+  const attToday=S.admTodayAtt||[];
+  const markedIds=new Set(attToday.map(r=>r.userId||r['User ID']));
+  const marked=attToday.length;
+  const total=allStaffNonAdmin.length;
+  return`<div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+      <h3 style="font-size:14px;font-weight:700;margin:0">🗓️ Daily Attendance — ${new Date().toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})}</h3>
+      <div style="background:#0284c7;color:#fff;border-radius:12px;padding:6px 14px;font-size:14px;font-weight:900">${marked}/${total} Marked</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px;max-width:700px">
+    ${!allStaffNonAdmin.length?`<div class="empty"><div class="empty-icon">👥</div><div>No staff records found</div></div>`:''}
+    ${allStaffNonAdmin.map(u=>{
+      const uid=u.userId||u['User ID'];
+      const name=u.name||u['Name'];
+      const loc=u.location||u['Location']||'—';
+      const rec=attToday.find(r=>(r.userId||r['User ID'])===uid);
+      const checkedIn=!!(rec?.inTime||rec?.['In Time']);
+      const checkedOut=!!(rec?.outTime||rec?.['Out Time']);
+      const inTime=rec?.inTime||rec?.['In Time']||'';
+      const outTime=rec?.outTime||rec?.['Out Time']||'';
+      return`<div style="background:#fff;border:1.5px solid ${checkedIn?'#16a34a':'var(--border)'};border-radius:12px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center;gap:10px">
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:700;font-size:13px">${esc(name)}</div>
+          <div style="font-size:11px;color:var(--muted)">📍 ${esc(loc)}</div>
+          ${checkedIn?`<div style="font-size:11px;color:#16a34a;margin-top:2px">✅ In: ${esc(inTime)}${checkedOut?' · Out: '+esc(outTime):''}</div>`:`<div style="font-size:11px;color:#f59e0b;margin-top:2px">⏳ Not marked</div>`}
+        </div>
+        <div style="flex-shrink:0;display:flex;gap:6px;align-items:center">
+          ${!checkedIn?`<button class="btn btn-ok btn-sm" style="font-size:11px;padding:5px 10px" onclick="admMarkAttendance('${esc(uid)}','${esc(name)}','${esc(loc)}','in')">✅ Check In</button>`:''}
+          ${checkedIn&&!checkedOut?`<button class="btn btn-warn btn-sm" style="font-size:11px;padding:5px 10px;background:#f59e0b;color:#fff;border:none" onclick="admMarkAttendance('${esc(uid)}','${esc(name)}','${esc(loc)}','out')">🏠 Check Out</button>`:''}
+          ${checkedIn&&checkedOut?`<span style="font-size:11px;color:#16a34a;font-weight:700">✅ Done</span>`:''}
+        </div>
+      </div>`;
+    }).join('')}
+    </div>
+    <button class="btn btn-out btn-sm" style="margin-top:14px" onclick="loadAdminData().then(()=>{loadCateringEvents();render();})">🔄 Refresh</button>
+  </div>`;
+}
+
+async function admMarkAttendance(userId,staffName,location,type){
+  await apiData('logAttendance',{userId,staffName,location,date:today(),type});
+  const r=await api({action:'getAttendance',date:today()});
+  if(r?.records) S.admTodayAtt=r.records;
+  render();
+}
+
 function renderAdmLeaves(){
   const leaves=S.allLeaves;
   if(!leaves.length)return`<div class="empty"><div class="empty-icon">🗓️</div><div>No leave applications</div></div>`;
@@ -2352,11 +2451,15 @@ function renderAdmLeaves(){
 function renderAdmMonthlyReport(){
   const now=new Date();
   const selMonth=S.reportMonth||(now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0'));
+  const useDateRange=!!(S.reportFrom&&S.reportTo);
+  const inRange=dateStr=>{
+    if(!dateStr)return false;
+    if(useDateRange){return dateStr>=S.reportFrom&&dateStr<=S.reportTo;}
+    return dateStr.startsWith(selMonth);
+  };
   const monthLeaves=S.allLeaves.filter(l=>{
-    const st=l.status||l['Status']||'';
-    if(st!=='Approved')return false;
-    const fd=l.fromDate||l['From Date']||'';
-    return fd.startsWith(selMonth);
+    if((l.status||l['Status']||'')!=='Approved')return false;
+    return inRange(l.fromDate||l['From Date']||'');
   });
   const liveStaff=S.allStaff.length?S.allStaff:DEMO_USERS;
   const staffRows=liveStaff.filter(u=>(u.role||u['Role'])!=='admin').map(u=>{
@@ -2372,22 +2475,54 @@ function renderAdmMonthlyReport(){
     });
     return{...u,name:u.name||u['Name'],location:u.location||u['Location'],profile:u.profile||u['Profile']||'',annualDays,casualDays};
   });
-  const csvRows=staffRows.map(r=>[r.name,r.location,r.profile,selMonth,r.annualDays,r.casualDays,r.annualDays+r.casualDays,r.casualDays>0?'Deduct '+r.casualDays+' day(s)':'No Deduction'].join(','));
-  const csv='Name,Location,Designation,Month,Annual Leave Days,Casual Leave Days,Total Leave Days,Salary Action\n'+csvRows.join('\n');
+  // Ration orders for this period
+  const allOrd=S.allRationOrders&&S.allRationOrders.length?S.allRationOrders:S.approvedOrders;
+  const rationRows=allOrd.filter(r=>{
+    const d=r['Delivery Date']||r.deliveryDate||r['Created Date']||r.createdDate||'';
+    const ds=d.toString().slice(0,10);
+    return inRange(ds);
+  });
+  // CSVs
+  const rationCsvRows=rationRows.map(r=>[
+    '"'+(r['Order Type']||r.orderType||'—').replace(/"/g,'""')+'"',
+    '"'+(r['Item']||r.name||'—').replace(/"/g,'""')+'"',
+    r['Quantity']||r.qty||'',
+    '"'+(r['Unit']||r.unit||'').replace(/"/g,'""')+'"',
+    '"'+(r['Staff Name']||r.staffName||'—').replace(/"/g,'""')+'"',
+    '"'+(r['Delivery Date']||r.deliveryDate||r['Created Date']||r.createdDate||'').toString().slice(0,10)+'"',
+    '"'+(r['Location']||r.location||'—').replace(/"/g,'""')+'"',
+    '"'+(r['Status']||r.status||'—').replace(/"/g,'""')+'"'
+  ].join(','));
+  const rationCsv='Category,Item,Qty,Unit,Who Ordered,Date,Delivery Location,Order Status\n'+rationCsvRows.join('\n');
+  const periodLabel=useDateRange?S.reportFrom+' to '+S.reportTo:selMonth;
+  const leaveCsvRows=staffRows.map(r=>[r.name,r.location,r.profile,periodLabel,r.annualDays,r.casualDays,r.annualDays+r.casualDays,r.casualDays>0?'Deduct '+r.casualDays+' day(s)':'No Deduction'].join(','));
+  const leaveCsv='Name,Location,Designation,Period,Annual Leave Days,Casual Leave Days,Total Leave Days,Salary Action\n'+leaveCsvRows.join('\n');
   return`<div>
-    <h3 style="font-size:14px;font-weight:700;margin-bottom:10px">📊 Monthly Salary & Attendance Report</h3>
+    <h3 style="font-size:14px;font-weight:700;margin-bottom:10px">📊 Monthly Report — Leaves & Rations</h3>
     <div style="display:flex;gap:9px;align-items:flex-end;margin-bottom:12px;flex-wrap:wrap">
       <div>
-        <label class="fl" style="margin-bottom:3px">Select Month</label>
-        <input type="month" class="fi" style="width:auto;min-width:160px" value="${selMonth}" oninput="S.reportMonth=this.value;render()">
+        <label class="fl" style="margin-bottom:3px">Month</label>
+        <input type="month" class="fi" style="width:auto;min-width:140px" value="${selMonth}" oninput="S.reportMonth=this.value;S.reportFrom='';S.reportTo='';render()">
       </div>
-      <a href="data:text/csv;charset=utf-8,${encodeURIComponent(csv)}" download="Flenbo_Monthly_Payroll_${selMonth}.csv"
-         style="display:inline-flex;align-items:center;gap:6px;padding:10px 15px;background:var(--navy);color:#fff;border-radius:8px;font-size:13px;font-weight:700;text-decoration:none">
-        ⬇ Export CSV
-      </a>
+      <div style="font-size:12px;color:var(--muted);align-self:center;padding-bottom:2px">or date range:</div>
+      <div>
+        <label class="fl" style="margin-bottom:3px">From</label>
+        <input type="date" class="fi" style="width:auto;min-width:130px" value="${S.reportFrom||''}" oninput="S.reportFrom=this.value;render()">
+      </div>
+      <div>
+        <label class="fl" style="margin-bottom:3px">To</label>
+        <input type="date" class="fi" style="width:auto;min-width:130px" value="${S.reportTo||''}" oninput="S.reportTo=this.value;render()">
+      </div>
     </div>
-    <div class="card" style="padding:0;overflow:auto">
-    <table><thead><tr><th>Staff Name</th><th>Designation</th><th>Location</th><th style="text-align:center">Annual<br>Leave Days</th><th style="text-align:center">Casual<br>Leave Days</th><th>Salary Action</th></tr></thead><tbody>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+      <a href="data:text/csv;charset=utf-8,${encodeURIComponent(leaveCsv)}" download="Flenbo_Leaves_${periodLabel}.csv"
+         style="display:inline-flex;align-items:center;gap:6px;padding:9px 14px;background:var(--navy);color:#fff;border-radius:8px;font-size:12px;font-weight:700;text-decoration:none">⬇ Export Leave CSV</a>
+      <a href="data:text/csv;charset=utf-8,${encodeURIComponent(rationCsv)}" download="Flenbo_Rations_${periodLabel}.csv"
+         style="display:inline-flex;align-items:center;gap:6px;padding:9px 14px;background:#0284c7;color:#fff;border-radius:8px;font-size:12px;font-weight:700;text-decoration:none">⬇ Export Ration CSV</a>
+    </div>
+    <div class="card-ttl" style="font-size:13px;margin-bottom:6px">🗓️ Leave Summary</div>
+    <div class="card" style="padding:0;overflow:auto;margin-bottom:16px">
+    <table><thead><tr><th>Staff Name</th><th>Designation</th><th>Location</th><th style="text-align:center">Annual Days</th><th style="text-align:center">Casual Days</th><th>Salary Action</th></tr></thead><tbody>
     ${staffRows.map(r=>`<tr>
       <td style="font-weight:600">${esc(r.name)}</td>
       <td style="font-size:11px">${esc(r.profile||'')}</td>
@@ -2398,11 +2533,27 @@ function renderAdmMonthlyReport(){
     </tr>`).join('')}
     </tbody></table>
     </div>
-    <div class="alert" style="margin-top:12px;font-size:12px;background:#f0f2fa;border-color:var(--navy2);color:var(--navy)">
-      ℹ️ <strong>Annual Leave</strong> — no salary deduction; balance reduced. &nbsp; <strong>Casual Leave</strong> — salary deducted for absent days; paid leave balance stays intact.
+    <div class="card-ttl" style="font-size:13px;margin-bottom:6px">📦 Ration Orders (${rationRows.length} items)</div>
+    ${rationRows.length?`<div class="card" style="padding:0;overflow:auto;margin-bottom:16px">
+    <table><thead><tr><th>Category</th><th>Item</th><th style="text-align:center">Qty</th><th>Unit</th><th>Ordered By</th><th>Date</th><th>Location</th><th>Status</th></tr></thead><tbody>
+    ${rationRows.map(r=>`<tr>
+      <td style="font-size:11px">${esc(r['Order Type']||r.orderType||'—')}</td>
+      <td style="font-weight:600;font-size:12px">${esc(r['Item']||r.name||'—')}</td>
+      <td style="text-align:center;font-weight:700">${esc(String(r['Quantity']||r.qty||''))}</td>
+      <td style="font-size:11px">${esc(r['Unit']||r.unit||'')}</td>
+      <td style="font-size:11px">${esc(r['Staff Name']||r.staffName||'—')}</td>
+      <td style="font-size:11px">${esc((r['Delivery Date']||r.deliveryDate||r['Created Date']||r.createdDate||'').toString().slice(0,10))}</td>
+      <td style="font-size:10px"><span class="badge b-navy" style="font-size:9px">${esc((r['Location']||r.location||'—').split(' ')[0])}</span></td>
+      <td><span style="background:${(r['Status']||r.status||'')==='Admin Approved'?'#dcfce7':(r['Status']||r.status||'')==='Manager Approved'?'#e0f2fe':(r['Status']||r.status||'')==='Rejected'?'#fee2e2':'#fef9c3'};color:${(r['Status']||r.status||'')==='Admin Approved'?'#16a34a':(r['Status']||r.status||'')==='Manager Approved'?'#0284c7':(r['Status']||r.status||'')==='Rejected'?'#dc2626':'#92400e'};border-radius:8px;padding:2px 6px;font-size:10px;font-weight:700">${esc(r['Status']||r.status||'—')}</span></td>
+    </tr>`).join('')}
+    </tbody></table>
+    </div>`:`<div class="empty" style="margin-bottom:16px"><div class="empty-icon">📦</div><div>No ration orders in this period</div></div>`}
+    <div class="alert" style="margin-top:4px;font-size:12px;background:#f0f2fa;border-color:var(--navy2);color:var(--navy)">
+      ℹ️ <strong>Annual Leave</strong> — no salary deduction. &nbsp; <strong>Casual Leave</strong> — salary deducted for absent days.
     </div>
   </div>`;
 }
+
 
 /* Year-to-Date Leave Summary */
 function renderAdmYTD(){
