@@ -58,7 +58,7 @@ const HDR_ATTEND    = ['Record ID','User ID','Staff Name','Location','Date','In 
 const HDR_GRN       = ['GRN ID','Order ID','Location','Received By','Received At','Remarks','Item','Ordered Qty','Received Qty','Unit','Discrepancy','Discrepancy %'];
 const HDR_WASTAGE   = ['Wastage ID','Location','Logged By','Logged At','Remarks','Item','Quantity','Unit','Reason','Supplier'];
 const HDR_ITEMS     = ['Item ID','Supplier','Category','Name','Unit','Added On','Added By'];
-const HDR_CAT_EVT   = ['Event ID','Event Code','Type','Meal Slot','Date','Time','PAX','Client Name','Client Mobile','Location','Menu JSON','Status','Created By','Created At','Ration Items JSON','Submitted By','Submitted At','Manager Note','Manager Decision','Manager Decided At','Admin Note','Admin Decision','Admin Decided At'];
+const HDR_CAT_EVT   = ['Event ID','Event Code','Type','Meal Slot','Date','Time','PAX','Client Name','Client Mobile','Location','Menu JSON','Status','Created By','Created At','Ration Items JSON','Submitted By','Submitted At','Manager Note','Manager Decision','Manager Decided At','Admin Note','Admin Decision','Admin Decided At','Custom Menu JSON'];
 
 // ── SPREADSHEET HELPER ───────────────────────────────────
 // Works for both standalone and container-bound scripts.
@@ -651,7 +651,14 @@ function setupTriggers() {
 
 function getCatEvtSheet() {
   var ss = getSS();
-  return getOrCreate(ss, SH_CAT_EVT, HDR_CAT_EVT, '#6d28d9');
+  var sheet = getOrCreate(ss, SH_CAT_EVT, HDR_CAT_EVT, '#6d28d9');
+  // Migration: add Custom Menu JSON column if sheet existed before this column was added
+  var lastCol = sheet.getLastColumn();
+  var headers = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
+  if (headers.indexOf('Custom Menu JSON') === -1) {
+    sheet.getRange(1, lastCol + 1).setValue('Custom Menu JSON');
+  }
+  return sheet;
 }
 
 function genEventCode(sheet) {
@@ -666,10 +673,10 @@ function parseCatEvtRow(row) {
     eventType:        row['Type']            || '',
     mealSlot:         row['Meal Slot']       || '',
     eventDate:        row['Date']            || '',
-    eventTime:        row['Time']            || '',
+    eventTime:        formatGasTime(row['Time']),
     pax:              row['PAX']             || '',
     clientName:       row['Client Name']     || '',
-     clientMobile:     row['Client Mobile']   || '',
+    clientMobile:     row['Client Mobile']   || '',
     location:         row['Location']        || '',
     menu:             safeParseJSON(row['Menu JSON'], {}),
     status:           row['Status']          || 'event_created',
@@ -682,7 +689,22 @@ function parseCatEvtRow(row) {
     managerDecision:  row['Manager Decision']|| '',
     adminNote:        row['Admin Note']      || '',
     adminDecision:    row['Admin Decision']  || '',
+    customMenuItems:  safeParseJSON(row['Custom Menu JSON'], []),
   };
+}
+
+function formatGasTime(val) {
+  // GAS returns sheet time values as Date objects (1899-12-30 epoch); extract UTC HH:MM
+  if (!val) return '';
+  if (val instanceof Date) {
+    var h = String(val.getUTCHours()).padStart(2,'0');
+    var m = String(val.getUTCMinutes()).padStart(2,'0');
+    return h + ':' + m;
+  }
+  var s = String(val).trim();
+  // Already HH:MM
+  if (/^\d{1,2}:\d{2}/.test(s)) return s.slice(0,5);
+  return s;
 }
 
 function safeParseJSON(str, def) {
@@ -706,7 +728,8 @@ function handleCreateCateringEvent(d) {
     d.eventType||'', d.mealSlot||'', d.eventDate||'', d.eventTime||'',
     d.pax||'', d.clientName||'', d.clientMobile||'', d.location||'',
     JSON.stringify(d.menu||{}), 'event_created',
-    d.createdBy||'', now(), '', '', '', '', '', '', '', '', ''
+    d.createdBy||'', now(), '', '', '', '', '', '', '', '', '',
+    JSON.stringify(d.customMenuItems||[])
   ]);
   return ok({success:true, eventId:evId, eventCode:code});
 }
@@ -728,6 +751,7 @@ function handleUpdateCateringEvent(d) {
       sheet.getRange(r, HDR_CAT_EVT.indexOf('Client Mobile')+1).setValue(d.clientMobile||'');
       sheet.getRange(r, HDR_CAT_EVT.indexOf('Location')+1).setValue(d.location||'');
       sheet.getRange(r, HDR_CAT_EVT.indexOf('Menu JSON')+1).setValue(JSON.stringify(d.menu||{}));
+      sheet.getRange(r, HDR_CAT_EVT.indexOf('Custom Menu JSON')+1).setValue(JSON.stringify(d.customMenuItems||[]));
       return ok({success:true});
     }
   }
