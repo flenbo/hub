@@ -449,6 +449,7 @@ const ORDER_TYPES = [
   {id:'Restaurant',label:'Restaurant',e:'🍽️',desc:'Daily ops'},
   {id:'Catering',label:'Catering Event',e:'🎉',desc:'Enter PAX below'},
   {id:'Cloud Kitchen',label:'Cloud Kitchen',e:'🏭',desc:'Delivery orders'},
+  {id:'Staff Ration',label:'Staff Ration',e:'🍱',desc:'Staff meals'},
   {id:'Canteen',label:'Canteen',e:'🏢',desc:'Coming soon',disabled:true},
 ];
 const LEAVE_TYPES = ['Annual Leave','Casual Leave','Sick Leave'];
@@ -543,7 +544,7 @@ let S = {
   upcomingEvents:[],
   eventDetail:null,
   // catering event management (admin/manager create; staff order ration)
-  cevForm:{type:'',mealSlot:'',date:'',time:'',pax:'',clientName:'',clientMobile:'',location:''},
+  cevForm:{type:'',mealSlot:'',date:'',time:'',pax:'',clientName:'',clientMobile:'',location:'',foodPrefs:[]},
   cevMenu:{},           // selected menu items {cat:{Veg:[],Non-Veg:[]}}
   cevCatOpen:{},        // accordion open state for menu picker
   cevEditId:null,       // eventId being edited (null = new)
@@ -552,6 +553,9 @@ let S = {
   cevRationCatTab:'',   // active category tab in ration screen
   cevMgrNote:'',
   cevAdminNote:'',
+  // approval detail state
+  mRationDetailId:null, mRationDetailType:null,
+  aRationDetailId:null, aRationDetailType:null,
   // ui
   loading:false,error:'',loginError:'',
   loginUser:'',loginPw:'',showPw:false,
@@ -625,12 +629,20 @@ function render(){
     case 's-leave-hist':   body=renderLeaveHistory();break;
     case 's-attend':       body=renderAttendance();break;
     // MANAGER
-    case 'm-home':         body=renderMgrHome();break;
-    case 'm-review':       body=renderMgrReview();break;
+    case 'm-home':              body=renderMgrHome();break;
+    case 'm-review':            body=renderMgrReview();break;
+    case 'm-ration-approvals':  body=renderMgrRationApprovals();break;
+    case 'm-leave-approvals':   body=renderMgrLeaveApprovals();break;
+    case 'm-ration-detail':     body=renderMgrRationDetail();break;
     // ADMIN
-    case 'a-home':         body=renderAdminHome();break;
+    case 'a-home':              body=renderAdminHome();break;
+    case 'a-ration-approvals':  body=renderAdmRationApprovals();break;
+    case 'a-leave-approvals':   body=renderAdmLeaveApprovals();break;
+    case 'a-ration-detail':     body=renderAdmRationDetail();break;
+    // SHARED
+    case 'events-page':         body=renderEventsPage();break;
     // CATERING EVENT SCREENS
-    case 'cev-create':     body=renderCevCreate();break;
+    case 'cev-create':          body=renderCevCreate();break;
     case 'cev-ration':     body=renderCevRation();break;
     case 'cev-mgr':        body=renderCevMgrApprove();break;
     case 'cev-admin':      body=renderCevAdminApprove();break;
@@ -908,6 +920,7 @@ function nextFromType(){
     go('cev-ration');
   } else if(S.orderType==='Cloud Kitchen') go('s-ration-ck');
   else go('s-ration-setup');
+  // Staff Ration and Restaurant both route to s-ration-setup
 }
 
 /* Cloud Kitchen location selection */
@@ -1354,29 +1367,46 @@ async function loadManagerData(){
 }
 
 function renderMgrHome(){
-  const evPending=(S.upcomingEvents||[]).filter(e=>e.status==='ration_submitted').length;
-  const tabs=[
-    {id:'ration',l:'📋 Ration',n:S.pendingOrders.length},
-    {id:'evapprove',l:'🎉 Approve',n:evPending},
-    {id:'leaves',l:'🗓️ Leaves',n:S.pendingLeaves.length},
-    {id:'attend',l:'✅ Attend',n:0},
-    {id:'myleave',l:'📅 My Leave',n:0}
+  const totalPendingRation=S.pendingOrders.length+((S.upcomingEvents||[]).filter(e=>e.status==='ration_submitted').length);
+  const upcomingEvCount=(S.upcomingEvents||[]).filter(e=>{const d=new Date(e.eventDate);d.setHours(0,0,0,0);const t=new Date();t.setHours(0,0,0,0);return d>=t;}).length;
+  const statCards=[
+    {n:totalPendingRation,l:'PENDING RATION APPROVALS',c:'#e53935',screen:'m-ration-approvals'},
+    {n:S.pendingLeaves.length,l:'PENDING LEAVE APPROVALS',c:'#f59e0b',screen:'m-leave-approvals'},
+    {n:upcomingEvCount,l:'UPCOMING EVENTS',c:'#7c3aed',screen:'events-page'},
+  ];
+  const actionTiles=[
+    {e:'🗓️',l:'Apply Leaves',fn:"go('s-leave')"},
+    {e:'🎉',l:'Create Catering Event',fn:"openCevCreate(null)"},
+    {e:'📋',l:'Add Ration Item',fn:"go('s-ration-type')"},
+    {e:'✅',l:'My Attendance',fn:"go('s-attend')"},
+    {e:'📅',l:'My Leave History',fn:"go('s-leave-hist')"},
+    {e:'🔄',l:'Refresh',fn:"loadManagerData().then(render)"},
   ];
   return`<div class="scr on scr-wide">
     <div class="id-bar" style="max-width:600px">
-      <div class="id-info"><strong>${esc(S.user.name)}</strong>Operations Manager</div>
+      <div class="id-info"><strong>${esc(S.user.name)}</strong>${esc(S.user.role==='manager'?'Manager':'Operations Manager')} · ${esc(S.user.location||'All Locations')}</div>
       <div style="text-align:right"><div style="font-size:11px;opacity:.8;cursor:pointer;text-decoration:underline" onclick="doLogout()">Sign out</div></div>
     </div>
-    <div class="stat-row">
-      <div class="stat warn"><div class="stat-n">${S.pendingOrders.length}</div><div class="stat-l">Pending Ration</div></div>
-      <div class="stat gold"><div class="stat-n">${S.pendingLeaves.length}</div><div class="stat-l">Leave Requests</div></div>
-      <div class="stat ok"><div class="stat-n">${S.todayAttAll.length}</div><div class="stat-l">Present Today</div></div>
+
+    <!-- Clickable stat cards -->
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px;max-width:600px">
+      ${statCards.map(c=>`
+      <div onclick="go('${c.screen}')" style="background:#fff;border:2px solid ${c.c};border-radius:12px;padding:12px 8px;text-align:center;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.07);transition:transform .1s" onmousedown="this.style.transform='scale(.97)'" onmouseup="this.style.transform=''">
+        <div style="font-size:26px;font-weight:900;color:${c.c};line-height:1">${c.n}</div>
+        <div style="font-size:9px;font-weight:700;color:#555;margin-top:4px;line-height:1.3;text-transform:uppercase;letter-spacing:.3px">${c.l}</div>
+      </div>`).join('')}
     </div>
-    <button class="btn btn-navy" style="width:100%;max-width:600px;margin-bottom:12px" onclick="openCevCreate(null)">➕ Create Catering Event</button>
-    <div class="tabs">${tabs.map(t=>`<button class="tb ${S.mTab===t.id?'on':''}" style="position:relative" onclick="S.mTab='${t.id}';render()">${t.l}${t.n?`<span class="tb-cnt">${t.n}</span>`:''}</button>`).join('')}</div>
-    ${S.mTab==='ration'?renderMgrRationTab():S.mTab==='evapprove'?renderMgrEvApproveTab():S.mTab==='leaves'?renderMgrLeavesTab():S.mTab==='myleave'?renderMgrMyLeaveTab():renderMgrAttTab()}
+
+    <!-- Action tiles -->
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px;max-width:600px">
+      ${actionTiles.map(t=>`
+      <div onclick="${t.fn}" style="background:#fff;border:1.5px solid var(--border);border-radius:12px;padding:14px 6px 10px;text-align:center;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.06);transition:transform .1s" onmousedown="this.style.transform='scale(.97)'" onmouseup="this.style.transform=''">
+        <div style="font-size:24px;margin-bottom:6px">${t.e}</div>
+        <div style="font-size:10px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:.3px;line-height:1.3">${t.l}</div>
+      </div>`).join('')}
+    </div>
+
     ${renderUpcomingEvents('manager')}
-    <div style="margin-top:14px"><button class="btn btn-out btn-sm" style="width:auto" onclick="loadManagerData().then(render)">🔄 Refresh</button></div>
   </div>`;
 }
 
@@ -1545,6 +1575,415 @@ async function logAttendance(type){
 }
 
 /* ════════════════════════════════════════════
+   DEDICATED MANAGER APPROVAL PAGES
+════════════════════════════════════════════ */
+
+function renderMgrRationApprovals(){
+  // Combine regular pending orders + event ration orders awaiting mgr approval
+  const grouped={};
+  S.pendingOrders.forEach(r=>{
+    const id=r['Order ID']||r.orderId;
+    if(!grouped[id])grouped[id]={id,date:r['Created Date']||r.createdDate||r['Delivery Date']||r.deliveryDate,staff:r['Staff Name']||r.staffName,loc:r['Location']||r.location,type:r['Order Type']||r.orderType||'Restaurant',pax:r['PAX']||r.pax,eventName:r['Event Name']||r.eventName,eventTime:r['Event Time']||r.eventTime,status:'pending',items:[]};
+    grouped[id].items.push({name:r['Item']||r.name,qty:r['Quantity']||r.qty,unit:r['Unit']||r.unit,supplier:r['Supplier']||r.sup});
+  });
+  const evOrders=(S.upcomingEvents||[]).filter(e=>e.status==='ration_submitted');
+  const allOrders=[...Object.values(grouped),...evOrders.map(e=>({id:e.eventId,date:e.eventDate,staff:e.submittedBy||'—',loc:e.location||e.eventLocation,type:'Catering',pax:e.pax,eventName:e.eventType+' — '+e.clientName,eventTime:e.eventTime||e.mealSlot,status:'ev-pending',isEvent:true,eventId:e.eventId,items:[]}))];
+  if(!allOrders.length)return`<div class="scr on"><div class="empty"><div class="empty-icon">📋</div><div>No pending ration approvals</div></div><button class="btn btn-out btn-sm" style="margin-top:12px" onclick="go('m-home')">← Back</button></div>`;
+  return`<div class="scr on scr-wide">
+    <div class="card-ttl" style="margin-bottom:12px;font-size:16px">📋 Pending Ration Approvals</div>
+    <div style="display:flex;flex-direction:column;gap:10px;max-width:700px">
+    ${allOrders.map((o,i)=>{
+      const isEv=o.isEvent;
+      return`<div style="background:#fff;border:1.5px solid var(--border);border-radius:12px;padding:14px 16px;display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
+        <div style="flex:1;min-width:0">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:3px">#${i+1} · ${fmtDate(o.date)}</div>
+          <div style="font-weight:700;font-size:14px;margin-bottom:2px">${esc(o.staff)}</div>
+          <div style="font-size:12px;color:var(--muted)">
+            <span style="background:${o.type==='Catering'?'#ede9fe':o.type==='Staff Ration'?'#d1fae5':o.type==='Cloud Kitchen'?'#fef3c7':'#f0f2fa'};color:${o.type==='Catering'?'#5b21b6':o.type==='Staff Ration'?'#065f46':o.type==='Cloud Kitchen'?'#92400e':'var(--navy)'};border-radius:20px;padding:2px 8px;font-size:11px;font-weight:700">${esc(o.type)}</span>
+            ${o.type==='Catering'?` · 👥 ${esc(o.pax)} PAX`:''}
+          </div>
+          ${o.eventName?`<div style="font-size:12px;color:var(--muted);margin-top:3px">🎉 ${esc(o.eventName)}${o.eventTime?' · ⏰ '+esc(o.eventTime):''}</div>`:''}
+          ${o.loc?`<div style="font-size:12px;color:var(--muted);margin-top:2px">📍 ${esc(o.loc)}</div>`:''}
+        </div>
+        <div style="flex-shrink:0">
+          ${isEv
+            ?`<button class="btn btn-sm" style="background:#dc2626;color:#fff;border:none;cursor:pointer;border-radius:8px;padding:6px 12px;font-size:11px;font-weight:700" onclick="S.mRationDetailId='${esc(o.eventId)}';S.mRationDetailType='event';go('m-ration-detail')">View Order</button>`
+            :`<button class="btn btn-sm" style="background:#dc2626;color:#fff;border:none;cursor:pointer;border-radius:8px;padding:6px 12px;font-size:11px;font-weight:700" onclick="S.mRationDetailId='${esc(o.id)}';S.mRationDetailType='regular';go('m-ration-detail')">View Order</button>`
+          }
+        </div>
+      </div>`;
+    }).join('')}
+    </div>
+    <button class="btn btn-out btn-sm" style="margin-top:16px" onclick="go('m-home')">← Back to Home</button>
+  </div>`;
+}
+
+function renderMgrRationDetail(){
+  const isEvent=S.mRationDetailType==='event';
+  if(isEvent){
+    const ev=(S.upcomingEvents||[]).find(e=>e.eventId===S.mRationDetailId);
+    if(!ev)return`<div class="scr on"><p>Not found.</p><button class="btn btn-out" onclick="go('m-ration-approvals')">← Back</button></div>`;
+    return`<div class="scr on scr-wide">
+      <div class="card">
+        <div class="card-ttl">[${esc(ev.eventCode)}] ${esc(ev.eventType)} — ${esc(ev.clientName)}</div>
+        <div style="font-size:13px;color:var(--muted);margin:4px 0 10px">📅 ${fmtDate(ev.eventDate)} · 🍽 ${esc(ev.mealSlot||'—')} · 👥 ${esc(ev.pax)} pax · 📍 ${esc(ev.location||'—')}</div>
+        ${renderCevRationItems(ev)}
+      </div>
+      <textarea class="ft" rows="2" placeholder="Manager note (optional)…" oninput="S.reviewNote=this.value" style="margin-bottom:10px">${esc(S.reviewNote||'')}</textarea>
+      <div class="btn-row">
+        <button class="btn btn-red btn-sm" onclick="mgrEvDecision('${esc(ev.eventId)}','manager_rejected')">✗ Reject</button>
+        <button class="btn btn-sm" style="background:#f59e0b;color:#fff;border:none;cursor:pointer;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700" onclick="mgrEvDecision('${esc(ev.eventId)}','event_created')">✏️ Request Changes</button>
+        <button class="btn btn-ok btn-sm" onclick="mgrEvDecision('${esc(ev.eventId)}','manager_approved')">✓ Approve & Forward</button>
+      </div>
+      <button class="btn btn-out btn-sm" style="margin-top:10px" onclick="go('m-ration-approvals')">← Back</button>
+    </div>`;
+  }
+  // Regular order detail
+  const id=S.mRationDetailId;
+  const orderRows=S.pendingOrders.filter(r=>(r['Order ID']||r.orderId)===id);
+  if(!orderRows.length)return`<div class="scr on"><p>Order not found.</p><button class="btn btn-out" onclick="go('m-ration-approvals')">← Back</button></div>`;
+  const o=orderRows[0];
+  return`<div class="scr on scr-wide">
+    <div class="card">
+      <div class="card-ttl">Order ${esc(id)}</div>
+      <div style="font-size:13px;color:var(--muted);margin:4px 0 10px">👤 ${esc(o['Staff Name']||o.staffName)} · 📍 ${esc(o['Location']||o.location)} · 📅 ${fmtDate(o['Delivery Date']||o.deliveryDate)}</div>
+      <div class="card-ttl" style="font-size:12px;margin-bottom:8px">Review Items — edit qty or ✗ to reject</div>
+      ${orderRows.map(r=>{
+        const it={name:r['Item']||r.name,qty:r['Quantity']||r.qty,unit:r['Unit']||r.unit};
+        const edKey=id+'|'+it.name;
+        const rej=S.reviewRejects[edKey];
+        const qty=S.reviewEdits[edKey]!=null?S.reviewEdits[edKey]:it.qty;
+        return`<div class="rev-row ${rej?'rejected':''}">
+          <span class="rv-name">${esc(it.name)}</span>
+          <input class="rv-qty-inp" type="number" value="${rej?0:qty}" min="0" ${rej?'disabled':''} oninput="S.reviewEdits['${esc(edKey)}']=parseFloat(this.value)||0">
+          <span class="rv-unit">${esc(it.unit)}</span>
+          <button class="rv-reject ${rej?'on':''}" title="${rej?'Restore':'Reject item'}" onclick="toggleReject('${esc(edKey)}')">${rej?'↩':'✗'}</button>
+        </div>`;
+      }).join('')}
+      <label class="fl">Manager Note</label>
+      <textarea class="ft" rows="2" placeholder="Add note for admin…" oninput="S.reviewNote=this.value">${esc(S.reviewNote||'')}</textarea>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-red btn-sm" onclick="mgrDecision('${esc(id)}','Rejected');go('m-ration-approvals')">✗ Reject All</button>
+      <button class="btn btn-ok btn-sm" onclick="mgrDecision('${esc(id)}','Manager Approved');go('m-ration-approvals')">✓ Approve & Forward</button>
+    </div>
+    <button class="btn btn-out btn-sm" style="margin-top:10px" onclick="S.reviewEdits={};S.reviewRejects={};S.reviewNote='';go('m-ration-approvals')">← Back</button>
+  </div>`;
+}
+
+function renderCevRationItems(ev){
+  const items=ev.rationItems||{};
+  let rows='';let total=0;
+  Object.entries(items).forEach(([k,v])=>{
+    if(Array.isArray(v))v.forEach(it=>{if(it&&it.qty>0){rows+=`<div style="display:flex;justify-content:space-between;font-size:13px;padding:4px 0;border-bottom:1px solid #f0f0f0"><span>${esc(it.name)}</span><span style="font-weight:700">${esc(it.qty)} ${esc(it.unit||'')}</span></div>`;total++;}});
+    else if(v&&typeof v==='object'&&v.qty>0){rows+=`<div style="display:flex;justify-content:space-between;font-size:13px;padding:4px 0;border-bottom:1px solid #f0f0f0"><span>${esc(k.split('|')[2]||k)}</span><span style="font-weight:700">${esc(v.qty)} ${esc(v.unit||'')}</span></div>`;total++;}
+    else if(v&&typeof v==='object')Object.entries(v).forEach(([name,it])=>{if(it&&it.qty>0){rows+=`<div style="display:flex;justify-content:space-between;font-size:13px;padding:4px 0;border-bottom:1px solid #f0f0f0"><span>${esc(name)}</span><span style="font-weight:700">${esc(it.qty)} ${esc(it.unit||'')}</span></div>`;total++;}});
+  });
+  return total?`<div style="margin-top:8px"><div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:6px">Ration Items (${total})</div>${rows}</div>`:`<div style="font-size:12px;color:var(--muted)">No ration items in this order.</div>`;
+}
+
+async function mgrEvDecision(eventId,newStatus){
+  S.loading=true;render();
+  const note=S.reviewNote||'';
+  await apiData('updateCateringEventStatus',{eventId,status:newStatus,managerNote:note});
+  const idx=(S.upcomingEvents||[]).findIndex(e=>e.eventId===eventId);
+  if(idx>=0){S.upcomingEvents[idx].status=newStatus;if(note)S.upcomingEvents[idx].managerNote=note;}
+  S.reviewNote='';S.loading=false;
+  go('m-ration-approvals');
+}
+
+function renderMgrLeaveApprovals(){
+  return`<div class="scr on scr-wide">
+    <div class="card-ttl" style="margin-bottom:12px;font-size:16px">🗓️ Leave Approval Requests</div>
+    ${!S.pendingLeaves.length?`<div class="empty"><div class="empty-icon">🗓️</div><div>No pending leave requests</div></div>`:''}
+    <div style="display:flex;flex-direction:column;gap:10px;max-width:700px">
+    ${S.pendingLeaves.map(l=>{
+      const staffData=(S.allStaff||[]).find(u=>u.userId===l.userId||u.userId===l['User ID'])||{};
+      const al=+(staffData.annualLeave||l.annualLeaveBalance||staffData['Annual Leave']||0);
+      const cl=+(staffData.casualLeave||l.casualLeaveBalance||staffData['Casual Leave']||0);
+      const fromD=l.fromDate||l['From Date']||'';
+      const toD=l.toDate||l['To Date']||'';
+      const days=fromD&&toD?Math.max(0,Math.round((new Date(toD)-new Date(fromD))/86400000)+1):0;
+      const lType=l.leaveType||l['Leave Type']||'';
+      const isAnnual=lType.toLowerCase().includes('annual');
+      return`<div style="background:#fff;border:1.5px solid var(--border);border-radius:12px;padding:14px 16px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+          <div>
+            <div style="font-weight:700;font-size:14px">${esc(l.staffName||l['Staff Name']||'—')}</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:2px">📍 ${esc(l.location||l['Location']||'—')}</div>
+          </div>
+          <span class="badge b-warn">${esc(l.status||'Pending')}</span>
+        </div>
+        <div style="font-size:13px;margin-bottom:6px">
+          <span style="background:${isAnnual?'#ede9fe':'#fee2e2'};color:${isAnnual?'#5b21b6':'#dc2626'};border-radius:20px;padding:2px 9px;font-size:12px;font-weight:700">${esc(lType)}</span>
+          &nbsp; 📅 ${fmtDate(fromD)} → ${fmtDate(toD)} ${days>0?`<strong>(${days} day${days>1?'s':''})</strong>`:''}
+        </div>
+        ${l.reason||l['Reason']?`<div style="font-size:12px;color:var(--muted);margin-bottom:8px">${esc(l.reason||l['Reason'])}</div>`:''}
+        <!-- Leave balance grid -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:10px">
+          <div style="background:#f0f2fa;border-radius:8px;padding:8px 10px;text-align:center">
+            <div style="font-size:18px;font-weight:900;color:var(--navy)">${al.toFixed(1)}</div>
+            <div style="font-size:10px;color:var(--muted);font-weight:600">Annual Balance</div>
+          </div>
+          <div style="background:#fff5f5;border-radius:8px;padding:8px 10px;text-align:center">
+            <div style="font-size:18px;font-weight:900;color:#dc2626">${cl.toFixed(1)}</div>
+            <div style="font-size:10px;color:var(--muted);font-weight:600">Casual Balance</div>
+          </div>
+        </div>
+        ${isAnnual&&days>al?`<div class="alert alert-warn" style="font-size:12px;margin-bottom:8px">⚠️ Requested ${days} day(s) but only ${al} annual leave days available.</div>`:''}
+        <input class="fi" placeholder="Optional note to staff…" id="mla-${esc(l.leaveId)}" style="margin-bottom:8px">
+        <div class="btn-row">
+          <button class="btn btn-red btn-sm" onclick="decideLeavePage('${esc(l.leaveId)}','Rejected')">✗ Reject</button>
+          <button class="btn btn-ok btn-sm" onclick="decideLeavePage('${esc(l.leaveId)}','Approved')">✓ Approve</button>
+        </div>
+      </div>`;
+    }).join('')}
+    </div>
+    <button class="btn btn-out btn-sm" style="margin-top:16px" onclick="go('m-home')">← Back to Home</button>
+  </div>`;
+}
+
+async function decideLeavePage(leaveId,status){
+  const note=document.getElementById('mla-'+leaveId)?.value||'';
+  await apiData('updateLeave',{leaveId,status,managerNote:note});
+  S.pendingLeaves=S.pendingLeaves.filter(l=>l.leaveId!==leaveId);
+  render();
+}
+
+/* ════════════════════════════════════════════
+   DEDICATED ADMIN APPROVAL PAGES
+════════════════════════════════════════════ */
+
+function renderAdmRationApprovals(){
+  // Admin sees Manager-Approved orders
+  const grouped={};
+  S.approvedOrders.forEach(r=>{
+    const id=r['Order ID']||r.orderId;
+    if(!grouped[id])grouped[id]={id,date:r['Created Date']||r.createdDate||r['Delivery Date']||r.deliveryDate,staff:r['Staff Name']||r.staffName,loc:r['Location']||r.location,type:r['Order Type']||r.orderType||'Restaurant',pax:r['PAX']||r.pax,eventName:r['Event Name']||r.eventName,eventTime:r['Event Time']||r.eventTime,managerNote:r['Manager Note']||r.managerNote,status:'mgr-approved',items:[]};
+    grouped[id].items.push({name:r['Item']||r.name,qty:r['Quantity']||r.qty,unit:r['Unit']||r.unit,supplier:r['Supplier']||r.sup});
+  });
+  const evOrders=(S.upcomingEvents||[]).filter(e=>e.status==='manager_approved');
+  const allOrders=[...Object.values(grouped),...evOrders.map(e=>({id:e.eventId,date:e.eventDate,staff:e.submittedBy||e.createdBy||'—',loc:e.location||e.eventLocation,type:'Catering',pax:e.pax,eventName:e.eventType+' — '+e.clientName,eventTime:e.eventTime||e.mealSlot,managerNote:e.managerNote,status:'ev-mgr-approved',isEvent:true,eventId:e.eventId,items:[]}))];
+  if(!allOrders.length)return`<div class="scr on"><div class="empty"><div class="empty-icon">📋</div><div>No ration orders pending admin approval</div></div><button class="btn btn-out btn-sm" style="margin-top:12px" onclick="go('a-home')">← Back</button></div>`;
+  return`<div class="scr on scr-wide">
+    <div class="card-ttl" style="margin-bottom:12px;font-size:16px">📋 Pending Ration Approvals</div>
+    <div style="display:flex;flex-direction:column;gap:10px;max-width:700px">
+    ${allOrders.map((o,i)=>`<div style="background:#fff;border:1.5px solid var(--border);border-radius:12px;padding:14px 16px;display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:3px">#${i+1} · ${fmtDate(o.date)} <span style="background:#d1fae5;color:#065f46;border-radius:10px;padding:1px 6px;font-size:10px;font-weight:700;margin-left:4px">✅ Mgr OK</span></div>
+        <div style="font-weight:700;font-size:14px;margin-bottom:2px">${esc(o.staff)}</div>
+        <div style="font-size:12px;color:var(--muted)">
+          <span style="background:${o.type==='Catering'?'#ede9fe':'#f0f2fa'};color:${o.type==='Catering'?'#5b21b6':'var(--navy)'};border-radius:20px;padding:2px 8px;font-size:11px;font-weight:700">${esc(o.type)}</span>
+          ${o.type==='Catering'?` · 👥 ${esc(o.pax)} PAX`:''}
+        </div>
+        ${o.eventName?`<div style="font-size:12px;color:var(--muted);margin-top:3px">🎉 ${esc(o.eventName)}${o.eventTime?' · ⏰ '+esc(o.eventTime):''}</div>`:''}
+        ${o.loc?`<div style="font-size:12px;color:var(--muted);margin-top:2px">📍 ${esc(o.loc)}</div>`:''}
+        ${o.managerNote?`<div style="font-size:11px;color:#065f46;background:#d1fae5;border-radius:6px;padding:3px 8px;margin-top:4px">Mgr Note: ${esc(o.managerNote)}</div>`:''}
+      </div>
+      <div style="flex-shrink:0">
+        <button class="btn btn-sm" style="background:#dc2626;color:#fff;border:none;cursor:pointer;border-radius:8px;padding:6px 12px;font-size:11px;font-weight:700" onclick="S.aRationDetailId='${esc(o.isEvent?o.eventId:o.id)}';S.aRationDetailType='${esc(o.isEvent?'event':'regular')}';go('a-ration-detail')">View Order</button>
+      </div>
+    </div>`).join('')}
+    </div>
+    <button class="btn btn-out btn-sm" style="margin-top:16px" onclick="go('a-home')">← Back to Home</button>
+  </div>`;
+}
+
+function renderAdmRationDetail(){
+  const isEvent=S.aRationDetailType==='event';
+  if(isEvent){
+    const ev=(S.upcomingEvents||[]).find(e=>e.eventId===S.aRationDetailId);
+    if(!ev)return`<div class="scr on"><p>Not found.</p><button class="btn btn-out" onclick="go('a-ration-approvals')">← Back</button></div>`;
+    return`<div class="scr on scr-wide">
+      <div class="card">
+        <div class="card-ttl">[${esc(ev.eventCode)}] ${esc(ev.eventType)} — ${esc(ev.clientName)}</div>
+        <div style="font-size:13px;color:var(--muted);margin:4px 0 10px">📅 ${fmtDate(ev.eventDate)} · 🍽 ${esc(ev.mealSlot||'—')} · 👥 ${esc(ev.pax)} pax · 📍 ${esc(ev.location||'—')}</div>
+        ${ev.managerNote?`<div style="font-size:12px;background:#d1fae5;color:#065f46;border-radius:8px;padding:8px 12px;margin-bottom:10px">Manager Note: ${esc(ev.managerNote)}</div>`:''}
+        ${renderCevRationItems(ev)}
+      </div>
+      <textarea class="ft" rows="2" placeholder="Admin note (optional)…" oninput="S.reviewNote=this.value" style="margin-bottom:10px">${esc(S.reviewNote||'')}</textarea>
+      <div class="btn-row">
+        <button class="btn btn-red btn-sm" onclick="admEvDecision('${esc(ev.eventId)}','admin_rejected')">✗ Reject</button>
+        <button class="btn btn-ok btn-sm" onclick="admEvDecision('${esc(ev.eventId)}','admin_approved')">✅ Approve & Place Order</button>
+      </div>
+      <button class="btn btn-out btn-sm" style="margin-top:10px" onclick="go('a-ration-approvals')">← Back</button>
+    </div>`;
+  }
+  // Regular order
+  const id=S.aRationDetailId;
+  const orderRows=S.approvedOrders.filter(r=>(r['Order ID']||r.orderId)===id);
+  if(!orderRows.length)return`<div class="scr on"><p>Order not found.</p><button class="btn btn-out" onclick="go('a-ration-approvals')">← Back</button></div>`;
+  const o=orderRows[0];
+  return`<div class="scr on scr-wide">
+    <div class="card">
+      <div class="card-ttl">Order ${esc(id)}</div>
+      <div style="font-size:13px;color:var(--muted);margin:4px 0 10px">👤 ${esc(o['Staff Name']||o.staffName)} · 📍 ${esc(o['Location']||o.location)} · 📅 ${fmtDate(o['Delivery Date']||o.deliveryDate)}</div>
+      ${o['Manager Note']||o.managerNote?`<div style="font-size:12px;background:#d1fae5;color:#065f46;border-radius:8px;padding:8px 12px;margin-bottom:10px">Manager Note: ${esc(o['Manager Note']||o.managerNote)}</div>`:''}
+      <div class="card-ttl" style="font-size:12px;margin-bottom:8px">Items to procure</div>
+      ${orderRows.map(r=>`<div style="display:flex;justify-content:space-between;font-size:13px;padding:5px 0;border-bottom:1px solid #f0f0f0">
+        <span>${esc(r['Item']||r.name)}</span>
+        <span style="font-weight:700">${esc(r['Quantity']||r.qty)} ${esc(r['Unit']||r.unit)}</span>
+      </div>`).join('')}
+    </div>
+    <textarea class="ft" rows="2" placeholder="Admin note (optional)…" oninput="S.reviewNote=this.value" style="margin-bottom:10px">${esc(S.reviewNote||'')}</textarea>
+    <div class="btn-row">
+      <button class="btn btn-red btn-sm" onclick="admOrderDecision('${esc(id)}','Rejected')">✗ Reject</button>
+      <button class="btn btn-ok btn-sm" onclick="admOrderDecision('${esc(id)}','Admin Approved')">✅ Approve & Place Order</button>
+    </div>
+    <button class="btn btn-out btn-sm" style="margin-top:10px" onclick="go('a-ration-approvals')">← Back</button>
+  </div>`;
+}
+
+async function admEvDecision(eventId,newStatus){
+  S.loading=true;render();
+  const note=S.reviewNote||'';
+  await apiData('updateCateringEventStatus',{eventId,status:newStatus,adminNote:note});
+  const idx=(S.upcomingEvents||[]).findIndex(e=>e.eventId===eventId);
+  if(idx>=0){S.upcomingEvents[idx].status=newStatus;if(note)S.upcomingEvents[idx].adminNote=note;}
+  S.reviewNote='';S.loading=false;
+  go('a-ration-approvals');
+}
+
+async function admOrderDecision(orderId,status){
+  S.loading=true;render();
+  const note=S.reviewNote||'';
+  await apiData('updateOrderStatus',{orderId,status,adminNote:note});
+  S.approvedOrders=S.approvedOrders.filter(r=>(r['Order ID']||r.orderId)!==orderId);
+  S.reviewNote='';S.loading=false;
+  go('a-ration-approvals');
+}
+
+function renderAdmLeaveApprovals(){
+  const pendingLeaves=(S.allLeaves||[]).filter(l=>l.status==='Pending'||l['Status']==='Pending');
+  return`<div class="scr on scr-wide">
+    <div class="card-ttl" style="margin-bottom:12px;font-size:16px">🗓️ Pending Leave Approvals</div>
+    ${!pendingLeaves.length?`<div class="empty"><div class="empty-icon">🗓️</div><div>No pending leave requests</div></div>`:''}
+    <div style="display:flex;flex-direction:column;gap:10px;max-width:700px">
+    ${pendingLeaves.map(l=>{
+      const staffData=(S.allStaff||[]).find(u=>u.userId===l.userId||u.userId===l['User ID'])||{};
+      const al=+(staffData.annualLeave||l.annualLeaveBalance||staffData['Annual Leave']||0);
+      const cl=+(staffData.casualLeave||l.casualLeaveBalance||staffData['Casual Leave']||0);
+      const fromD=l.fromDate||l['From Date']||'';
+      const toD=l.toDate||l['To Date']||'';
+      const days=fromD&&toD?Math.max(0,Math.round((new Date(toD)-new Date(fromD))/86400000)+1):0;
+      const lType=l.leaveType||l['Leave Type']||'';
+      const isAnnual=lType.toLowerCase().includes('annual');
+      return`<div style="background:#fff;border:1.5px solid var(--border);border-radius:12px;padding:14px 16px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+          <div>
+            <div style="font-weight:700;font-size:14px">${esc(l.staffName||l['Staff Name']||'—')}</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:2px">📍 ${esc(l.location||l['Location']||'—')}</div>
+          </div>
+          <span class="badge b-warn">${esc(l.status||'Pending')}</span>
+        </div>
+        <div style="font-size:13px;margin-bottom:6px">
+          <span style="background:${isAnnual?'#ede9fe':'#fee2e2'};color:${isAnnual?'#5b21b6':'#dc2626'};border-radius:20px;padding:2px 9px;font-size:12px;font-weight:700">${esc(lType)}</span>
+          &nbsp; 📅 ${fmtDate(fromD)} → ${fmtDate(toD)} ${days>0?`<strong>(${days} day${days>1?'s':''})</strong>`:''}
+        </div>
+        ${l.reason||l['Reason']?`<div style="font-size:12px;color:var(--muted);margin-bottom:8px">${esc(l.reason||l['Reason'])}</div>`:''}
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:10px">
+          <div style="background:#f0f2fa;border-radius:8px;padding:8px 10px;text-align:center">
+            <div style="font-size:18px;font-weight:900;color:var(--navy)">${al.toFixed(1)}</div>
+            <div style="font-size:10px;color:var(--muted);font-weight:600">Annual Balance</div>
+          </div>
+          <div style="background:#fff5f5;border-radius:8px;padding:8px 10px;text-align:center">
+            <div style="font-size:18px;font-weight:900;color:#dc2626">${cl.toFixed(1)}</div>
+            <div style="font-size:10px;color:var(--muted);font-weight:600">Casual Balance</div>
+          </div>
+        </div>
+        ${isAnnual&&days>al?`<div class="alert alert-warn" style="font-size:12px;margin-bottom:8px">⚠️ Requested ${days} day(s) but only ${al} annual leave days available.</div>`:''}
+        <input class="fi" placeholder="Optional note to staff…" id="ala-${esc(l.leaveId||l['Leave ID'])}" style="margin-bottom:8px">
+        <div class="btn-row">
+          <button class="btn btn-red btn-sm" onclick="admDecideLeave('${esc(l.leaveId||l['Leave ID'])}','Rejected')">✗ Reject</button>
+          <button class="btn btn-ok btn-sm" onclick="admDecideLeave('${esc(l.leaveId||l['Leave ID'])}','Approved')">✓ Approve</button>
+        </div>
+      </div>`;
+    }).join('')}
+    </div>
+    <button class="btn btn-out btn-sm" style="margin-top:16px" onclick="go('a-home')">← Back to Home</button>
+  </div>`;
+}
+
+async function admDecideLeave(leaveId,status){
+  const note=document.getElementById('ala-'+leaveId)?.value||'';
+  await apiData('updateLeave',{leaveId,status,adminNote:note});
+  S.allLeaves=(S.allLeaves||[]).map(l=>(l.leaveId===leaveId||l['Leave ID']===leaveId)?{...l,status}:l);
+  render();
+}
+
+/* ════════════════════════════════════════════
+   EVENTS PAGE — PAST + UPCOMING
+════════════════════════════════════════════ */
+function renderEventsPage(){
+  const role=S.user?.role||'staff';
+  const isPriv=role==='admin'||role==='manager';
+  const now=new Date();now.setHours(0,0,0,0);
+  const all=S.upcomingEvents||[];
+  const upcoming=all.filter(e=>{const d=new Date(e.eventDate);d.setHours(0,0,0,0);return d>=now;}).sort((a,b)=>new Date(a.eventDate)-new Date(b.eventDate));
+  const past=all.filter(e=>{const d=new Date(e.eventDate);d.setHours(0,0,0,0);return d<now;}).sort((a,b)=>new Date(b.eventDate)-new Date(a.eventDate));
+
+  const renderEvCard=ev=>{
+    const d=daysUntil(ev.eventDate);
+    const dLabel=d===0?'TODAY':d===1?'TOMORROW':d!==null&&d>0?`In ${d} days`:'';
+    const st=ev.status||'event_created';
+    const canOrder=role==='staff'&&['event_created','manager_rejected','admin_rejected'].includes(st);
+    const isRejected=st==='manager_rejected'||st==='admin_rejected';
+    return`<div class="ev-card" style="cursor:pointer" onclick="S.eventDetail='${esc(ev.eventId)}';render()">
+      <div class="ev-card-hdr">
+        <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap">
+          <span style="background:#ede9fe;color:#5b21b6;font-size:11px;font-weight:800;padding:2px 7px;border-radius:6px">[${esc(ev.eventCode||'—')}]</span>
+          <div class="ev-card-name">${esc(ev.eventType)} · ${esc(ev.clientName)}</div>
+        </div>
+        <div class="ev-card-meta">
+          <span class="ev-pill">📅 ${fmtDate(ev.eventDate)}</span>
+          ${ev.mealSlot?`<span class="ev-pill">🍽 ${esc(ev.mealSlot)}</span>`:''}
+          <span class="ev-pill">👥 ${esc(ev.pax)} PAX</span>
+          ${dLabel?`<span class="ev-pill" style="background:${d===0?'rgba(220,38,38,.3)':d<=3?'rgba(217,119,6,.3)':'rgba(255,255,255,.15)'}">${dLabel}</span>`:''}
+        </div>
+      </div>
+      <div class="ev-card-body">
+        <div style="flex:1;min-width:0">
+          <div class="ev-loc">📍 ${esc(ev.location||ev.eventLocation||'—')}</div>
+          ${isPriv?`<div style="font-size:12px;color:var(--muted);margin-top:2px">📞 ${esc(ev.clientMobile||ev.eventPhone||'—')}</div>`:''}
+          <div style="margin-top:6px"><span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;${cevStatusStyle(st)}">${cevStatusLabel(st)}</span></div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:5px;flex-shrink:0;align-items:flex-end">
+          ${canOrder?`<button class="btn btn-navy btn-xs" onclick="event.stopPropagation();openCevRation('${esc(ev.eventId)}')">🧺 Order Ration</button>`:''}
+          ${isPriv?`<button class="btn btn-out btn-xs" onclick="event.stopPropagation();openCevCreate('${esc(ev.eventId)}')">✏️ Edit</button>`:''}
+        </div>
+      </div>
+    </div>`;
+  };
+
+  return`<div class="scr on scr-wide">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;max-width:700px">
+      <div class="card-ttl" style="font-size:16px;margin:0">🎉 Catering Events</div>
+      ${isPriv?`<button class="btn btn-navy btn-sm" onclick="openCevCreate(null)">➕ New Event</button>`:''}
+    </div>
+
+    <!-- Upcoming section -->
+    <div style="max-width:700px;margin-bottom:20px">
+      <div style="font-size:13px;font-weight:800;color:var(--navy);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;padding-left:2px">
+        ⬆ Upcoming Events <span style="background:var(--navy);color:#fff;border-radius:20px;padding:1px 8px;font-size:11px">${upcoming.length}</span>
+      </div>
+      ${upcoming.length?upcoming.map(renderEvCard).join(''):
+        `<div style="text-align:center;padding:20px;color:var(--muted);font-size:13px;background:#fff;border-radius:12px;border:1.5px solid var(--border)">No upcoming events</div>`}
+    </div>
+
+    <!-- Past section -->
+    <div style="max-width:700px">
+      <div style="font-size:13px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;padding-left:2px">
+        ⬇ Past Events <span style="background:var(--muted);color:#fff;border-radius:20px;padding:1px 8px;font-size:11px">${past.length}</span>
+      </div>
+      ${past.length?past.map(renderEvCard).join(''):
+        `<div style="text-align:center;padding:20px;color:var(--muted);font-size:13px;background:#fff;border-radius:12px;border:1.5px solid var(--border)">No past events</div>`}
+    </div>
+
+    <button class="btn btn-out btn-sm" style="margin-top:16px" onclick="goBack()">← Back</button>
+  </div>`;
+}
+
+/* ════════════════════════════════════════════
    ADMIN SCREENS
 ════════════════════════════════════════════ */
 async function loadAdminData(){
@@ -1570,36 +2009,59 @@ async function loadAdminData(){
 }
 
 function renderAdminHome(){
-  const evPending=(S.upcomingEvents||[]).filter(e=>e.status==='manager_approved').length;
-  const tabs=[
-    {id:'procurement',l:'🛒 Procurement'},
-    {id:'evapprove',l:'🎉 Approve',n:evPending},
-    {id:'staff',l:'👥 Staff'},
-    {id:'locations',l:'📍 Locations'},
-    {id:'leaves',l:'🗓️ Leaves'},
-    {id:'assignleave',l:'✏️ Assign Leave'},
-    {id:'items',l:'📦 Manage Items'},
-    {id:'monthly',l:'📊 Monthly Report'},
-    {id:'ytd',l:'📋 YTD Leaves'}
+  const pendingRation=S.approvedOrders.length; // orders from manager awaiting admin action
+  const pendingLeaves=S.allLeaves.filter(l=>l.status==='Pending'||l['Status']==='Pending').length;
+  const upcomingEvCount=(S.upcomingEvents||[]).filter(e=>{const d=new Date(e.eventDate);d.setHours(0,0,0,0);const t=new Date();t.setHours(0,0,0,0);return d>=t;}).length;
+  const statCards=[
+    {n:pendingRation,l:'PENDING RATION APPROVALS',c:'#e53935',screen:'a-ration-approvals'},
+    {n:pendingLeaves,l:'PENDING LEAVE APPROVALS',c:'#f59e0b',screen:'a-leave-approvals'},
+    {n:upcomingEvCount,l:'UPCOMING EVENTS',c:'#7c3aed',screen:'events-page'},
   ];
+  const actionTiles=[
+    {e:'✏️',l:'Assign Leaves',fn:"S.aTab='assignleave';S.screen='a-home';render()"},
+    {e:'📊',l:'Leave Balance',fn:"S.aTab='ytd';S.screen='a-home';render()"},
+    {e:'📈',l:'Monthly Reports',fn:"S.aTab='monthly';S.screen='a-home';render()"},
+    {e:'👥',l:'Add Staff',fn:"S.aTab='staff';S.screen='a-home';render()"},
+    {e:'📦',l:'Add Ration Item',fn:"S.aTab='items';S.screen='a-home';render()"},
+    {e:'🎉',l:'Create Catering Event',fn:"openCevCreate(null)"},
+    {e:'🛒',l:'Procurement',fn:"S.aTab='procurement';S.screen='a-home';render()"},
+    {e:'📍',l:'Locations',fn:"S.aTab='locations';S.screen='a-home';render()"},
+    {e:'🔄',l:'Refresh',fn:"loadAdminData().then(()=>{loadCateringEvents();render();})"},
+  ];
+  // If an admin tab is active (aTab), show that tab content instead of home cards
+  const showTab=S.aTab&&S.screen==='a-home';
   return`<div class="scr on scr-wide">
     <div class="id-bar" style="max-width:700px">
       <div class="id-info"><strong>${esc(S.user.name)}</strong>Master Admin — All Locations</div>
       <div style="text-align:right"><div style="font-size:11px;opacity:.8;cursor:pointer;text-decoration:underline" onclick="doLogout()">Sign out</div></div>
     </div>
-    <div class="stat-row">
-      <div class="stat warn"><div class="stat-n">${S.approvedOrders.length}</div><div class="stat-l">Approved Orders</div></div>
-      <div class="stat navy" style="border-color:var(--border)"><div class="stat-n" style="color:var(--navy)">${S.allStaff.length}</div><div class="stat-l">Total Staff</div></div>
-      <div class="stat gold"><div class="stat-n">${S.allLocations.length}</div><div class="stat-l">Locations</div></div>
-      <div class="stat ok"><div class="stat-n">${S.allLeaves.filter(l=>l.status==='Pending'||l['Status']==='Pending').length}</div><div class="stat-l">Leave Pending</div></div>
-    </div>
-    <button class="btn btn-navy" style="width:100%;max-width:700px;margin-bottom:12px" onclick="openCevCreate(null)">➕ Create Catering Event</button>
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:14px;max-width:700px">${tabs.map(t=>`
-      <button onclick="S.aTab='${t.id}';render()" style="position:relative;background:${S.aTab===t.id?'var(--purple2)':'var(--card)'};color:${S.aTab===t.id?'#fff':'var(--txt)'};border:1.5px solid ${S.aTab===t.id?'var(--purple2)':'var(--border)'};border-radius:10px;padding:10px 6px;font-size:11px;font-weight:700;cursor:pointer;text-align:center;line-height:1.4;width:100%">${t.l}${t.n?`<span style="position:absolute;top:4px;right:5px;background:#e53935;color:#fff;border-radius:10px;padding:0 5px;font-size:9px;font-weight:800">${t.n}</span>`:''}</button>`).join('')}
+
+    ${showTab?`
+    <div style="margin-bottom:10px;max-width:700px">
+      <button class="btn btn-out btn-sm" style="width:auto" onclick="S.aTab=null;render()">← Home</button>
     </div>
     ${S.aTab==='procurement'?renderAdmProcurement():S.aTab==='evapprove'?renderAdmEvApproveTab():S.aTab==='staff'?renderAdmStaff():S.aTab==='locations'?renderAdmLocations():S.aTab==='monthly'?renderAdmMonthlyReport():S.aTab==='ytd'?renderAdmYTD():S.aTab==='items'?renderAdmItems():S.aTab==='assignleave'?renderAdmAssignLeave():renderAdmLeaves()}
+    `:`
+    <!-- Clickable stat cards -->
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px;max-width:700px">
+      ${statCards.map(c=>`
+      <div onclick="go('${c.screen}')" style="background:#fff;border:2px solid ${c.c};border-radius:12px;padding:12px 8px;text-align:center;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.07);transition:transform .1s" onmousedown="this.style.transform='scale(.97)'" onmouseup="this.style.transform=''">
+        <div style="font-size:26px;font-weight:900;color:${c.c};line-height:1">${c.n}</div>
+        <div style="font-size:9px;font-weight:700;color:#555;margin-top:4px;line-height:1.3;text-transform:uppercase;letter-spacing:.3px">${c.l}</div>
+      </div>`).join('')}
+    </div>
+
+    <!-- Action tiles -->
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px;max-width:700px">
+      ${actionTiles.map(t=>`
+      <div onclick="${t.fn}" style="background:#fff;border:1.5px solid var(--border);border-radius:12px;padding:14px 6px 10px;text-align:center;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.06);transition:transform .1s" onmousedown="this.style.transform='scale(.97)'" onmouseup="this.style.transform=''">
+        <div style="font-size:24px;margin-bottom:6px">${t.e}</div>
+        <div style="font-size:10px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:.3px;line-height:1.3">${t.l}</div>
+      </div>`).join('')}
+    </div>
+
     ${renderUpcomingEvents('admin')}
-    <div style="margin-top:14px"><button class="btn btn-out btn-sm" style="width:auto" onclick="loadAdminData().then(()=>{loadCateringEvents();render();})">🔄 Refresh</button></div>
+    `}
   </div>`;
 }
 
@@ -2239,6 +2701,8 @@ function renderEventDetailModal(){
           ${isPriv?`
           <div class="ev-detail-row"><span class="ev-detail-label">Client</span><span class="ev-detail-val">${esc(ev.clientName)}</span></div>
           <div class="ev-detail-row"><span class="ev-detail-label">Mobile</span><span class="ev-detail-val"><a href="tel:${esc(ev.clientMobile||ev.eventPhone||'')}" style="color:var(--navy);font-weight:700">📞 ${esc(ev.clientMobile||ev.eventPhone||'—')}</a></span></div>`:''}
+          ${(ev.foodPrefs&&ev.foodPrefs.length)?`
+          <div class="ev-detail-row"><span class="ev-detail-label">Food Pref</span><span class="ev-detail-val" style="display:flex;flex-wrap:wrap;gap:4px">${(ev.foodPrefs||[]).map(p=>`<span style="background:#fef3c7;color:#92400e;border-radius:20px;padding:2px 9px;font-size:11px;font-weight:700">${esc(p)}</span>`).join('')}</span></div>`:'' }
           ${Object.keys(menu).length?`
           <div style="margin-top:14px">
             <div class="card-ttl" style="margin-bottom:8px">📋 Event Menu</div>
@@ -2308,11 +2772,11 @@ function openCevCreate(eventId){
     const ev=(S.upcomingEvents||[]).find(e=>e.eventId===eventId);
     if(!ev)return;
     S.cevEditId=eventId;
-    S.cevForm={type:ev.eventType||'',mealSlot:ev.mealSlot||'',date:ev.eventDate||'',time:ev.eventTime||'',pax:ev.pax||'',clientName:ev.clientName||ev.eventClient||'',clientMobile:ev.clientMobile||ev.eventPhone||'',location:ev.location||ev.eventLocation||''};
+    S.cevForm={type:ev.eventType||'',mealSlot:ev.mealSlot||'',date:ev.eventDate||'',time:ev.eventTime||'',pax:ev.pax||'',clientName:ev.clientName||ev.eventClient||'',clientMobile:ev.clientMobile||ev.eventPhone||'',location:ev.location||ev.eventLocation||'',foodPrefs:ev.foodPrefs?[...ev.foodPrefs]:[]};
     S.cevMenu=JSON.parse(JSON.stringify(ev.menu||{}));
   } else {
     S.cevEditId=null;
-    S.cevForm={type:'',mealSlot:'',date:'',time:'',pax:'',clientName:'',clientMobile:'',location:''};
+    S.cevForm={type:'',mealSlot:'',date:'',time:'',pax:'',clientName:'',clientMobile:'',location:'',foodPrefs:[]};
     S.cevMenu={};
   }
   S.cevCatOpen={};
@@ -2403,6 +2867,14 @@ function renderCevCreate(){
         <option value="">— Select location —</option>
         ${EVENT_LOCATIONS.map(l=>`<option value="${esc(l)}" ${f.location===l?'selected':''}>${esc(l)}</option>`).join('')}
       </select>
+      <label class="fl">Food Preferences / Dietary Restrictions</label>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px">
+        ${['With Garlic','Non-Onion/Non-Garlic','Jain','Veg Only','Contains Eggs','Contains Non-Veg'].map(pref=>{
+          const sel=(f.foodPrefs||[]).includes(pref);
+          return`<span onclick="(function(){const p=S.cevForm.foodPrefs||[];const i=p.indexOf('${pref}');if(i>=0)p.splice(i,1);else p.push('${pref}');S.cevForm.foodPrefs=p;render();})()" style="cursor:pointer;border-radius:20px;padding:5px 13px;font-size:12px;font-weight:600;border:1.5px solid ${sel?'var(--navy)':'var(--border)'};background:${sel?'var(--navy)':'transparent'};color:${sel?'#fff':'var(--txt)'}">${esc(pref)}</span>`;
+        }).join('')}
+      </div>
+      ${(f.foodPrefs&&f.foodPrefs.length)?`<div style="margin-top:6px;font-size:12px;color:var(--navy);font-weight:600">Selected: ${(f.foodPrefs||[]).map(p=>esc(p)).join(', ')}</div>`:''}
     </div>
 
     <div class="card">
@@ -2439,7 +2911,7 @@ function renderCevCreate(){
 async function cevSave(){
   const f=S.cevForm;
   const isEdit=!!S.cevEditId;
-  const payload={eventType:f.type,mealSlot:f.mealSlot,eventDate:f.date,eventTime:f.time,pax:f.pax,clientName:f.clientName,clientMobile:f.clientMobile,location:f.location,menu:S.cevMenu,createdBy:S.user?.name||''};
+  const payload={eventType:f.type,mealSlot:f.mealSlot,eventDate:f.date,eventTime:f.time,pax:f.pax,clientName:f.clientName,clientMobile:f.clientMobile,location:f.location,menu:S.cevMenu,foodPrefs:f.foodPrefs||[],createdBy:S.user?.name||''};
   S.loading=true; render();
   try{
     if(isEdit){
