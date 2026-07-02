@@ -1,7 +1,7 @@
 // Flenbo Hub — Service Worker
 // Caches the app shell for instant offline loading
 
-const CACHE = 'flenbo-v2';
+const CACHE = 'flenbo-v3';
 const APP_SHELL = [
   '/hub/',
   '/hub/index.html',
