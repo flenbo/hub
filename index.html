@@ -2436,7 +2436,7 @@ function renderAdmAttendance(){
   const allStaffNonAdmin=(S.allStaff||[]).filter(u=>(u.role||u['Role'])!=='admin');
   const attToday=S.admTodayAtt||[];
   const markedIds=new Set(attToday.map(r=>r.userId||r['User ID']));
-  const marked=attToday.length;
+  const marked=markedIds.size;
   const total=allStaffNonAdmin.length;
   return`<div>
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
@@ -2473,9 +2473,22 @@ function renderAdmAttendance(){
 }
 
 async function admMarkAttendance(userId,staffName,location,type){
-  await apiData('logAttendance',{userId,staffName,location,date:today(),type});
-  const r=await api({action:'getAttendance',date:today()});
-  if(r?.records) S.admTodayAtt=r.records;
+  const timeStr=new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+  const payload={userId,staffName,location,date:today(),type};
+  if(type==='in'){
+    payload.inTime=timeStr;
+  } else {
+    payload.outTime=timeStr;
+    // include existing inTime so GAS can calculate hours
+    const existing=(S.admTodayAtt||[]).find(r=>(r.userId||r['User ID'])===userId);
+    if(existing) payload.inTime=existing.inTime||existing['In Time']||'';
+  }
+  showLoading(type==='in'?'Marking attendance...':'Marking check out...');
+  try{
+    await apiData('logAttendance',payload);
+    const r=await api({action:'getAttendance',date:today()});
+    if(r?.records) S.admTodayAtt=r.records;
+  }finally{hideLoading();}
   render();
 }
 
