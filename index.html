@@ -325,9 +325,11 @@ tr:hover td{background:#fafbfe}
 .hdr-photo{width:36px;height:36px;border-radius:50%;object-fit:cover;border:2px solid var(--gold);cursor:pointer;flex-shrink:0}
 .hdr-photo-init{width:36px;height:36px;border-radius:50%;background:var(--gold);color:var(--navy);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;cursor:pointer;flex-shrink:0;border:2px solid var(--gold)}
 .hdr-user-col{display:flex;flex-direction:column;align-items:flex-end;gap:2px}
+@keyframes fb-spin{to{transform:rotate(360deg)}}
 </style>
 </head>
 <body>
+<div id="fb-loading" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9999;align-items:center;justify-content:center;flex-direction:column;gap:16px"><div style="width:48px;height:48px;border:5px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:fb-spin 0.8s linear infinite"></div><p id="fb-loading-msg" style="color:#fff;font-size:15px;font-weight:600;letter-spacing:0.5px;margin:0">Please wait...</p></div>
 <div id="root"></div>
 <script>
 /* ════════════════════════════════════════════
@@ -577,6 +579,8 @@ function fmtTime(s){
   if(m) return`${m[1]}:${m[2]}`;
   return str;
 }
+function showLoading(msg){const el=document.getElementById('fb-loading');if(!el)return;document.getElementById('fb-loading-msg').textContent=msg||'Please wait...';el.style.display='flex';}
+function hideLoading(){const el=document.getElementById('fb-loading');if(el)el.style.display='none';}
 function genId(loc){const l=(loc||'').includes('Nawada')?'NAW':(loc||'').includes('Emaar')?'EMR':'HUB';const d=new Date().toISOString().slice(0,10).replace(/-/g,'');return`FB-${l}-${d}-${Math.floor(Math.random()*900)+100}`;}
 function cartCount(){return Object.values(S.cart).filter(v=>v.qty>0).length;}
 function cartItems(){const a=[];for(const[k,v]of Object.entries(S.cart)){if(v.qty>0){const[sup,cat,name]=k.split('|');a.push({sup,cat,name,qty:v.qty,unit:v.unit});}}return a;}
@@ -754,7 +758,7 @@ async function doLogin(){
   const u=(S.loginUser||'').trim().toLowerCase();
   const p=(S.loginPw||'').trim();
   if(!u||!p){S.loginError='Enter username and password.';render();return;}
-  S.loading=true;S.loginError='';render();
+  S.loading=true;S.loginError='';showLoading('Signing in...');render();
   let user=null;
   if(isBackendSet()){
     const res=await api({action:'login',username:u,password:p});
@@ -762,7 +766,7 @@ async function doLogin(){
   } else {
     user=DEMO_USERS.find(x=>x.username===u&&String(x.password)===String(p))||null;
   }
-  S.loading=false;
+  S.loading=false;hideLoading();
   if(!user){S.loginError='Invalid username or password.';render();return;}
   S.user=user;lsS('fb_session',user);
   S.screen=homeScreen();
@@ -1185,7 +1189,7 @@ function renderRationReview(){
 
 async function submitOrder(){
   const items=cartItems();if(!items.length)return;
-  S.loading=true;render();
+  S.loading=true;showLoading('Submitting order...');render();
   S.orderId=genId(S.user.location);
   const resolvedLoc = S.orderType==='Catering'?(S.eventLocation==='NEW LOCATION'?S.eventLocationNew:S.eventLocation):(S.ckLocation||S.user.location);
   const order={
@@ -1214,7 +1218,7 @@ async function submitOrder(){
     S.upcomingEvents=getLocalCateringEvents();
   }
   saveItemHist(items);
-  S.loading=false;
+  S.loading=false;hideLoading();
   go('s-ration-confirm');
 }
 
@@ -1315,11 +1319,11 @@ function updateLeaveBtn(){
   btn.disabled=bad;
 }
 async function submitLeave(){
-  S.loading=true;render();
+  S.loading=true;showLoading('Submitting leave...');render();
   const leave={leaveId:'LV-'+Date.now(),userId:S.user.userId,staffName:S.user.name,location:S.user.location,leaveType:S.leaveType,fromDate:S.leaveFrom,toDate:S.leaveTo,reason:S.leaveReason,submittedAt:new Date().toISOString(),status:'Pending'};
   await apiData('submitLeave',leave);
   if(!isBackendSet()){const arr=lsG('fb_leaves_'+S.user.userId,[]);arr.unshift(leave);lsS('fb_leaves_'+S.user.userId,arr.slice(0,30));S.myLeaves=[leave,...S.myLeaves];}
-  S.loading=false;S.leaveType='';S.leaveFrom='';S.leaveTo='';S.leaveReason='';
+  S.loading=false;hideLoading();S.leaveType='';S.leaveFrom='';S.leaveTo='';S.leaveReason='';
   go('s-leave-done');
 }
 
@@ -1580,8 +1584,11 @@ function renderMgrLeavesTab(){
 
 async function decideLeave(leaveId,status){
   const note=document.getElementById('ln-'+leaveId)?.value||'';
-  await apiData('updateLeave',{leaveId,status,managerNote:note});
-  S.pendingLeaves=S.pendingLeaves.filter(l=>l.leaveId!==leaveId);
+  showLoading('Updating leave...');
+  try{
+    await apiData('updateLeave',{leaveId,status,managerNote:note});
+    S.pendingLeaves=S.pendingLeaves.filter(l=>l.leaveId!==leaveId);
+  }finally{hideLoading();}
   render();
 }
 
@@ -1607,8 +1614,11 @@ async function logAttendance(type){
     S.todayAtt={...S.todayAtt,outTime:timeStr};
   }
   lsS('fb_att_'+today(),S.todayAtt);
-  await apiData('logAttendance',{userId:S.user.userId,staffName:S.user.name,location:S.user.location,date:today(),...S.todayAtt,type});
-  render();
+  render(); // instant feedback — show time immediately
+  showLoading('Saving attendance...');
+  try{
+    await apiData('logAttendance',{userId:S.user.userId,staffName:S.user.name,location:S.user.location,date:today(),...S.todayAtt,type});
+  }finally{hideLoading();}
 }
 
 /* ════════════════════════════════════════════
@@ -1733,12 +1743,12 @@ function renderCevRationItems(ev){
 }
 
 async function mgrEvDecision(eventId,newStatus){
-  S.loading=true;render();
+  S.loading=true;showLoading('Saving decision...');render();
   const note=S.reviewNote||'';
   await apiData('updateCateringEventStatus',{eventId,status:newStatus,managerNote:note});
   const idx=(S.upcomingEvents||[]).findIndex(e=>e.eventId===eventId);
   if(idx>=0){S.upcomingEvents[idx].status=newStatus;if(note)S.upcomingEvents[idx].managerNote=note;}
-  S.reviewNote='';S.loading=false;
+  S.reviewNote='';S.loading=false;hideLoading();
   go('m-ration-approvals');
 }
 
@@ -1803,8 +1813,11 @@ function renderMgrLeaveApprovals(){
 
 async function decideLeavePage(leaveId,status){
   const note=document.getElementById('mla-'+leaveId)?.value||'';
-  await apiData('updateLeave',{leaveId,status,managerNote:note});
-  S.pendingLeaves=S.pendingLeaves.filter(l=>l.leaveId!==leaveId);
+  showLoading('Updating leave...');
+  try{
+    await apiData('updateLeave',{leaveId,status,managerNote:note});
+    S.pendingLeaves=S.pendingLeaves.filter(l=>l.leaveId!==leaveId);
+  }finally{hideLoading();}
   render();
 }
 
@@ -2010,13 +2023,13 @@ function renderAdmRationDetail(){
 }
 
 async function admEvDecision(eventId,newStatus){
-  S.loading=true;render();
+  S.loading=true;showLoading('Processing decision...');render();
   const note=S.reviewNote||'';
   const evBefore=(S.upcomingEvents||[]).find(e=>e.eventId===eventId);
   await apiData('updateCateringEventStatus',{eventId,status:newStatus,adminNote:note});
   const idx=(S.upcomingEvents||[]).findIndex(e=>e.eventId===eventId);
   if(idx>=0){S.upcomingEvents[idx].status=newStatus;if(note)S.upcomingEvents[idx].adminNote=note;}
-  S.reviewNote='';S.loading=false;
+  S.reviewNote='';S.loading=false;hideLoading();
   if(newStatus==='admin_approved'&&evBefore){
     const rationItems=evBefore.rationItems||{};
     const allItems=Object.values(rationItems).flat().filter(i=>i.qty>0);
@@ -2039,13 +2052,13 @@ async function admEvDecision(eventId,newStatus){
 }
 
 async function admOrderDecision(orderId,status){
-  S.loading=true;render();
+  S.loading=true;showLoading('Processing decision...');render();
   const note=S.reviewNote||'';
   // Capture order data before removing from list (for WhatsApp/print)
   const orderRows=S.approvedOrders.filter(r=>(r['Order ID']||r.orderId)===orderId);
   await apiData('updateOrderStatus',{orderId,status,adminNote:note});
   S.approvedOrders=S.approvedOrders.filter(r=>(r['Order ID']||r.orderId)!==orderId);
-  S.reviewNote='';S.loading=false;
+  S.reviewNote='';S.loading=false;hideLoading();
   if(status==='Admin Approved'&&orderRows.length){
     const o=orderRows[0];
     S.admJustApproved={
@@ -2764,9 +2777,9 @@ async function submitAdminLeave(){
     status:S.admLeaveStatus||'Approved',
     managerNote:'Recorded by Admin'
   };
-  S.loading=true;render();
+  S.loading=true;showLoading('Recording leave...');render();
   await apiData('submitLeave',leave);
-  S.loading=false;
+  S.loading=false;hideLoading();
   S.admLeaveStaff='';S.admLeaveType='';S.admLeaveFrom='';S.admLeaveTo='';S.admLeaveReason='';S.admLeaveStatus='Approved';
   alert('✅ Leave recorded successfully for '+leave.staffName);
   await loadAdminData();
@@ -3159,9 +3172,11 @@ function openCevAdminApprove(eventId){
 // Delete event
 async function cevDelete(eventId){
   if(!confirm('Delete this event permanently?'))return;
+  showLoading('Deleting event...');
+  try{
   if(isBackendSet()){
     const r=await apiData('deleteCateringEvent',{eventId});
-    if(!r?.success){alert('Delete failed: '+(r?.error||'error'));return;}
+    if(!r?.success){hideLoading();alert('Delete failed: '+(r?.error||'error'));return;}
   }
   // Persist deleted ID so auto-refresh can't bring it back from the backend
   const del=lsG('fb_deleted_events',[]);
@@ -3169,6 +3184,7 @@ async function cevDelete(eventId){
   S.upcomingEvents=(S.upcomingEvents||[]).filter(e=>e.eventId!==eventId);
   const cached=lsG('fb_catering_events',[]).filter(e=>e.eventId!==eventId);
   lsS('fb_catering_events',cached);
+  }finally{hideLoading();}
   render();
 }
 
@@ -3279,12 +3295,12 @@ async function cevSave(){
   const f=S.cevForm;
   const isEdit=!!S.cevEditId;
   const payload={eventType:f.type,mealSlot:f.mealSlot,eventDate:f.date,eventTime:f.time,pax:f.pax,clientName:f.clientName,clientMobile:f.clientMobile,location:f.location,menu:S.cevMenu,foodPrefs:f.foodPrefs||[],customMenuItems:S.cevCustomItems||[],createdBy:S.user?.name||''};
-  S.loading=true; render();
+  S.loading=true;showLoading(isEdit?'Saving changes...':'Creating event...');render();
   try{
     if(isEdit){
       if(isBackendSet()){
         const r=await apiData('updateCateringEvent',{...payload,eventId:S.cevEditId});
-        if(!r?.success){alert('Save failed: '+(r?.error||'error'));S.loading=false;render();return;}
+        if(!r?.success){alert('Save failed: '+(r?.error||'error'));S.loading=false;hideLoading();render();return;}
       }
       const idx=(S.upcomingEvents||[]).findIndex(e=>e.eventId===S.cevEditId);
       if(idx>=0) Object.assign(S.upcomingEvents[idx],{eventType:f.type,mealSlot:f.mealSlot,eventDate:f.date,eventTime:f.time,pax:f.pax,clientName:f.clientName,clientMobile:f.clientMobile,location:f.location,menu:S.cevMenu,customMenuItems:S.cevCustomItems||[]});
@@ -3294,7 +3310,7 @@ async function cevSave(){
       let evId,evCode;
       if(isBackendSet()){
         const r=await apiData('createCateringEvent',payload);
-        if(!r?.success){alert('Failed: '+(r?.error||'error'));S.loading=false;render();return;}
+        if(!r?.success){alert('Failed: '+(r?.error||'error'));S.loading=false;hideLoading();render();return;}
         evId=r.eventId; evCode=r.eventCode;
       } else {
         evCode=String(1000+((S.upcomingEvents||[]).length));
@@ -3307,12 +3323,12 @@ async function cevSave(){
       // Persist custom items to localStorage so they survive backend overwrites
       if((S.cevCustomItems||[]).length){const cm=lsG('fb_cev_custom',{});cm[evId]=S.cevCustomItems;lsS('fb_cev_custom',cm);}
     }
-    S.loading=false;
+    S.loading=false;hideLoading();
     alert(isEdit?'Event updated!':'Event created! Staff can now order ration.');
     const role=S.user?.role;
     S.cevEditId=null;
     go(role==='admin'?'a-home':'m-home');
-  } catch(err){S.loading=false;alert('Error: '+err.message);render();}
+  } catch(err){S.loading=false;hideLoading();alert('Error: '+err.message);render();}
 }
 
 // ── STAFF RATION ORDER FOR EVENT ────────────────────────────
@@ -3373,18 +3389,18 @@ async function cevSubmitRation(){
     });
   });
   if(!Object.keys(rationItems).length){alert('Add at least one item.');return;}
-  S.loading=true;render();
+  S.loading=true;showLoading('Submitting ration...');render();
   try{
     if(isBackendSet()){
       const r=await apiData('submitEventRation',{eventId:ev.eventId,rationItems,submittedBy:S.user?.name||''});
-      if(!r?.success){alert('Submit failed: '+(r?.error||'error'));S.loading=false;render();return;}
+      if(!r?.success){alert('Submit failed: '+(r?.error||'error'));S.loading=false;hideLoading();render();return;}
     }
     const idx=(S.upcomingEvents||[]).findIndex(e=>e.eventId===ev.eventId);
     if(idx>=0){Object.assign(S.upcomingEvents[idx],{status:'ration_submitted',rationItems,submittedBy:S.user?.name||''});}
-    S.loading=false;
+    S.loading=false;hideLoading();
     alert('Ration submitted! Awaiting Operations Manager approval.');
     go('s-home');
-  } catch(err){S.loading=false;alert('Error: '+err.message);render();}
+  } catch(err){S.loading=false;hideLoading();alert('Error: '+err.message);render();}
 }
 
 // ── MANAGER APPROVE ────────────────────────────────────────
@@ -3431,19 +3447,19 @@ async function cevMgrDecide(decision){
   if(!ev)return;
   if(decision==='rejected'&&!S.cevMgrNote.trim()){alert('Add a note explaining why you are rejecting.');return;}
   if(!confirm(decision==='approved'?'Approve and send to Admin?':'Reject and return to Staff?'))return;
-  S.loading=true;render();
+  S.loading=true;showLoading(decision==='approved'?'Approving...':'Rejecting...');render();
   try{
     if(isBackendSet()){
       const r=await apiData('decideEventRation',{eventId:ev.eventId,decision,note:S.cevMgrNote});
-      if(!r?.success){alert('Failed: '+(r?.error||'error'));S.loading=false;render();return;}
+      if(!r?.success){alert('Failed: '+(r?.error||'error'));S.loading=false;hideLoading();render();return;}
     }
     const newStatus=decision==='approved'?'manager_approved':'manager_rejected';
     const idx=(S.upcomingEvents||[]).findIndex(e=>e.eventId===ev.eventId);
     if(idx>=0)Object.assign(S.upcomingEvents[idx],{status:newStatus,managerNote:S.cevMgrNote,managerDecision:decision});
-    S.loading=false;
+    S.loading=false;hideLoading();
     alert(decision==='approved'?'Approved! Sent to Admin.':'Rejected. Staff will be notified.');
     go('m-home');
-  } catch(err){S.loading=false;alert('Error: '+err.message);render();}
+  } catch(err){S.loading=false;hideLoading();alert('Error: '+err.message);render();}
 }
 
 // ── ADMIN FINAL APPROVAL ───────────────────────────────────
@@ -3486,19 +3502,19 @@ async function cevAdminDecide(decision){
   if(!ev)return;
   if(decision==='rejected'&&!S.cevAdminNote.trim()){alert('Add a rejection note.');return;}
   if(!confirm(decision==='approved'?'Final approve for procurement?':'Reject and send back to Staff?'))return;
-  S.loading=true;render();
+  S.loading=true;showLoading(decision==='approved'?'Final approving...':'Rejecting...');render();
   try{
     if(isBackendSet()){
       const r=await apiData('adminDecideEventRation',{eventId:ev.eventId,decision,note:S.cevAdminNote});
-      if(!r?.success){alert('Failed: '+(r?.error||'error'));S.loading=false;render();return;}
+      if(!r?.success){alert('Failed: '+(r?.error||'error'));S.loading=false;hideLoading();render();return;}
     }
     const newStatus=decision==='approved'?'admin_approved':'admin_rejected';
     const idx=(S.upcomingEvents||[]).findIndex(e=>e.eventId===ev.eventId);
     if(idx>=0)Object.assign(S.upcomingEvents[idx],{status:newStatus,adminNote:S.cevAdminNote,adminDecision:decision});
-    S.loading=false;
+    S.loading=false;hideLoading();
     alert(decision==='approved'?'✅ Ration approved! Order placed with supplier.':'Rejected. Staff will need to revise.');
     go('a-home');
-  } catch(err){S.loading=false;alert('Error: '+err.message);render();}
+  } catch(err){S.loading=false;hideLoading();alert('Error: '+err.message);render();}
 }
 
 /* ════════════════════════════════════════════
@@ -3561,14 +3577,14 @@ document.addEventListener('DOMContentLoaded',async()=>{
   }else{
     go('login');
   }
-  // Auto-refresh every 60 seconds while logged in
+  // Auto-refresh every 30 seconds while logged in
   // Skip refresh when user is actively filling in a form to avoid disrupting input
   const FORM_SCREENS=['cev-create','s-leave-apply','s-ration','s-ration-new','s-ration-review','m-ration-new'];
   setInterval(()=>{
     if(S.user&&document.visibilityState==='visible'&&!FORM_SCREENS.includes(S.screen)){
       loadUserData().catch(()=>{});
     }
-  },60000);
+  },30000);
 });
 </script>
 </body>
